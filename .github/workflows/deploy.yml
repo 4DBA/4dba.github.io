@@ -9,6 +9,9 @@ on:
       - '_config.next.yml'
       - 'package.json'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,4 +26,8 @@ jobs:
         run: |
           git config --global user.name "4DBA"
           git config --global user.email "realk@foxmail.com"
-          npx hexo deploy
+          cd public
+          git init
+          git add -A
+          git commit -m "Deploy"
+          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/4DBA/4dba.github.io.git main:gh-pages

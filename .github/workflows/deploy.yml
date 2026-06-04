@@ -24,10 +24,11 @@ jobs:
       - run: npx hexo clean && npx hexo generate
       - name: Deploy to GitHub Pages
         run: |
-          git config --global user.name "4DBA"
-          git config --global user.email "realk@foxmail.com"
           cd public
           git init
+          git checkout -b gh-pages
           git add -A
+          git config user.name "4DBA"
+          git config user.email "realk@foxmail.com"
           git commit -m "Deploy"
-          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/4DBA/4dba.github.io.git main:gh-pages
+          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/4DBA/4dba.github.io.git gh-pages

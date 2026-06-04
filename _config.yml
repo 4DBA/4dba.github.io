@@ -101,4 +101,6 @@ theme: next
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
-  type: ''
+  type: git
+  repo: https://github.com/4DBA/4dba.github.io.git
+  branch: gh-pages

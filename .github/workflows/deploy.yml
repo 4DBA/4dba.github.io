@@ -1,17 +1,13 @@
-name: Deploy Hexo to GitHub Pages
+name: Deploy Hexo Blog
 
 on:
   push:
     branches: [main]
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+    paths:
+      - 'source/**'
+      - '_config.yml'
+      - '_config.next.yml'
+      - 'package.json'
 
 jobs:
   build:
@@ -22,17 +18,9 @@ jobs:
         with:
           node-version: '22'
       - run: npm install
-      - run: npx hexo generate
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - run: npx hexo clean && npx hexo generate
+      - name: Deploy to GitHub Pages
+        run: |
+          git config --global user.name "4DBA"
+          git config --global user.email "realk@foxmail.com"
+          npx hexo deploy

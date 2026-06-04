@@ -90,8 +90,8 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0
       inferno:
-        specifier: ^8.2.3
-        version: 8.2.3
+        specifier: ^9.1.0
+        version: 9.1.0
       inferno-create-element:
         specifier: ^8.2.3
         version: 8.2.3
@@ -2133,8 +2133,14 @@ packages:
   inferno-vnode-flags@8.2.3:
     resolution: {integrity: sha512-dfC0MIwFv9PCbZCUsuk9ISejFS3fKJODC0rZ/LjxxzE+OrCk+PMwPLsUnGU6O9/jbBnPACVz1BkACDf5LWgU5Q==}
 
+  inferno-vnode-flags@9.1.0:
+    resolution: {integrity: sha512-pyM4YQbYGiKS/YHgXUBsrrG6VHDZCqtas4Ba3OQqxZE6UMNWDO9Sz9q3y2hLHO7Ue1e4gcBV9S1BCr5gnUuQ8A==}
+
   inferno@8.2.3:
     resolution: {integrity: sha512-LMeRlCe+RlXw8kHCLyOWRk2PsZ3Fo4jkESyAR1g4FfPT48N78i11YhTVXW2ukCx5MFjv+qrfa73JzJWU9sg4CQ==}
+
+  inferno@9.1.0:
+    resolution: {integrity: sha512-Cw7iu5Yn//PDZKZPZGy2+7b7hCaVhbKuPP1ikyyOvXILZno1faIfcQOyfQkNKh4h6LSQ6VhImaG7sxvS0IrhuA==}
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
@@ -3195,6 +3201,7 @@ packages:
   whatwg-encoding@2.0.0:
     resolution: {integrity: sha512-p41ogyeMUrw3jWclHWTQg1k05DSVXPLcVxRTYsXUk+ZooOCZLcoYgPZ/HL/D/N+uQPOtcp1me1WhBEaX02mhWg==}
     engines: {node: '>=12'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@3.0.0:
     resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
@@ -5892,10 +5899,18 @@ snapshots:
 
   inferno-vnode-flags@8.2.3: {}
 
+  inferno-vnode-flags@9.1.0: {}
+
   inferno@8.2.3:
     dependencies:
       csstype: 3.2.3
       inferno-vnode-flags: 8.2.3
+      opencollective-postinstall: 2.0.3
+
+  inferno@9.1.0:
+    dependencies:
+      csstype: 3.2.3
+      inferno-vnode-flags: 9.1.0
       opencollective-postinstall: 2.0.3
 
   inflight@1.0.6:

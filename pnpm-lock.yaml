@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@fancyapps/ui':
-        specifier: ^5.0.31
-        version: 5.0.31
+        specifier: ^6.1.14
+        version: 6.1.14
       '@fortawesome/fontawesome-free':
         specifier: ^7.0.0
         version: 7.0.0
@@ -710,6 +710,9 @@ packages:
 
   '@fancyapps/ui@5.0.31':
     resolution: {integrity: sha512-SW2QAmBCVdrggOT8koPu1K3RM4NECu0+klyAhe4zfwG//0NOPkr12QK3iscycA1YiON7u2Pt35CEvpMgODgtQQ==}
+
+  '@fancyapps/ui@6.1.14':
+    resolution: {integrity: sha512-cBV73XXHrc0qMca+PJJ6qay3xweIgsoYse13rGRstgUs0xA5WAv1tgbSzPCIOOjiLs2S2jiVFJxyszgvgyfxMg==}
 
   '@firebase/ai@2.2.1':
     resolution: {integrity: sha512-0VWlkGB18oDhwMqsgxpt/usMsyjnH3a7hTvQPcAbk7VhFg0QZMDX60mQKfLTFKrB5VwmlaIdVsSZznsTY2S0wA==}
@@ -3127,6 +3130,7 @@ packages:
   whatwg-encoding@2.0.0:
     resolution: {integrity: sha512-p41ogyeMUrw3jWclHWTQg1k05DSVXPLcVxRTYsXUk+ZooOCZLcoYgPZ/HL/D/N+uQPOtcp1me1WhBEaX02mhWg==}
     engines: {node: '>=12'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@3.0.0:
     resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
@@ -3990,6 +3994,8 @@ snapshots:
   '@creativecommons/vocabulary@2020.11.3': {}
 
   '@fancyapps/ui@5.0.31': {}
+
+  '@fancyapps/ui@6.1.14': {}
 
   '@firebase/ai@2.2.1(@firebase/app-types@0.9.3)(@firebase/app@0.14.2)':
     dependencies:

@@ -99,8 +99,8 @@ importers:
         specifier: ^1.2.4
         version: 1.2.4
       pangu:
-        specifier: ^7.2.0
-        version: 7.2.0
+        specifier: ^7.2.1
+        version: 7.2.1
       prismjs:
         specifier: ^1.30.0
         version: 1.30.0
@@ -2552,6 +2552,11 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  pangu@7.2.1:
+    resolution: {integrity: sha512-HEWJHmYcJhGz5wGebMaKblzu709wUjzsnJzwdjaowAKQzHIHQDmWGpCbWWPx19Exnv/RaQ3UhUg4LkttWZsbCw==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   parse5@7.1.1:
     resolution: {integrity: sha512-kwpuwzB+px5WUg9pyK0IcK/shltJN5/OVhQagxhCQNtT9Y9QRZqNY2e1cmbu/paRh5LMnz/oVTVLBpjFmMZhSg==}
 
@@ -3127,6 +3132,7 @@ packages:
   whatwg-encoding@2.0.0:
     resolution: {integrity: sha512-p41ogyeMUrw3jWclHWTQg1k05DSVXPLcVxRTYsXUk+ZooOCZLcoYgPZ/HL/D/N+uQPOtcp1me1WhBEaX02mhWg==}
     engines: {node: '>=12'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@3.0.0:
     resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
@@ -6247,6 +6253,8 @@ snapshots:
       quansync: 0.2.11
 
   pangu@7.2.0: {}
+
+  pangu@7.2.1: {}
 
   parse5@7.1.1:
     dependencies:

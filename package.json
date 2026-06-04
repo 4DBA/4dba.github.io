@@ -39,7 +39,7 @@
     "hexo-server": "^3.0.0",
     "hexo-theme-landscape": "^1.0.0",
     "hexo-util": "^3.3.0",
-    "inferno": "^8.2.3",
+    "inferno": "^9.1.0",
     "inferno-create-element": "^8.2.3",
     "lozad": "^1.16.0",
     "medium-zoom": "^1.1.0",

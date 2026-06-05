@@ -1,6 +1,5 @@
 ---
 title: TDE 透明数据加密实战：表空间级加密与 Wallet 密钥管理
-lang: zh-CN
 date: 2026-04-27 10:00:00
 categories: Oracle
 tags: [TDE, 加密, 安全, Wallet, 表空间加密, 密钥管理]

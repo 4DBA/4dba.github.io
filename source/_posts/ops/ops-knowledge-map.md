@@ -1,6 +1,5 @@
 ---
 title: 运维杂记 知识地图
-lang: zh-CN
 date: 2025-06-04 12:00:03
 categories: 运维杂记
 tags: [知识地图, 导航]

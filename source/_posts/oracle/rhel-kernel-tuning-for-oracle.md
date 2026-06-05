@@ -1,6 +1,5 @@
 ---
 title: RHEL 8/9 Kernel Tuning for Oracle Database 深度指南
-lang: zh-CN
 date: 2026-01-05 10:00:00
 categories: Oracle
 tags: [RHEL, Linux内核, HugePages, NUMA, 性能调优, Oracle]

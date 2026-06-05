@@ -1,6 +1,5 @@
 ---
 title: SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化
-lang: zh-CN
 date: 2026-03-08 10:00:00
 categories: Oracle
 tags: [SQL优化, 执行计划, CBO, Cost, Cardinality, 10053]
@@ -13,6 +12,9 @@ tags: [SQL优化, 执行计划, CBO, Cost, Cardinality, 10053]
 ## 一、问题背景
 
 慢SQL是数据库性能问题的首要原因。根据经验，80%以上的数据库性能问题最终都指向SQL语句。然而，很多DBA在分析执行计划时存在一个常见误区：只看走了什么路径（Index Scan还是Full Table Scan），却不理解CBO（Cost-Based Optimizer）做出这个选择的底层逻辑。
+
+<!-- more -->
+
 
 举个简单的例子：一个SQL走了Full Table Scan，很多DBA的第一反应是"应该加索引"。但实际上，如果表很小或者需要返回大部分数据，Full Table Scan可能就是最优选择。真正的SQL优化，需要深入理解CBO的决策逻辑——它基于什么信息，怎么计算Cost，为什么选择这个Access Path和Join Method。
 
@@ -499,67 +501,3 @@ CREATE INDEX idx_products_category ON products(category_id);
 Predicate Information (identified by operation id):
 ---------------------------------------------------
    5 - access("C"."REGION"='East')
-   7 - access("O"."ORDER_DATE">=TO_DATE('2026-01-01') AND "O"."ORDER_DATE"<=TO_DATE('2026-06-01'))
-   8 - access("O"."ORDER_ID"="OI"."ORDER_ID")
-  10 - access("OI"."PRODUCT_ID"="P"."PRODUCT_ID")
-```
-
-**对比结果：**
-
-| 指标 | 优化前 | 优化后 | 提升 |
-|------|--------|--------|------|
-| Buffer Gets | 520,000 | 8,500 | **98.4%** |
-| Cost | 8,540 | 85 | **99%** |
-| 执行时间 | 30秒 | 0.3秒 | **99%** |
-
-优化效果显著。Buffers从52万降到8500，执行时间从30秒降到0.3秒。关键优化点：更新统计信息让CBO获得准确的Cardinality估算，创建索引提供高效的Access Path。
-
-## 五、经验总结
-
-### SQL优化的系统方法
-
-1. **获取执行计划**：优先使用 `DBMS_XPLAN.DISPLAY_CURSOR` + `GATHER_PLAN_STATISTICS`
-2. **对比E-Rows与A-Rows**：差距大说明Cardinality估算有问题
-3. **检查统计信息**：`USER_TAB_STATISTICS`、`USER_TAB_COL_STATISTICS`
-4. **分析Access Path**：是否走了正确的索引
-5. **分析Join Method与Join Order**：大表是否作为驱动表
-6. **必要时使用10053 Trace**深入分析CBO决策
-
-### 10053 Trace的使用时机
-
-- 统计信息准确但执行计划不合理时
-- 需要理解CBO为什么选择某个Access Path/Join Method时
-- 调试Hint为什么不生效时
-- 理解Selectivity和Cardinality的具体计算过程时
-
-### 统计信息收集策略
-
-```sql
--- 推荐使用自动统计信息收集（Oracle默认开启）
--- 对关键表手动收集，确保及时性
-BEGIN
-  DBMS_STATS.GATHER_TABLE_STATS(
-    ownname          => 'SCOTT',
-    tabname          => 'ORDERS',
-    estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE,
-    method_opt       => 'FOR ALL COLUMNS SIZE AUTO',
-    granularity      => 'AUTO',
-    cascade          => TRUE  -- 同时收集索引统计信息
-  );
-END;
-/
-
--- 锁定统计信息（防止自动收集覆盖）
-DBMS_STATS.LOCK_TABLE_STATS('SCOTT', 'CONFIG_TABLE');
-```
-
-### 常见SQL反模式
-
-1. **隐式类型转换**：确保绑定变量类型与列类型一致
-2. **函数包裹索引列**：使用函数索引或改写SQL
-3. **SELECT ***：只查需要的列，尤其是覆盖索引场景
-4. **缺少WHERE条件**：全表更新/删除务必加条件
-5. **子查询替代JOIN**：现代优化器通常能自动转换，但复杂嵌套子查询仍可能导致问题
-6. **过度使用Hint**：应先分析根本原因，Hint只是临时方案
-
-执行计划分析是DBA的核心能力。掌握Cost、Cardinality、Access Path和Join优化的原理，结合10053 Trace的深度分析，才能真正实现SQL优化从"知其然"到"知其所以然"的跨越。

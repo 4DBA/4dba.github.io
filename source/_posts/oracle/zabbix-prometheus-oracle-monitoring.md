@@ -1,6 +1,5 @@
 ---
 title: Zabbix/Prometheus Oracle 监控定制：自定义监控项与可视化
-lang: zh-CN
 date: 2026-05-22 10:00:00
 categories: Oracle
 tags: [Zabbix, Prometheus, Grafana, 监控, UserParameter, 可视化]
@@ -9,6 +8,9 @@ tags: [Zabbix, Prometheus, Grafana, 监控, UserParameter, 可视化]
 ## 一、问题背景
 
 在企业级 Oracle 数据库运维中，监控是保障业务连续性的第一道防线。然而，大多数 DBA 在实际工作中都会遇到这样的困境：
+
+<!-- more -->
+
 
 **默认监控模板的局限性**：无论是 Zabbix 社区提供的 Oracle Template，还是 Prometheus 官方 Exporter 的默认采集项，都无法覆盖生产环境中的全部监控需求。例如，默认模板通常只关注基础的表空间使用率、连接数等通用指标，而对于 DG 同步延迟、RAC 节点间心跳、特定业务 SQL 的执行效率等关键指标，往往需要 DBA 自行定制。
 

@@ -1,6 +1,5 @@
 ---
 title: 运维夜话
-lang: zh-CN
 date: 2025-06-04 12:00:05
 categories:
   - 运维夜话

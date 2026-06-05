@@ -1,6 +1,5 @@
 ---
 title: TX/TM 锁机制详解与阻塞会话快速定位
-lang: zh-CN
 date: 2026-04-02 10:00:00
 categories: Oracle
 tags: [锁, TX锁, TM锁, 阻塞, Deadlock, 故障排查]

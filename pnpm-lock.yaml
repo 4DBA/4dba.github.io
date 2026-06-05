@@ -47,9 +47,6 @@ importers:
       hexo-generator-category:
         specifier: ^2.0.0
         version: 2.0.0
-      hexo-generator-i18n:
-        specifier: ^0.0.10
-        version: 0.0.10
       hexo-generator-index:
         specifier: ^3.0.0
         version: 3.0.0
@@ -2018,10 +2015,6 @@ packages:
     resolution: {integrity: sha512-9OduRBf3WeRDa4BR0kAfRjOVHur7v3fm0NKAwbjUiqULigAdNZVZPO3cHKW2MlBbl/lI5PuWdhQ9zZ99CCCAgQ==}
     engines: {node: '>=14'}
 
-  hexo-generator-i18n@0.0.10:
-    resolution: {integrity: sha512-MMKgo125xlzMeimxoaaI6udzER0MBIlLM7Cgda/HuMGcq+nfxqg+36AYnQs/zukCdNbWSesuOwW48BTbWBNaRA==}
-    engines: {node: '>= 0.10.0'}
-
   hexo-generator-index@3.0.0:
     resolution: {integrity: sha512-83AuNN4cWdLVi//3ugR8E3kR6rrOwhXZt+hOCm1IjtIGj353/GlrtpMHpqZHU5kqipzj4miy9dweVdukXglVWw==}
     engines: {node: '>=14'}
@@ -2397,9 +2390,6 @@ packages:
 
   lodash.debounce@4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
-
-  lodash@4.18.1:
-    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   logidrom@0.3.1:
     resolution: {integrity: sha512-B1Rjay3Ye/JcythUjMt+KLiLIwOjnMJN1M5BRbDgNMsJhmn7yApbx6n1rw7cT3Fi/NA77HDM+y3y1nXvKQVB9Q==}
@@ -5701,10 +5691,6 @@ snapshots:
     dependencies:
       hexo-pagination: 3.0.0
 
-  hexo-generator-i18n@0.0.10:
-    dependencies:
-      lodash: 4.18.1
-
   hexo-generator-index@3.0.0:
     dependencies:
       hexo-pagination: 3.0.0
@@ -6177,8 +6163,6 @@ snapshots:
   lodash.camelcase@4.3.0: {}
 
   lodash.debounce@4.0.8: {}
-
-  lodash@4.18.1: {}
 
   logidrom@0.3.1:
     dependencies:

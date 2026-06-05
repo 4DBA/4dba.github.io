@@ -1,6 +1,5 @@
 ---
 title: 补丁生命周期管理：RU/PSU 应用、OPlan 冲突检测与滚动升级
-lang: zh-CN
 date: 2026-05-08 10:00:00
 categories: Oracle
 tags: [补丁, RU, PSU, OPlan, OPatch, 升级, 回滚]
@@ -9,6 +8,9 @@ tags: [补丁, RU, PSU, OPlan, OPatch, 升级, 回滚]
 ## 一、问题背景
 
 补丁管理是 Oracle DBA 日常运维中最核心、最高频的工作之一。一个成熟的 DBA，不仅要能熟练安装补丁，更要掌握补丁从下载、分析、冲突检测、应用到回滚的完整生命周期管理。在生产环境中，任何一次补丁操作的失误都可能导致数据库无法启动、业务中断，甚至数据丢失。
+
+<!-- more -->
+
 
 Oracle 的补丁体系经历了一次重要的演变：从 12c 之前的 **PSU (Patch Set Update)** 体系，转变为 12c 及之后的 **RU (Release Update)** 体系。理解这一演变过程，对于正确选择和应用补丁至关重要。
 
@@ -499,24 +501,3 @@ SELECT name, open_mode FROM v$pdbs;
 - **OPatch rollback**: 适用于大部分补丁，依赖 `.patch_storage` 中的备份文件
 - **RMAN 恢复**: 当补丁不支持回滚时的最终手段
 - **Data Guard Switchover**: 如果有物理备库，可通过切换实现快速回退
-- **存储快照恢复**: 利用存储层快照实现秒级回退
-
-> 关键提醒：确保 `$ORACLE_HOME/.patch_storage/` 目录的完整性。OPatch 的回滚机制依赖此目录中保存的原始文件备份。不要手动清理此目录。
-
-**4. 补丁窗口规划**
-
-- **季度补丁窗口**：跟随 Oracle 的季度发布节奏（1月、4月、7月、10月）
-- **紧急补丁窗口**：针对 Critical Patch Update 中的高危漏洞
-- **补丁时间选择**：选择业务低谷期，通常为周末凌晨
-- **补丁窗口时长**：预留足够的时间缓冲，建议至少 2-4 小时
-- **通知机制**：提前通知相关方，确保有足够的人力支持
-
-**补丁管理是 DBA 专业能力的重要体现**。通过标准化的流程、完善的测试验证和可靠的回滚策略，可以将补丁风险降到最低，确保数据库环境的安全与稳定。
-
----
-
-> **参考文档**：
-> - MOS Doc ID 555.1: Oracle Recommended Patches
-> - MOS Doc ID 2162547.1: OPlan Patch Planning Tool
-> - MOS Doc ID 2246070.1: RU/RUR Patch Naming Convention
-> - Oracle Database OPatch User's Guide

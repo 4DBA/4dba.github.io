@@ -1,6 +1,5 @@
 ---
 title: RAC + ASM on Multipath 存储：从多路径配置到磁盘组管理的完整指南
-lang: zh-CN
 date: 2026-01-26 10:00:00
 categories: Oracle
 tags: [RAC, ASM, Multipath, 存储, 多路径, 冗余策略]
@@ -9,6 +8,9 @@ tags: [RAC, ASM, Multipath, 存储, 多路径, 冗余策略]
 ## 一、问题背景
 
 Oracle RAC (Real Application Clusters) 配合 ASM (Automatic Storage Management) 是目前业界最经典的高可用数据库架构。RAC 解决了计算层的高可用与横向扩展，ASM 则在存储层提供了自动化的卷管理、条带化和镜像能力。然而，很多 DBA 在搭建 RAC 时往往将注意力集中在集群软件和数据库实例上，忽略了存储层——尤其是**多路径（Multipath）**——的正确配置。
+
+<!-- more -->
+
 
 存储层配置不当会导致一系列严重问题：
 
@@ -499,149 +501,3 @@ WHERE header_status != 'MEMBER'
 multipath -ll | grep -E "(active|faulty|failed)"
 # 所有路径应显示 "active ready running"
 
-# 检查路径数量是否与预期一致
-multipath -ll | grep -c "ready"
-# 应等于 HBA 卡数 × 存储控制器数（通常为 4 条路径）
-
-# 模拟路径故障测试
-echo 1 > /sys/block/sdb/device/delete
-# 等待几秒后 multipath -ll 确认路径切换正常
-# 然后重新扫描 SCSI 设备恢复
-echo "- - -" > /sys/class/scsi_host/host3/scan
-```
-
-#### 4.2 ASM 层验证
-
-```sql
--- 检查磁盘组状态
-SELECT name, state, type, total_mb, free_mb
-FROM V$ASM_DISKGROUP;
--- state 应为 MOUNTED
-
--- 检查磁盘状态
-SELECT name, path, header_status, mode_status, state, total_mb, free_mb
-FROM V$ASM_DISK
-ORDER BY group_number, disk_number;
--- header_status 应为 MEMBER，mode_status 应为 ONLINE
-
--- 检查 ASM 实例参数
-SELECT name, value FROM V$PARAMETER
-WHERE name IN ('asm_diskstring', 'asm_power_limit', 'asm_diskgroups');
-```
-
-#### 4.3 ASM Alert 日志检查
-
-```bash
-# 查看 ASM alert 日志（12c+ 位置）
-$ tail -100 $ORACLE_BASE/diag/asm/+asm/+ASM1/trace/alert_+ASM1.log
-
-# 关注以下关键字：
-# - "Disk group XXX mounted successfully"
-# - "WARNING: Read Failed" — 表示有 IO 读取失败
-# - "ORA-27072" — 文件 IO 错误
-# - "rebalance completed" — rebalance 操作完成
-```
-
-#### 4.4 IO 性能验证
-
-```bash
-# 使用 fio 测试 Multipath 设备的 IO 性能
-fio --name=asm_test \
-    --filename=/dev/mapper/asm_data01 \
-    --direct=1 \
-    --rw=randread \
-    --bs=8k \
-    --numjobs=4 \
-    --size=1G \
-    --runtime=60 \
-    --group_reporting
-
-# 使用 Oracle Orion 工具测试
-# Orion 是 Oracle 官方提供的 IO 性能测试工具
-$ orion -run advanced -testname asm_io \
-    -num_disks 10 -size_small 8 -size_large 1024 \
-    -type rand -matrix point \
-    -num_large 1 -num_small 8
-```
-
----
-
-## 五、经验总结
-
-### 5.1 存储配置 Checklist
-
-在每次部署 RAC + ASM 环境前，建议按以下清单逐项确认：
-
-| 检查项 | 说明 | 状态 |
-|--------|------|------|
-| HBA 卡冗余 | 每个节点至少 2 块 HBA 卡 | ☐ |
-| 存储控制器冗余 | LUN 映射到双控制器 | ☐ |
-| Multipath 配置 | 所有存储 LUN 均通过 Multipath 设备访问 | ☐ |
-| 路径状态 | multipath -ll 所有路径 active | ☐ |
-| 设备权限 | oracle:oinstall 0660 | ☐ |
-| ASM_DISKSTRING | 指向 Multipath 设备路径 | ☐ |
-| SCSI ID 唯一性 | 每个 LUN 的 WWID 唯一 | ☐ |
-| udev 规则 | 所有节点规则一致 | ☐ |
-| I/O 调度器 | 设置为 noop 或 none | ☐ |
-| 大页内存 | 配置 HugePages | ☐ |
-
-### 5.2 ASM 磁盘组命名规范
-
-建议采用统一的命名规范：
-
-```
-磁盘组前缀_用途编号
-示例：
-  +DATA01    — 第一组数据磁盘组
-  +FRA01     — 闪回恢复区
-  +OCR01     — OCR 和 Voting Disk
-  +REDO01    — 专用 Redo 磁盘组（高 IOPS 场景）
-```
-
-### 5.3 常见存储问题快速定位
-
-**问题 1：ASM 实例无法发现磁盘**
-
-```bash
-# 检查步骤：
-# 1. 确认 Multipath 设备存在
-ls -l /dev/mapper/asm_*
-# 2. 确认权限正确
-# 3. 确认 asm_diskstring 参数正确
-# 4. 检查 ASM 实例参数中是否设置了正确的磁盘发现路径
-```
-
-**问题 2：路径切换导致 RAC 节点驱逐**
-
-```bash
-# 检查 Multipath 的 no_path_retry 设置
-# 建议设置为 queue（排队等待），避免 IO 失败触发 CSS 超时
-# 同时检查 CSS misscount 参数
-$ crsctl get css misscount    # 默认 30 秒
-```
-
-**问题 3：磁盘组空间告警**
-
-```sql
--- 紧急释放空间
--- 1. 删除不需要的归档日志和备份
--- 2. resize 数据文件
-ALTER DATABASE DATAFILE '+DATA/prod/users01.dbf' RESIZE 10G;
--- 3. 添加新磁盘
-ALTER DISKGROUP DATA ADD DISK '/dev/mapper/asm_data05' NAME DATA_005;
-```
-
-### 5.4 大规模环境的 ASM 管理经验
-
-在管理超过 50 个节点的 RAC 集群时，以下经验非常有价值：
-
-1. **使用 ASMFD 替代 udev + oracleasm**：ASMFD 提供更好的内核级保护，减少配置不一致的风险。
-2. **磁盘组不要太大**：单个磁盘组建议不超过 20TB，避免 rebalance 时间过长。
-3. **合理设置 ASM_POWER_LIMIT**：日常使用较低功率（2-4），维护窗口时提高到 8-11。
-4. **定期检查磁盘组一致性**：通过 `ALTER DISKGROUP ... CHECK` 定期验证。
-5. **监控 IO 延迟**：关注 `V$ASM_DISK_STAT` 中的读写延迟指标。
-6. **建立标准操作流程 (SOP)**：所有存储变更必须有文档记录和回滚方案。
-
----
-
-> **写在最后**：存储是数据库的根基，RAC + ASM 的高可用架构建立在正确的存储配置之上。Multipath 配置虽然看似简单，但它处于 IO 路径的最底层，一旦出问题，影响面极大。希望本文的内容能帮助大家在实际工作中少踩坑、多避雷。如果遇到复杂的存储问题，欢迎在评论区交流讨论。

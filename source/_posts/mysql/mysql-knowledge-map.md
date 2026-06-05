@@ -1,6 +1,5 @@
 ---
 title: MySQL 知识地图
-lang: zh-CN
 date: 2025-06-04 12:00:01
 categories: MySQL
 tags: [知识地图, 导航]

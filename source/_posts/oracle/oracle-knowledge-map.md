@@ -1,6 +1,5 @@
 ---
 title: Oracle 运维实战知识地图
-lang: zh-CN
 date: 2025-06-04 12:00:00
 categories: Oracle
 tags: [知识地图, 导航, OCM, 运维实战]

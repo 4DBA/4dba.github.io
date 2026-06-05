@@ -1,6 +1,5 @@
 ---
 title: Oracle 23ai 新特性尝鲜：AI Vector Search 与 JSON Relational Duality
-lang: zh-CN
 date: 2026-06-03 10:00:00
 categories: Oracle
 tags: [23ai, AI Vector Search, JSON, 新特性, 向量数据库, AI]

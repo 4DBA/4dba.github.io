@@ -1,6 +1,5 @@
 ---
 title: RMAN 高级备份策略：增量备份、BCT、Catalog 与跨节点恢复
-lang: zh-CN
 date: 2026-02-20 10:00:00
 categories: Oracle
 tags: [RMAN, 备份恢复, BCT, Catalog, 增量备份, 容灾]

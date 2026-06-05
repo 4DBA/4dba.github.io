@@ -1,6 +1,5 @@
 ---
 title: TNS 网络故障排查：TNS-12541, ORA-12170 系统化诊断指南
-lang: zh-CN
 date: 2026-04-17 10:00:00
 categories: Oracle
 tags: [TNS, 网络, Listener, 故障排查, 防火墙, ACL]
@@ -9,6 +8,9 @@ tags: [TNS, 网络, Listener, 故障排查, 防火墙, ACL]
 ## 一、问题背景
 
 在 Oracle DBA 的日常运维中，网络连接问题看似简单，实则排查链条极长。客户端报一个 `ORA-12170: TNS:Connect timeout occurred`，背后可能是 Listener 没启动、防火墙拦截了端口、ACL 策略阻断了流量，甚至是数据库实例没有注册到 Listener。
+
+<!-- more -->
+
 
 TNS-12541 和 ORA-12170 是生产环境中最高频的两类网络错误。前者意味着客户端根本无法与 Listener 建立 TCP 连接，后者意味着连接建立后在握手阶段超时。两者的根因可能完全不同，需要系统化的诊断方法论。
 

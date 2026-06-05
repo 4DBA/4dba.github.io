@@ -1,6 +1,5 @@
 ---
 title: PostgreSQL 知识地图
-lang: zh-CN
 date: 2025-06-04 12:00:02
 categories: PostgreSQL
 tags: [知识地图, 导航]

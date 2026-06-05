@@ -1,6 +1,5 @@
 ---
 title: AWR/ASH/ADDM 诊断框架：从采样到根因的完整方法论
-lang: zh-CN
 date: 2026-03-03 10:00:00
 categories: Oracle
 tags: [AWR, ASH, ADDM, 性能调优, 诊断, 等待事件]

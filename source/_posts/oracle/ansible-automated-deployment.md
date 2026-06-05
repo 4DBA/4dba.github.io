@@ -1,6 +1,5 @@
 ---
 title: Ansible 自动化部署 Oracle：从 OS 准备到软件安装的全流程
-lang: zh-CN
 date: 2026-01-31 10:00:00
 categories: Oracle
 tags: [Ansible, 自动化, DevOps, 安装部署, IaC]

@@ -8,7 +8,9 @@ subtitle: ''
 description: Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务
 keywords:
 author: Cove
-language: zh-CN
+language:
+  - zh-CN
+  - en
 timezone: ''
 
 # URL
@@ -124,3 +126,8 @@ robots:
     - /images/
   sitemaps:
     - https://4dba.top/sitemap.xml
+
+# i18n
+i18n:
+  type: [page, post]
+  generator: [archive, category, tag, index]

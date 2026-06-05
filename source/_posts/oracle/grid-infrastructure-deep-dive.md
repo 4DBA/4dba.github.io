@@ -1,5 +1,6 @@
 ---
 title: Grid Infrastructure 深度解析：OCR/Voting Disk/SCAN 与集群启动逻辑
+lang: zh-CN
 date: 2026-01-19 10:00:00
 categories: Oracle
 tags: [Grid Infrastructure, RAC, OCR, Voting Disk, SCAN, GPNP, 集群]

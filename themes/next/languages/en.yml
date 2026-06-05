@@ -16,6 +16,12 @@ menu:
   schedule: Schedule
   sitemap: Sitemap
   commonweal: Commonweal 404
+  Oracle: Oracle
+  MySQL: MySQL
+  PostgreSQL: PostgreSQL
+  信创专栏: Localization
+  综合运维: General Ops
+  运维夜话: Ops Night Talk
 
 sidebar:
   overview: Overview

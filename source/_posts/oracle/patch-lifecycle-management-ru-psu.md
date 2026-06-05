@@ -1,5 +1,6 @@
 ---
 title: 补丁生命周期管理：RU/PSU 应用、OPlan 冲突检测与滚动升级
+lang: zh-CN
 date: 2026-05-08 10:00:00
 categories: Oracle
 tags: [补丁, RU, PSU, OPlan, OPatch, 升级, 回滚]

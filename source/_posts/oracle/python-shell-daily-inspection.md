@@ -1,5 +1,6 @@
 ---
 title: Python/Shell 自动巡检脚本：覆盖表空间、告警日志、备份状态的日常巡检方案
+lang: zh-CN
 date: 2026-05-15 10:00:00
 categories: Oracle
 tags: [自动巡检, Python, Shell, 监控, crontab, 邮件告警]

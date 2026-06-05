@@ -130,7 +130,7 @@ npx hexo server -p 4000
 
 ### 4.2 部署
 ```bash
-./deploy.sh
+./deploy2github.sh  # git push → GitHub Actions 自动部署
 ```
 
 ---
@@ -140,7 +140,7 @@ npx hexo server -p 4000
 ### 新文章流程
 1. 写中文文章 → 放 `source/_posts/分类/`
 2. AI 翻译英文版 → 放 `source/_posts/en/分类/`
-3. `./deploy.sh`
+3. `./deploy2github.sh`
 
 ### 工作量估算
 - Phase 1: 10 分钟（改配置）

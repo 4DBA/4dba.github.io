@@ -1,5 +1,6 @@
 ---
 title: RAC + ASM on Multipath 存储：从多路径配置到磁盘组管理的完整指南
+lang: zh-CN
 date: 2026-01-26 10:00:00
 categories: Oracle
 tags: [RAC, ASM, Multipath, 存储, 多路径, 冗余策略]

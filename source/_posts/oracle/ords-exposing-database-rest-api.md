@@ -1,5 +1,6 @@
 ---
 title: ORDS 实战：将 Oracle 数据库转化为 RESTful API 服务
+lang: zh-CN
 date: 2026-05-29 10:00:00
 categories: Oracle
 tags: [ORDS, REST API, JSON, 微服务, 数据库服务化]

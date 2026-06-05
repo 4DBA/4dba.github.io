@@ -1,5 +1,6 @@
 ---
 title: Oracle 内存管理深度解析：AMM vs ASMM 与大内存服务器最佳实践
+lang: zh-CN
 date: 2026-03-13 10:00:00
 categories: Oracle
 tags: [内存管理, SGA, PGA, AMM, ASMM, OOM, HugePages]

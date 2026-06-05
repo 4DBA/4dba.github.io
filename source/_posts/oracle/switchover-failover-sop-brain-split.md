@@ -1,5 +1,6 @@
 ---
 title: Data Guard Switchover/Failover SOP 与脑裂预防机制
+lang: zh-CN
 date: 2026-02-15 10:00:00
 categories: Oracle
 tags: [Data Guard, Switchover, Failover, 脑裂, 容灾演练, SOP]

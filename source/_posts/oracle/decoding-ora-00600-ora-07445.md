@@ -1,5 +1,6 @@
 ---
 title: 解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位
+lang: zh-CN
 date: 2026-03-28 10:00:00
 categories: Oracle
 tags: [ORA-00600, ORA-07445, Trace, 故障排查, MOS, 内部错误]

@@ -1,5 +1,6 @@
 ---
 title: 站点导航
+lang: zh-CN
 date: 2024-01-01 00:00:00
 sticky: 999
 ---

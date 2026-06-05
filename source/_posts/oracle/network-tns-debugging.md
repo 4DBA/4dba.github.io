@@ -1,5 +1,6 @@
 ---
 title: TNS 网络故障排查：TNS-12541, ORA-12170 系统化诊断指南
+lang: zh-CN
 date: 2026-04-17 10:00:00
 categories: Oracle
 tags: [TNS, 网络, Listener, 故障排查, 防火墙, ACL]

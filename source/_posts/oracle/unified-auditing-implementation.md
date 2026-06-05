@@ -1,5 +1,6 @@
 ---
 title: Unified Auditing 统一审计实施：策略定制与审计日志管理
+lang: zh-CN
 date: 2026-05-02 10:00:00
 categories: Oracle
 tags: [审计, Unified Auditing, 安全, 合规, FGA]

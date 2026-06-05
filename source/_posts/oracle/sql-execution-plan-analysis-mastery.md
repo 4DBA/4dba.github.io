@@ -1,5 +1,6 @@
 ---
 title: SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化
+lang: zh-CN
 date: 2026-03-08 10:00:00
 categories: Oracle
 tags: [SQL优化, 执行计划, CBO, Cost, Cardinality, 10053]

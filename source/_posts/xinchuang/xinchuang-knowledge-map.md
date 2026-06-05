@@ -1,5 +1,6 @@
 ---
 title: 信创/国产化 知识地图
+lang: zh-CN
 date: 2025-06-04 12:00:04
 categories: 信创
 tags: [知识地图, 导航]

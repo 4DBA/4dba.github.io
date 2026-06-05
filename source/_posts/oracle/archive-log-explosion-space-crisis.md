@@ -1,5 +1,6 @@
 ---
 title: 归档日志暴涨与空间危机：根因分析与应急处置方案
+lang: zh-CN
 date: 2026-04-12 10:00:00
 categories: Oracle
 tags: [归档日志, 空间管理, RMAN, 应急, 故障排查]

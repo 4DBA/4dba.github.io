@@ -1,5 +1,6 @@
 ---
 title: Zabbix/Prometheus Oracle 监控定制：自定义监控项与可视化
+lang: zh-CN
 date: 2026-05-22 10:00:00
 categories: Oracle
 tags: [Zabbix, Prometheus, Grafana, 监控, UserParameter, 可视化]

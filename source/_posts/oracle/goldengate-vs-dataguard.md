@@ -1,6 +1,6 @@
 ---
 title: GoldenGate vs Data Guard：容灾技术选型与架构对比
-date: 2026-06-06 13:00:00
+date: 2026-02-28 10:00:00
 categories: Oracle
 tags: [GoldenGate, Data Guard, 容灾, 架构选型, CDC, 数据同步]
 ---

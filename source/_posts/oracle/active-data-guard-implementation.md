@@ -1,6 +1,6 @@
 ---
 title: Active Data Guard 实战：物理备库搭建、Real-time Apply 与读写分离
-date: 2026-06-06 10:00:00
+date: 2026-02-10 10:00:00
 categories: Oracle
 tags: [Data Guard, ADG, 高可用, 读写分离, DG Broker, 容灾]
 ---

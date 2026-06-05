@@ -1,6 +1,6 @@
 ---
 title: 最小权限原则与 Oracle 角色设计：打破 DBA 权限泛滥现状
-date: 2026-06-09 10:00:00
+date: 2026-04-22 10:00:00
 categories: Oracle
 tags: [安全, 权限, 角色, 最小权限, Profile, 审计]
 ---

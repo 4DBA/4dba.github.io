@@ -1,6 +1,6 @@
 ---
 title: Oracle 启动故障排查与 Control File 恢复实战
-date: 2026-06-08 12:00:00
+date: 2026-04-07 10:00:00
 categories: Oracle
 tags: [启动故障, Control File, 恢复, ORA-01113, ORA-00205, 故障排查]
 ---

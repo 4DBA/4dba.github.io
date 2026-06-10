@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/03/23/oracle/latch-mutex-concurrency-tuning/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/03/23/oracle/latch-mutex-concurrency-tuning/","path":"2026/03/23/oracle/latch-mutex-concurrency-tuning/","title":"Latch, Mutex 与并发争用调优：Library Cache Lock/Pin 深度解析"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Latch, Mutex 与并发争用调优：Library Cache Lock/Pin 深度解析 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Latch-%E6%9C%BA%E5%88%B6"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 Latch 机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Latch-%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">2.1.1.</span> <span class="nav-text">Latch 的作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Spin-%E4%B8%8E-Sleep-%E6%9C%BA%E5%88%B6"><span class="nav-number">2.1.2.</span> <span class="nav-text">Spin 与 Sleep 机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Latch-%E8%8E%B7%E5%8F%96%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.1.3.</span> <span class="nav-text">Latch 获取模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E8%A7%86%E5%9B%BE"><span class="nav-number">2.1.4.</span> <span class="nav-text">相关视图</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Mutex-%E6%9C%BA%E5%88%B6"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 Mutex 机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Mutex-vs-Latch-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">2.2.1.</span> <span class="nav-text">Mutex vs Latch 的区别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mutex-%E7%9A%84%E5%AE%9E%E7%8E%B0%EF%BC%9ACAS"><span class="nav-number">2.2.2.</span> <span class="nav-text">Mutex 的实现：CAS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#11g-Mutex-%E7%9A%84%E5%B9%BF%E6%B3%9B%E5%BA%94%E7%94%A8"><span class="nav-number">2.2.3.</span> <span class="nav-text">11g+ Mutex 的广泛应用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Library-Cache"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 Library Cache</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Library-Cache-%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84"><span class="nav-number">2.3.1.</span> <span class="nav-text">Library Cache 内部结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Library-Cache-Lock-Pin-%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">2.3.2.</span> <span class="nav-text">Library Cache Lock&#x2F;Pin 的作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A1%AC%E8%A7%A3%E6%9E%90%E4%B8%8E-Cursor-Sharing"><span class="nav-number">2.3.3.</span> <span class="nav-text">硬解析与 Cursor Sharing</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E7%AD%89%E5%BE%85%E4%BA%8B%E4%BB%B6"><span class="nav-number">2.3.4.</span> <span class="nav-text">相关等待事件</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Row-Cache"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 Row Cache</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Row-Cache-%E7%BB%93%E6%9E%84"><span class="nav-number">2.4.1.</span> <span class="nav-text">Row Cache 结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Row-Cache-Lock-%E7%9A%84%E8%A7%A6%E5%8F%91%E5%9C%BA%E6%99%AF"><span class="nav-number">2.4.2.</span> <span class="nav-text">Row Cache Lock 的触发场景</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DDL-%E5%AF%B9-Row-Cache-%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="nav-number">2.4.3.</span> <span class="nav-text">DDL 对 Row Cache 的影响</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-Latch-Mutex-%E4%BA%89%E7%94%A8%E8%AF%8A%E6%96%AD"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 Latch&#x2F;Mutex 争用诊断</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Latch-%E5%88%86%E6%9E%90%E8%84%9A%E6%9C%AC"><span class="nav-number">3.1.1.</span> <span class="nav-text">Latch 分析脚本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mutex-%E4%BA%89%E7%94%A8%E5%88%86%E6%9E%90"><span class="nav-number">3.1.2.</span> <span class="nav-text">Mutex 争用分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ASH-%E4%B8%AD%E7%9A%84-Latch-Mutex-%E7%AD%89%E5%BE%85%E4%BA%8B%E4%BB%B6"><span class="nav-number">3.1.3.</span> <span class="nav-text">ASH 中的 Latch&#x2F;Mutex 等待事件</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Library-Cache-%E4%BC%98%E5%8C%96"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 Library Cache 优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%87%8F%E5%B0%91%E7%A1%AC%E8%A7%A3%E6%9E%90%EF%BC%9A%E7%BB%91%E5%AE%9A%E5%8F%98%E9%87%8F"><span class="nav-number">3.2.1.</span> <span class="nav-text">减少硬解析：绑定变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Shared-Pool-%E5%A4%A7%E5%B0%8F%E8%B0%83%E6%95%B4"><span class="nav-number">3.2.2.</span> <span class="nav-text">Shared Pool 大小调整</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Library-Cache-Pin-Lock-%E8%AF%8A%E6%96%AD"><span class="nav-number">3.2.3.</span> <span class="nav-text">Library Cache Pin&#x2F;Lock 诊断</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-Cursor-%E4%BC%98%E5%8C%96"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 Cursor 优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Session-Cached-Cursors"><span class="nav-number">3.3.1.</span> <span class="nav-text">Session Cached Cursors</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PL-SQL-%E4%BC%98%E5%8C%96"><span class="nav-number">3.3.2.</span> <span class="nav-text">PL&#x2F;SQL 优化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%81%BF%E5%85%8D%E5%A4%A7%E8%A7%84%E6%A8%A1-DDL-%E7%9A%84%E5%B9%B6%E5%8F%91%E9%97%AE%E9%A2%98"><span class="nav-number">3.3.3.</span> <span class="nav-text">避免大规模 DDL 的并发问题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-Row-Cache-%E4%BC%98%E5%8C%96"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 Row Cache 优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%87%8F%E5%B0%91%E7%A1%AC-DDL-%E6%93%8D%E4%BD%9C"><span class="nav-number">3.4.1.</span> <span class="nav-text">减少硬 DDL 操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BA%8F%E5%88%97%EF%BC%88Sequence%EF%BC%89%E7%BC%93%E5%AD%98"><span class="nav-number">3.4.2.</span> <span class="nav-text">序列（Sequence）缓存</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%98%E5%8C%96%E6%A1%88%E4%BE%8B%EF%BC%9A%E6%9F%90%E7%94%B5%E5%95%86%E7%B3%BB%E7%BB%9F-Library-Cache-%E4%BA%89%E7%94%A8%E4%BC%98%E5%8C%96"><span class="nav-number">4.1.</span> <span class="nav-text">优化案例：某电商系统 Library Cache 争用优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E5%B9%B6%E5%8F%91%E7%8E%AF%E5%A2%83%E7%9A%84-SQL-%E7%BC%96%E5%86%99%E8%A7%84%E8%8C%83"><span class="nav-number">5.1.</span> <span class="nav-text">高并发环境的 SQL 编写规范</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%B1%82%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6%E5%BB%BA%E8%AE%AE"><span class="nav-number">5.2.</span> <span class="nav-text">应用层并发控制建议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SGA-%E8%B0%83%E4%BC%98%E4%B8%8E%E5%B9%B6%E5%8F%91%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">5.3.</span> <span class="nav-text">SGA 调优与并发的关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E5%B9%B6%E5%8F%91%E9%97%AE%E9%A2%98%E7%9A%84%E5%BF%AB%E9%80%9F%E5%AE%9A%E4%BD%8D"><span class="nav-number">5.4.</span> <span class="nav-text">常见并发问题的快速定位</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/03/23/oracle/latch-mutex-concurrency-tuning/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Latch, Mutex 与并发争用调优：Library Cache Lock&#x2F;Pin 深度解析 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Latch, Mutex 与并发争用调优：Library Cache Lock/Pin 深度解析
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-23 10:00:00" itemprop="dateCreated datePublished" datetime="2026-03-23T10:00:00+00:00">2026-03-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>在高并发 OLTP 系统中，性能瓶颈往往不是来自 I&#x2F;O 或 CPU，而是来自 Oracle 内部的<strong>并发争用（Contention）</strong>。当数百甚至数千个会话同时访问共享内存结构时，Oracle 必须通过内部锁机制来保证数据一致性——这就是 Latch 和 Mutex 的职责所在。</p>
+<p>一个真实案例：某电商系统在大促期间突然出现性能雪崩，应用响应时间从 50ms 飙升到 30s+。DBA 通过 ASH 发现大量会话等待在 <code>cursor: pin S wait on X</code> 和 <code>library cache lock</code> 上。根因是开发团队在大促前批量发布了大量新功能，导致大量硬解析（Hard Parse）集中爆发，Library Cache 中的 Hash Bucket 产生严重争用。</p>
+<p>这类问题的本质是：<strong>当并发访问的粒度不够细时，保护共享资源的内部锁就会成为瓶颈</strong>。理解 Oracle 内部锁机制的工作原理，是诊断和解决此类问题的关键。</p>
+<p>Oracle 内部锁机制的层次关系如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────┐</span><br><span class="line">│              Oracle 内部锁机制                    │</span><br><span class="line">├─────────────────────────────────────────────────┤</span><br><span class="line">│                                                   │</span><br><span class="line">│  ┌──────────┐    ┌──────────┐    ┌──────────┐   │</span><br><span class="line">│  │  Latch   │    │  Mutex   │    │   Lock   │   │</span><br><span class="line">│  │ (粗粒度) │    │ (细粒度) │    │(业务级)  │   │</span><br><span class="line">│  ├──────────┤    ├──────────┤    ├──────────┤   │</span><br><span class="line">│  │ 保护SGA  │    │ 保护     │    │ 保护     │   │</span><br><span class="line">│  │ 内存结构 │    │ Cursor/  │    │ 行/表/   │   │</span><br><span class="line">│  │          │    │ Heap     │    │ 对象     │   │</span><br><span class="line">│  ├──────────┤    ├──────────┤    ├──────────┤   │</span><br><span class="line">│  │ Spin +   │    │ CAS      │    │ Queue +  │   │</span><br><span class="line">│  │ Sleep    │    │ 原子操作 │    │ Wait     │   │</span><br><span class="line">│  └──────────┘    └──────────┘    └──────────┘   │</span><br><span class="line">│                                                   │</span><br><span class="line">│  保护粒度：Latch &gt; Mutex &gt; Enqueue Lock           │</span><br><span class="line">│  轻量程度：Mutex &gt; Latch &gt; Enqueue Lock           │</span><br><span class="line">└─────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-Latch-机制"><a href="#2-1-Latch-机制" class="headerlink" title="2.1 Latch 机制"></a>2.1 Latch 机制</h3><h4 id="Latch-的作用"><a href="#Latch-的作用" class="headerlink" title="Latch 的作用"></a>Latch 的作用</h4><p>Latch 是 Oracle 最早引入的轻量级内部锁，用于保护 SGA 中的内存结构不被并发修改。可以将 Latch 理解为一把”短时占用”的门闩——获取、操作、释放，整个过程通常在微秒级别完成。</p>
+<p>常见的 Latch 类型：</p>
+<table>
+<thead>
+<tr>
+<th>Latch 名称</th>
+<th>保护的结构</th>
+<th>典型争用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>shared pool</td>
+<td>Shared Pool 内存分配</td>
+<td>大量硬解析</td>
+</tr>
+<tr>
+<td>library cache</td>
+<td>Library Cache Hash Bucket</td>
+<td>SQL 解析争用</td>
+</tr>
+<tr>
+<td>cache buffers chains</td>
+<td>Buffer Cache Hash Chain</td>
+<td>热点块争用</td>
+</tr>
+<tr>
+<td>row cache objects</td>
+<td>Row Cache（数据字典缓存）</td>
+<td>DDL 操作争用</td>
+</tr>
+<tr>
+<td>redo allocation</td>
+<td>Redo Log Buffer 分配</td>
+<td>高并发 DML</td>
+</tr>
+</tbody></table>
+<h4 id="Spin-与-Sleep-机制"><a href="#Spin-与-Sleep-机制" class="headerlink" title="Spin 与 Sleep 机制"></a>Spin 与 Sleep 机制</h4><p>Latch 的获取采用<strong>自旋-休眠（Spin-Sleep）</strong>策略：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">会话尝试获取 Latch</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">  ┌─────────────┐</span><br><span class="line">  │ 尝试获取    │──── 成功 ──→ 执行操作 ──→ 释放 Latch</span><br><span class="line">  │ (Spin)      │</span><br><span class="line">  └──────┬──────┘</span><br><span class="line">         │ 失败</span><br><span class="line">         ▼</span><br><span class="line">  ┌─────────────┐</span><br><span class="line">  │ CPU 自旋    │──── 第 N 次尝试成功 ──→ 执行操作</span><br><span class="line">  │ _SPIN_COUNT │</span><br><span class="line">  └──────┬──────┘</span><br><span class="line">         │ 超过 spin_count 仍未获取</span><br><span class="line">         ▼</span><br><span class="line">  ┌─────────────┐</span><br><span class="line">  │ Sleep 等待  │──── 被唤醒后重试</span><br><span class="line">  │ (让出 CPU)  │</span><br><span class="line">  └─────────────┘</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>Spin 阶段</strong>：在 CPU 上循环尝试获取 Latch，避免上下文切换开销。<code>_SPIN_COUNT</code>（默认 2000）控制自旋次数。</li>
+<li><strong>Sleep 阶段</strong>：自旋失败后，会话进入 Sleep 状态，让出 CPU。Sleep 时间采用<strong>指数退避</strong>策略（1ms, 2ms, 4ms, …），避免惊群效应。</li>
+</ul>
+<blockquote>
+<p><strong>关键参数</strong>：<code>_SPIN_COUNT</code> 控制自旋次数。在高并发环境下，适当增大可以减少 Sleep 导致的上下文切换，但会增加 CPU 消耗。</p>
+</blockquote>
+<h4 id="Latch-获取模式"><a href="#Latch-获取模式" class="headerlink" title="Latch 获取模式"></a>Latch 获取模式</h4><ul>
+<li><strong>Willing-to-Wait（愿意等待）</strong>：默认模式。如果获取失败，会 Spin 然后 Sleep，反复重试直到成功。</li>
+<li><strong>No-Wait（不等待）</strong>：尝试获取，如果失败立即返回，不会等待。用于某些非关键路径的 Latch 获取。</li>
+</ul>
+<h4 id="相关视图"><a href="#相关视图" class="headerlink" title="相关视图"></a>相关视图</h4><ul>
+<li>**<code>V$LATCH</code>**：每个 Latch 的获取次数、Miss 次数、Sleep 次数、等待时间</li>
+<li>**<code>V$LATCH_MISSES</code>**：Latch Miss 的详细分布，定位到具体的代码路径（Where）</li>
+</ul>
+<h3 id="2-2-Mutex-机制"><a href="#2-2-Mutex-机制" class="headerlink" title="2.2 Mutex 机制"></a>2.2 Mutex 机制</h3><h4 id="Mutex-vs-Latch-的区别"><a href="#Mutex-vs-Latch-的区别" class="headerlink" title="Mutex vs Latch 的区别"></a>Mutex vs Latch 的区别</h4><p>从 10g R2 开始，Oracle 引入 Mutex（Mutual Exclusion Object）作为 Latch 的替代方案。两者的核心区别：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>Latch</th>
+<th>Mutex</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>内存开销</td>
+<td>较大（每个 Latch 结构占用数百字节）</td>
+<td>极小（仅 16-24 字节）</td>
+</tr>
+<tr>
+<td>粒度</td>
+<td>粗粒度（如整个 shared pool latch）</td>
+<td>细粒度（每个 Cursor 独立的 Mutex）</td>
+</tr>
+<tr>
+<td>获取方式</td>
+<td>Spin + Sleep</td>
+<td>CAS（Compare-And-Swap）原子操作</td>
+</tr>
+<tr>
+<td>并发读</td>
+<td>需要 Shared Latch 模式</td>
+<td>天然支持并发 S（Shared）模式</td>
+</tr>
+<tr>
+<td>争用扩展性</td>
+<td>Hash Bucket 分拆</td>
+<td>Cursor 本身即为 Mutex 载体</td>
+</tr>
+</tbody></table>
+<h4 id="Mutex-的实现：CAS"><a href="#Mutex-的实现：CAS" class="headerlink" title="Mutex 的实现：CAS"></a>Mutex 的实现：CAS</h4><p>Mutex 的核心是 <strong>CAS（Compare-And-Swap）</strong> 原子操作，这是一种无锁（Lock-Free）的并发控制方式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Mutex 结构（32位）：</span><br><span class="line">┌────────────────┬──────────────┬─────────┐</span><br><span class="line">│  Session ID    │  Reference   │  Mode   │</span><br><span class="line">│  (持有者)      │  Count (16b) │  S/X    │</span><br><span class="line">└────────────────┴──────────────┴─────────┘</span><br><span class="line"></span><br><span class="line">获取流程（伪代码）：</span><br><span class="line">  old_value = mutex_location</span><br><span class="line">  new_value = old_value + 1  // ref count + 1</span><br><span class="line">  if CAS(mutex_location, old_value, new_value):</span><br><span class="line">      // 成功获取</span><br><span class="line">  else:</span><br><span class="line">      // 失败，进入等待</span><br></pre></td></tr></table></figure>
+
+<p>与 Latch 的 Spin-Sleep 不同，Mutex 在争用时直接进入 Sleep，不再消耗 CPU 自旋。这是 Mutex 在高并发场景下性能更优的关键原因之一。</p>
+<h4 id="11g-Mutex-的广泛应用"><a href="#11g-Mutex-的广泛应用" class="headerlink" title="11g+ Mutex 的广泛应用"></a>11g+ Mutex 的广泛应用</h4><p>从 11g 开始，Oracle 大量将 Latch 替换为 Mutex：</p>
+<ul>
+<li><strong>Library Cache Hash Bucket Latch</strong> → <code>Library Hash Bucket</code> Mutex</li>
+<li><strong>Library Cache Latch</strong> → <code>Library Cache</code> Mutex</li>
+<li><strong>Cursor Pin</strong> 相关操作 → <code>Cursor Pin</code> Mutex</li>
+</ul>
+<p>这意味着在 11g+ 中，大部分 Library Cache 相关的性能问题都表现为 <strong>Mutex 等待事件</strong>，而非传统的 Latch 等待。</p>
+<h3 id="2-3-Library-Cache"><a href="#2-3-Library-Cache" class="headerlink" title="2.3 Library Cache"></a>2.3 Library Cache</h3><h4 id="Library-Cache-内部结构"><a href="#Library-Cache-内部结构" class="headerlink" title="Library Cache 内部结构"></a>Library Cache 内部结构</h4><p>Library Cache 是 Shared Pool 中用于缓存 SQL&#x2F;PLSQL 执行计划的核心结构。其内部组织如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">Library Cache 结构图解：</span><br><span class="line"></span><br><span class="line">  Hash Table（哈希表）</span><br><span class="line">  ┌─────────────────────────────────────────────────────────┐</span><br><span class="line">  │                                                          │</span><br><span class="line">  │  Bucket 0    Bucket 1    Bucket 2    ...   Bucket N-1   │</span><br><span class="line">  │  ┌───┐       ┌───┐       ┌───┐            ┌───┐        │</span><br><span class="line">  │  │   │       │   │       │   │            │   │        │</span><br><span class="line">  │  └─┬─┘       └─┬─┘       └─┬─┘            └─┬─┘        │</span><br><span class="line">  │    │           │           │                 │          │</span><br><span class="line">  │    ▼           ▼           ▼                 ▼          │</span><br><span class="line">  │  Handle ───→ Handle     Handle             Handle       │</span><br><span class="line">  │  (KGLHD)    (KGLHD)    (KGLHD)            (KGLHD)      │</span><br><span class="line">  │    │           │           │                 │          │</span><br><span class="line">  │    ▼           ▼           ▼                 ▼          │</span><br><span class="line">  │  Object      Object     Object             Object       │</span><br><span class="line">  │  ┌─────┐    ┌─────┐    ┌─────┐           ┌─────┐      │</span><br><span class="line">  │  │SQL  │    │PL/SQL│   │Table│           │Index│      │</span><br><span class="line">  │  │Area │    │ Body │   │Meta │           │Meta │      │</span><br><span class="line">  │  │(KGLOB)   │      │   │data │           │data │      │</span><br><span class="line">  │  └──┬──┘    └─────┘    └─────┘           └─────┘      │</span><br><span class="line">  │     │                                                    │</span><br><span class="line">  │     ▼                                                    │</span><br><span class="line">  │  Child Cursor 0 ──→ Child Cursor 1 ──→ ...              │</span><br><span class="line">  │  (执行计划A)       (执行计划B)                           │</span><br><span class="line">  │                                                          │</span><br><span class="line">  └─────────────────────────────────────────────────────────┘</span><br><span class="line"></span><br><span class="line">  Mutex 保护粒度：</span><br><span class="line">  ├── Library Hash Bucket Mutex  → 保护 Bucket 链表</span><br><span class="line">  ├── Library Cache Mutex        → 保护 Handle（父游标）</span><br><span class="line">  └── Cursor Pin Mutex           → 保护子游标/执行计划</span><br></pre></td></tr></table></figure>
+
+<h4 id="Library-Cache-Lock-Pin-的作用"><a href="#Library-Cache-Lock-Pin-的作用" class="headerlink" title="Library Cache Lock&#x2F;Pin 的作用"></a>Library Cache Lock&#x2F;Pin 的作用</h4><p>当一个会话需要访问 Library Cache 中的对象时，需要经历两个阶段的保护：</p>
+<ol>
+<li><strong>Library Cache Lock（Lock 模式）</strong>：保护 Handle 层，确保对象定义不被修改。例如，当一个游标正在执行时，不允许 DDL 修改其依赖的表结构。</li>
+<li><strong>Library Cache Pin（Pin 模式）</strong>：保护 Object 层（Heap），确保执行计划不被换出内存。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">访问流程：</span><br><span class="line">  Session ──→ 获取 Library Cache Lock (Handle)  ──→ 检查对象有效性</span><br><span class="line">            ──→ 获取 Library Cache Pin (Heap)    ──→ 读取/执行执行计划</span><br><span class="line">            ──→ 释放 Pin</span><br><span class="line">            ──→ 释放 Lock</span><br></pre></td></tr></table></figure>
+
+<h4 id="硬解析与-Cursor-Sharing"><a href="#硬解析与-Cursor-Sharing" class="headerlink" title="硬解析与 Cursor Sharing"></a>硬解析与 Cursor Sharing</h4><p><strong>硬解析（Hard Parse）</strong>是 Library Cache 争用的主要根源。当一条 SQL 无法在 Library Cache 中找到匹配的游标时，Oracle 必须：</p>
+<ol>
+<li>语法&#x2F;语义检查</li>
+<li>查询数据字典（触发 Row Cache Lock）</li>
+<li>生成执行计划</li>
+<li>分配 Library Cache 内存</li>
+<li>注册到 Hash Bucket</li>
+</ol>
+<p>整个过程涉及多个 Latch&#x2F;Mutex 的获取，高并发下极易形成争用。</p>
+<h4 id="相关等待事件"><a href="#相关等待事件" class="headerlink" title="相关等待事件"></a>相关等待事件</h4><table>
+<thead>
+<tr>
+<th>等待事件</th>
+<th>含义</th>
+<th>常见原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>library cache lock</code></td>
+<td>等待获取 Library Cache Lock</td>
+<td>DDL 与 SQL 执行并发、硬解析争用</td>
+</tr>
+<tr>
+<td><code>library cache pin</code></td>
+<td>等待获取 Library Cache Pin</td>
+<td>执行计划被换出&#x2F;重新加载</td>
+</tr>
+<tr>
+<td><code>cursor: pin S wait on X</code></td>
+<td>等待以 Shared 模式获取 Cursor Pin，但被 Exclusive 持有</td>
+<td>大量并发硬解析同一 SQL</td>
+</tr>
+<tr>
+<td><code>cursor: pin S</code></td>
+<td>高并发下 Cursor Pin 的 Shared 模式争用</td>
+<td>极高并发的软解析</td>
+</tr>
+<tr>
+<td><code>library cache: mutex X</code></td>
+<td>等待以 Exclusive 模式获取 Library Cache Mutex</td>
+<td>硬解析&#x2F;加载执行计划</td>
+</tr>
+</tbody></table>
+<h3 id="2-4-Row-Cache"><a href="#2-4-Row-Cache" class="headerlink" title="2.4 Row Cache"></a>2.4 Row Cache</h3><h4 id="Row-Cache-结构"><a href="#Row-Cache-结构" class="headerlink" title="Row Cache 结构"></a>Row Cache 结构</h4><p>Row Cache（也叫 Data Dictionary Cache）缓存数据字典信息，包括表定义、列信息、权限、序列等。它由一系列独立的 Cache 组成：</p>
+<table>
+<thead>
+<tr>
+<th>Cache 类型</th>
+<th>缓存内容</th>
+<th>视图</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>dc_tables</td>
+<td>表定义</td>
+<td><code>V$ROWCACHE</code> WHERE parameter&#x3D;’dc_tables’</td>
+</tr>
+<tr>
+<td>dc_columns</td>
+<td>列定义</td>
+<td>dc_columns</td>
+</tr>
+<tr>
+<td>dc_usernames</td>
+<td>用户信息</td>
+<td>dc_usernames</td>
+</tr>
+<tr>
+<td>dc_sequences</td>
+<td>序列值</td>
+<td>dc_sequences</td>
+</tr>
+<tr>
+<td>dc_object_ids</td>
+<td>对象 ID 映射</td>
+<td>dc_object_ids</td>
+</tr>
+<tr>
+<td>dc_histograms</td>
+<td>直方图信息</td>
+<td>dc_histograms</td>
+</tr>
+</tbody></table>
+<h4 id="Row-Cache-Lock-的触发场景"><a href="#Row-Cache-Lock-的触发场景" class="headerlink" title="Row Cache Lock 的触发场景"></a>Row Cache Lock 的触发场景</h4><p>Row Cache Lock 在以下场景触发：</p>
+<ul>
+<li><strong>硬解析</strong>：需要查询数据字典获取表&#x2F;列&#x2F;权限信息，触发 <code>dc_tables</code>、<code>dc_columns</code> 等 Cache 的 Lock</li>
+<li><strong>DDL 操作</strong>：修改表结构会 invalidation 相关的 Row Cache 条目</li>
+<li><strong>序列访问</strong>：<code>dc_sequences</code> 在 Sequence Cache 耗尽时需要更新</li>
+<li><strong>权限检查</strong>：首次访问触发 <code>dc_usernames</code>、<code>dc_user_grants</code> 的加载</li>
+</ul>
+<h4 id="DDL-对-Row-Cache-的影响"><a href="#DDL-对-Row-Cache-的影响" class="headerlink" title="DDL 对 Row Cache 的影响"></a>DDL 对 Row Cache 的影响</h4><p>大规模 DDL（如批量 <code>ALTER TABLE</code>、<code>GRANT</code>）会触发大量 Row Cache Lock，进而引发 <code>row cache lock</code> 等待事件。这是因为每个 DDL 操作都需要独占访问对应的 Row Cache 条目，高并发 DDL 会导致 Row Cache Lock 的严重排队。</p>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-Latch-Mutex-争用诊断"><a href="#3-1-Latch-Mutex-争用诊断" class="headerlink" title="3.1 Latch&#x2F;Mutex 争用诊断"></a>3.1 Latch&#x2F;Mutex 争用诊断</h3><h4 id="Latch-分析脚本"><a href="#Latch-分析脚本" class="headerlink" title="Latch 分析脚本"></a>Latch 分析脚本</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看 Latch 争用 Top 10（按 Miss 率排序）</span></span><br><span class="line"><span class="keyword">SELECT</span> name,</span><br><span class="line">       gets,</span><br><span class="line">       misses,</span><br><span class="line">       sleeps,</span><br><span class="line">       ROUND(misses <span class="operator">/</span> <span class="built_in">NULLIF</span>(gets, <span class="number">0</span>) <span class="operator">*</span> <span class="number">100</span>, <span class="number">4</span>) <span class="keyword">AS</span> miss_rate_pct,</span><br><span class="line">       ROUND(sleeps <span class="operator">/</span> <span class="built_in">NULLIF</span>(misses, <span class="number">0</span>) <span class="operator">*</span> <span class="number">100</span>, <span class="number">2</span>) <span class="keyword">AS</span> sleep_rate_pct,</span><br><span class="line">       wait_time</span><br><span class="line"><span class="keyword">FROM</span>   v$latch</span><br><span class="line"><span class="keyword">WHERE</span>  gets <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> misses <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">10</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看 Latch Miss 的代码路径分布</span></span><br><span class="line"><span class="keyword">SELECT</span> parent_name,</span><br><span class="line">       where_in_code,</span><br><span class="line">       nwfail_count,</span><br><span class="line">       sleep_count,</span><br><span class="line">       wtr_slp_count</span><br><span class="line"><span class="keyword">FROM</span>   v$latch_misses</span><br><span class="line"><span class="keyword">WHERE</span>  sleep_count <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> sleep_count <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Mutex-争用分析"><a href="#Mutex-争用分析" class="headerlink" title="Mutex 争用分析"></a>Mutex 争用分析</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看 Mutex Sleep 历史（11g+）</span></span><br><span class="line"><span class="keyword">SELECT</span> mutex_type,</span><br><span class="line">       location,</span><br><span class="line">       sleep_timestamp,</span><br><span class="line">       sleeps,</span><br><span class="line">       requesting_session,</span><br><span class="line">       blocking_session,</span><br><span class="line">       mutex_value</span><br><span class="line"><span class="keyword">FROM</span>   v$mutex_sleep_history</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> sleep_timestamp <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Mutex 总体统计</span></span><br><span class="line"><span class="keyword">SELECT</span> mutex_type,</span><br><span class="line">       location,</span><br><span class="line">       sleeps,</span><br><span class="line">       wait_time</span><br><span class="line"><span class="keyword">FROM</span>   v$mutex_sleep</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> wait_time <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">15</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ASH-中的-Latch-Mutex-等待事件"><a href="#ASH-中的-Latch-Mutex-等待事件" class="headerlink" title="ASH 中的 Latch&#x2F;Mutex 等待事件"></a>ASH 中的 Latch&#x2F;Mutex 等待事件</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看过去 1 小时内 Latch/Mutex 相关等待的分布</span></span><br><span class="line"><span class="keyword">SELECT</span> event,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> wait_count,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(time_waited) <span class="operator">/</span> <span class="number">1000000</span>, <span class="number">2</span>) <span class="keyword">AS</span> total_wait_sec,</span><br><span class="line">       ROUND(<span class="built_in">AVG</span>(time_waited) <span class="operator">/</span> <span class="number">1000</span>, <span class="number">2</span>) <span class="keyword">AS</span> avg_wait_ms</span><br><span class="line"><span class="keyword">FROM</span>   v$active_session_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span><span class="operator">/</span><span class="number">24</span></span><br><span class="line"><span class="keyword">AND</span>    (event <span class="keyword">LIKE</span> <span class="string">&#x27;%latch%&#x27;</span></span><br><span class="line">        <span class="keyword">OR</span> event <span class="keyword">LIKE</span> <span class="string">&#x27;%mutex%&#x27;</span></span><br><span class="line">        <span class="keyword">OR</span> event <span class="keyword">LIKE</span> <span class="string">&#x27;%cursor: pin%&#x27;</span></span><br><span class="line">        <span class="keyword">OR</span> event <span class="keyword">LIKE</span> <span class="string">&#x27;%library cache%&#x27;</span>)</span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> event</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> wait_count <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 定位具体的争用 SQL</span></span><br><span class="line"><span class="keyword">SELECT</span> sql_id,</span><br><span class="line">       event,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> wait_count,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(time_waited) <span class="operator">/</span> <span class="number">1000000</span>, <span class="number">2</span>) <span class="keyword">AS</span> total_wait_sec</span><br><span class="line"><span class="keyword">FROM</span>   v$active_session_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span><span class="operator">/</span><span class="number">24</span></span><br><span class="line"><span class="keyword">AND</span>    event <span class="keyword">LIKE</span> <span class="string">&#x27;%cursor: pin%&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> sql_id, event</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> wait_count <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">10</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-Library-Cache-优化"><a href="#3-2-Library-Cache-优化" class="headerlink" title="3.2 Library Cache 优化"></a>3.2 Library Cache 优化</h3><h4 id="减少硬解析：绑定变量"><a href="#减少硬解析：绑定变量" class="headerlink" title="减少硬解析：绑定变量"></a>减少硬解析：绑定变量</h4><p>硬解析是 Library Cache 争用的头号杀手。最有效的优化手段是<strong>使用绑定变量</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 反面示例：每条 SQL 都是不同的文本，触发硬解析</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> order_id <span class="operator">=</span> <span class="number">1001</span>;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> order_id <span class="operator">=</span> <span class="number">1002</span>;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> order_id <span class="operator">=</span> <span class="number">1003</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 正确做法：使用绑定变量，共享同一个游标</span></span><br><span class="line"><span class="comment">-- 应用层使用 PreparedStatement</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> order_id <span class="operator">=</span> :order_id;</span><br></pre></td></tr></table></figure>
+
+<p>对于无法修改应用代码的场景，可以设置 <code>CURSOR_SHARING</code> 参数：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 将字面量替换为系统绑定变量（应急方案，非长久之计）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> cursor_sharing <span class="operator">=</span> <span class="string">&#x27;FORCE&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 推荐值：EXACT（默认）&gt; SIMILAR（已废弃）&gt; FORCE（应急）</span></span><br><span class="line"><span class="comment">-- 注意：FORCE 可能导致执行计划不稳定，生产环境慎用</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Shared-Pool-大小调整"><a href="#Shared-Pool-大小调整" class="headerlink" title="Shared Pool 大小调整"></a>Shared Pool 大小调整</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看 Shared Pool 使用情况</span></span><br><span class="line"><span class="keyword">SELECT</span> component,</span><br><span class="line">       current_size <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span> <span class="keyword">AS</span> current_mb,</span><br><span class="line">       min_size <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span> <span class="keyword">AS</span> min_mb,</span><br><span class="line">       max_size <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span> <span class="keyword">AS</span> max_mb</span><br><span class="line"><span class="keyword">FROM</span>   v$sga_dynamic_components</span><br><span class="line"><span class="keyword">WHERE</span>  component <span class="keyword">IN</span> (<span class="string">&#x27;shared pool&#x27;</span>, <span class="string">&#x27;large pool&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看 Shared Pool 中各子池的使用</span></span><br><span class="line"><span class="keyword">SELECT</span> pool,</span><br><span class="line">       name,</span><br><span class="line">       bytes <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span> <span class="keyword">AS</span> size_mb</span><br><span class="line"><span class="keyword">FROM</span>   v$sgastat</span><br><span class="line"><span class="keyword">WHERE</span>  pool <span class="operator">=</span> <span class="string">&#x27;shared pool&#x27;</span></span><br><span class="line"><span class="keyword">AND</span>    name <span class="keyword">IN</span> (<span class="string">&#x27;free memory&#x27;</span>, <span class="string">&#x27;library cache&#x27;</span>,</span><br><span class="line">               <span class="string">&#x27;sql area&#x27;</span>, <span class="string">&#x27;row cache&#x27;</span>,</span><br><span class="line">               <span class="string">&#x27;PL/SQL DIANA&#x27;</span>, <span class="string">&#x27;PL/SQL MPCODE&#x27;</span>)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> bytes <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>经验法则</strong>：Shared Pool 不宜过大也不宜过小。过大会导致 LRU 管理开销增加，过小会导致频繁的内存回收和硬解析。建议通过 AWR 报告中的 “Shared Pool Advisory” 来确定最优大小。</p>
+</blockquote>
+<h4 id="Library-Cache-Pin-Lock-诊断"><a href="#Library-Cache-Pin-Lock-诊断" class="headerlink" title="Library Cache Pin&#x2F;Lock 诊断"></a>Library Cache Pin&#x2F;Lock 诊断</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看当前 Library Cache Lock/Pin 的持有者和等待者</span></span><br><span class="line"><span class="keyword">SELECT</span> s.sid,</span><br><span class="line">       s.serial#,</span><br><span class="line">       s.username,</span><br><span class="line">       s.sql_id,</span><br><span class="line">       kgllktype <span class="keyword">AS</span> lock_type,</span><br><span class="line">       kgllkhdl <span class="keyword">AS</span> handle_addr,</span><br><span class="line">       kgllkmod <span class="keyword">AS</span> mode_held,</span><br><span class="line">       kgllkreq <span class="keyword">AS</span> mode_requested,</span><br><span class="line">       kgllkses <span class="keyword">AS</span> session_addr</span><br><span class="line"><span class="keyword">FROM</span>   dba_kgllock w,</span><br><span class="line">       v$session s</span><br><span class="line"><span class="keyword">WHERE</span>  w.kgllkuse <span class="operator">=</span> s.saddr</span><br><span class="line"><span class="keyword">AND</span>    w.kgllkreq <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> s.sql_id;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-Cursor-优化"><a href="#3-3-Cursor-优化" class="headerlink" title="3.3 Cursor 优化"></a>3.3 Cursor 优化</h3><h4 id="Session-Cached-Cursors"><a href="#Session-Cached-Cursors" class="headerlink" title="Session Cached Cursors"></a>Session Cached Cursors</h4><p><code>SESSION_CACHED_CURSORS</code> 参数控制每个会话缓存的关闭游标数量。当游标被缓存后，再次执行相同 SQL 时不需要重新从 Library Cache 中搜索，直接从会话的游标缓存中获取，减少了 Library Cache 相关 Latch&#x2F;Mutex 的获取次数。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看当前设置和命中率</span></span><br><span class="line"><span class="keyword">SELECT</span> name, <span class="keyword">value</span></span><br><span class="line"><span class="keyword">FROM</span>   v$<span class="keyword">parameter</span></span><br><span class="line"><span class="keyword">WHERE</span>  name <span class="operator">=</span> <span class="string">&#x27;session_cached_cursors&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看 session cursor cache 命中率</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="string">&#x27;session cursor cache hits&#x27;</span> <span class="keyword">AS</span> metric,</span><br><span class="line">       <span class="built_in">SUM</span>(pins) <span class="keyword">AS</span> <span class="keyword">value</span></span><br><span class="line"><span class="keyword">FROM</span>   v$librarycache</span><br><span class="line"><span class="keyword">WHERE</span>  namespace <span class="operator">=</span> <span class="string">&#x27;SQL AREA&#x27;</span></span><br><span class="line"><span class="keyword">UNION</span> <span class="keyword">ALL</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="string">&#x27;session cursor cache counts&#x27;</span>,</span><br><span class="line">       <span class="built_in">SUM</span>(reloads)</span><br><span class="line"><span class="keyword">FROM</span>   v$librarycache</span><br><span class="line"><span class="keyword">WHERE</span>  namespace <span class="operator">=</span> <span class="string">&#x27;SQL AREA&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 推荐值：50-200，根据并发量和 SQL 多样性调整</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> session_cached_cursors <span class="operator">=</span> <span class="number">100</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="PL-SQL-优化"><a href="#PL-SQL-优化" class="headerlink" title="PL&#x2F;SQL 优化"></a>PL&#x2F;SQL 优化</h4><p>PL&#x2F;SQL 中的动态 SQL 是硬解析的常见来源。优化建议：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 避免在循环中使用动态 SQL</span></span><br><span class="line"><span class="comment">-- 反面示例</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    <span class="keyword">FOR</span> r <span class="keyword">IN</span> (<span class="keyword">SELECT</span> order_id <span class="keyword">FROM</span> orders) LOOP</span><br><span class="line">        <span class="keyword">EXECUTE</span> IMMEDIATE</span><br><span class="line">            <span class="string">&#x27;UPDATE orders SET status = &#x27;&#x27;SHIPPED&#x27;&#x27; WHERE order_id = &#x27;</span> <span class="operator">||</span> r.order_id;</span><br><span class="line">    <span class="keyword">END</span> LOOP;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 正确做法：使用绑定变量</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    <span class="keyword">FOR</span> r <span class="keyword">IN</span> (<span class="keyword">SELECT</span> order_id <span class="keyword">FROM</span> orders) LOOP</span><br><span class="line">        <span class="keyword">EXECUTE</span> IMMEDIATE</span><br><span class="line">            <span class="string">&#x27;UPDATE orders SET status = :1 WHERE order_id = :2&#x27;</span></span><br><span class="line">            <span class="keyword">USING</span> <span class="string">&#x27;SHIPPED&#x27;</span>, r.order_id;</span><br><span class="line">    <span class="keyword">END</span> LOOP;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="避免大规模-DDL-的并发问题"><a href="#避免大规模-DDL-的并发问题" class="headerlink" title="避免大规模 DDL 的并发问题"></a>避免大规模 DDL 的并发问题</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 大规模 DDL 前后刷新 Shared Pool（慎用，会导致所有游标失效）</span></span><br><span class="line"><span class="comment">-- 更好的做法是分批执行，避免集中 DDL</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 分批执行示例</span></span><br><span class="line"><span class="keyword">DECLARE</span></span><br><span class="line">    v_batch_size CONSTANT PLS_INTEGER :<span class="operator">=</span> <span class="number">100</span>;</span><br><span class="line">    v_count PLS_INTEGER :<span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    <span class="keyword">FOR</span> r <span class="keyword">IN</span> (<span class="keyword">SELECT</span> table_name <span class="keyword">FROM</span> user_tables <span class="keyword">WHERE</span> ...) LOOP</span><br><span class="line">        <span class="keyword">EXECUTE</span> IMMEDIATE <span class="string">&#x27;ALTER TABLE &#x27;</span> <span class="operator">||</span> r.table_name <span class="operator">||</span> <span class="string">&#x27; ...&#x27;</span>;</span><br><span class="line">        v_count :<span class="operator">=</span> v_count <span class="operator">+</span> <span class="number">1</span>;</span><br><span class="line">        IF <span class="built_in">MOD</span>(v_count, v_batch_size) <span class="operator">=</span> <span class="number">0</span> <span class="keyword">THEN</span></span><br><span class="line">            DBMS_LOCK.SLEEP(<span class="number">1</span>);  <span class="comment">-- 每批暂停 1 秒，降低争用</span></span><br><span class="line">        <span class="keyword">END</span> IF;</span><br><span class="line">    <span class="keyword">END</span> LOOP;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-Row-Cache-优化"><a href="#3-4-Row-Cache-优化" class="headerlink" title="3.4 Row Cache 优化"></a>3.4 Row Cache 优化</h3><h4 id="减少硬-DDL-操作"><a href="#减少硬-DDL-操作" class="headerlink" title="减少硬 DDL 操作"></a>减少硬 DDL 操作</h4><p>Row Cache Lock 的主要触发源是 DDL 操作和硬解析。减少策略：</p>
+<ul>
+<li><strong>避免业务高峰期执行 DDL</strong>：将 DDL 变更安排在低峰期</li>
+<li><strong>合并 DDL 操作</strong>：将多个 ALTER 合并为一个，减少 Row Cache Lock 的获取次数</li>
+<li>**使用 <code>DBMS_REDEFINITION</code>**：在线重定义替代直接 ALTER TABLE</li>
+</ul>
+<h4 id="序列（Sequence）缓存"><a href="#序列（Sequence）缓存" class="headerlink" title="序列（Sequence）缓存"></a>序列（Sequence）缓存</h4><p>序列的 <code>CACHE</code> 设置直接影响 <code>dc_sequences</code> Row Cache 的争用程度：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看序列当前设置</span></span><br><span class="line"><span class="keyword">SELECT</span> sequence_name,</span><br><span class="line">       cache_size,</span><br><span class="line">       last_number,</span><br><span class="line">       increment_by</span><br><span class="line"><span class="keyword">FROM</span>   user_sequences</span><br><span class="line"><span class="keyword">WHERE</span>  sequence_name <span class="operator">=</span> <span class="string">&#x27;ORDER_SEQ&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 增大缓存（默认值 20 通常太小）</span></span><br><span class="line"><span class="keyword">ALTER</span> SEQUENCE order_seq CACHE <span class="number">1000</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 对于极高并发场景，可使用 NOORDER（RAC 环境）</span></span><br><span class="line"><span class="comment">-- NOORDER 不保证全局顺序，但消除了 RAC 间的序列争用</span></span><br><span class="line"><span class="keyword">ALTER</span> SEQUENCE order_seq NOORDER CACHE <span class="number">10000</span>;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：<code>CACHE</code> 值越大，实例异常关闭时丢失的序列号越多。需要根据业务对序列连续性的要求来权衡。</p>
+</blockquote>
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><h3 id="优化案例：某电商系统-Library-Cache-争用优化"><a href="#优化案例：某电商系统-Library-Cache-争用优化" class="headerlink" title="优化案例：某电商系统 Library Cache 争用优化"></a>优化案例：某电商系统 Library Cache 争用优化</h3><p><strong>问题描述</strong>：大促期间，AWR 报告显示 <code>cursor: pin S wait on X</code> 和 <code>library cache: mutex X</code> 位列 Top 5 等待事件，占比超过 30%。</p>
+<p><strong>诊断过程</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 1. 定位争用 SQL</span></span><br><span class="line"><span class="keyword">SELECT</span> sql_id,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> hard_parses,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(elapsed_time) <span class="operator">/</span> <span class="number">1000000</span>, <span class="number">2</span>) <span class="keyword">AS</span> total_sec</span><br><span class="line"><span class="keyword">FROM</span>   v$sqlarea</span><br><span class="line"><span class="keyword">WHERE</span>  loads <span class="operator">&gt;</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">AND</span>    parse_calls <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> sql_id</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> hard_parses <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">10</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 2. 硬解析率检查</span></span><br><span class="line"><span class="keyword">SELECT</span> name, <span class="keyword">value</span></span><br><span class="line"><span class="keyword">FROM</span>   v$sysstat</span><br><span class="line"><span class="keyword">WHERE</span>  name <span class="keyword">IN</span> (<span class="string">&#x27;parse count (total)&#x27;</span>, <span class="string">&#x27;parse count (hard)&#x27;</span>,</span><br><span class="line">                <span class="string">&#x27;session cursor cache hits&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 优化前指标</span></span><br><span class="line"><span class="comment">-- parse count (total)   : 15,234,567</span></span><br><span class="line"><span class="comment">-- parse count (hard)    : 2,345,678    ← 硬解析率 15.4%，过高</span></span><br><span class="line"><span class="comment">-- session cursor cache hits: 8,234,567</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>优化措施</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>措施</th>
+<th>参数&#x2F;操作</th>
+<th>优化前</th>
+<th>优化后</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>绑定变量改造</td>
+<td>应用代码重构</td>
+<td>每个字面量独立游标</td>
+<td>共享游标</td>
+</tr>
+<tr>
+<td>Session Cached Cursors</td>
+<td><code>SESSION_CACHED_CURSORS</code></td>
+<td>50</td>
+<td>200</td>
+</tr>
+<tr>
+<td>Shared Pool 大小</td>
+<td><code>SHARED_POOL_SIZE</code></td>
+<td>4GB</td>
+<td>8GB</td>
+</tr>
+<tr>
+<td>Sequence 缓存</td>
+<td><code>CACHE</code></td>
+<td>20</td>
+<td>5000</td>
+</tr>
+</tbody></table>
+<p><strong>优化后指标</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 优化后硬解析率</span></span><br><span class="line"><span class="comment">-- parse count (total)   : 18,456,789</span></span><br><span class="line"><span class="comment">-- parse count (hard)    : 89,012       ← 硬解析率 0.48%，大幅下降</span></span><br><span class="line"><span class="comment">-- session cursor cache hits: 15,234,567</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- AWR Library Cache 指标</span></span><br><span class="line"><span class="keyword">SELECT</span> namespace,</span><br><span class="line">       pins,</span><br><span class="line">       pinhits,</span><br><span class="line">       ROUND(pinhits <span class="operator">/</span> <span class="built_in">NULLIF</span>(pins, <span class="number">0</span>) <span class="operator">*</span> <span class="number">100</span>, <span class="number">2</span>) <span class="keyword">AS</span> hit_ratio</span><br><span class="line"><span class="keyword">FROM</span>   v$librarycache;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>优化前</th>
+<th>优化后</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>cursor: pin S wait on X</code> 等待占比</td>
+<td>18.5%</td>
+<td>0.3%</td>
+</tr>
+<tr>
+<td><code>library cache: mutex X</code> 等待占比</td>
+<td>12.1%</td>
+<td>0.8%</td>
+</tr>
+<tr>
+<td>硬解析率</td>
+<td>15.4%</td>
+<td>0.48%</td>
+</tr>
+<tr>
+<td>Library Cache Hit Ratio</td>
+<td>87.2%</td>
+<td>99.1%</td>
+</tr>
+<tr>
+<td>平均响应时间</td>
+<td>2.3s</td>
+<td>45ms</td>
+</tr>
+</tbody></table>
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="高并发环境的-SQL-编写规范"><a href="#高并发环境的-SQL-编写规范" class="headerlink" title="高并发环境的 SQL 编写规范"></a>高并发环境的 SQL 编写规范</h3><ol>
+<li><strong>强制使用绑定变量</strong>：这是解决 Library Cache 争用的根本措施。ORM 框架（如 Hibernate、MyBatis）需确保参数化查询。</li>
+<li>**避免 <code>SELECT *</code>**：减少共享游标因列不同而产生多个子游标的可能性。</li>
+<li><strong>统一 SQL 风格</strong>：同一 SQL 在不同模块中保持文本一致（大小写、空格、换行），便于游标共享。</li>
+<li><strong>减少动态 SQL</strong>：动态拼接的 SQL 无法共享游标，是硬解析的主要来源。</li>
+</ol>
+<h3 id="应用层并发控制建议"><a href="#应用层并发控制建议" class="headerlink" title="应用层并发控制建议"></a>应用层并发控制建议</h3><ol>
+<li><strong>连接池配置</strong>：合理设置最大连接数，避免过多并发会话加剧内部争用。建议连接数 &#x3D; CPU 核心数 × 2 + 磁盘数。</li>
+<li><strong>请求限流</strong>：在应用层实现限流&#x2F;排队机制，避免瞬时高并发冲击数据库内部锁。</li>
+<li><strong>读写分离</strong>：将只读查询路由到 Active Data Guard 备库，减轻主库的解析压力。</li>
+<li><strong>缓存策略</strong>：对热点数据使用 Redis&#x2F;Memcached 缓存，减少数据库访问频次。</li>
+</ol>
+<h3 id="SGA-调优与并发的关系"><a href="#SGA-调优与并发的关系" class="headerlink" title="SGA 调优与并发的关系"></a>SGA 调优与并发的关系</h3><ul>
+<li><strong>Shared Pool 过小</strong>：导致频繁的 Library Cache 内存回收，引发硬解析和 Mutex 争用</li>
+<li><strong>Shared Pool 过大</strong>：增加 LRU 管理开销，且可能导致过多的子游标堆积</li>
+<li><strong>Buffer Cache 过小</strong>：热点块争用（<code>cache buffers chains</code> Latch）加剧</li>
+<li><strong>SGA 自动管理</strong>：推荐使用 <code>SGA_TARGET</code> + <code>MEMORY_TARGET</code>，让 Oracle 自动调优各组件比例</li>
+</ul>
+<h3 id="常见并发问题的快速定位"><a href="#常见并发问题的快速定位" class="headerlink" title="常见并发问题的快速定位"></a>常见并发问题的快速定位</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">问题定位速查表：</span><br><span class="line"></span><br><span class="line">等待事件                          │ 根因                │ 优化方向</span><br><span class="line">─────────────────────────────────┼────────────────────┼──────────────────</span><br><span class="line">cursor: pin S wait on X          │ 并发硬解析           │ 绑定变量</span><br><span class="line">cursor: pin S                    │ 极高并发软解析       │ Session Cached Cursors</span><br><span class="line">library cache lock               │ DDL 与 SQL 并发      │ 避免高峰期 DDL</span><br><span class="line">library cache pin                │ 执行计划重加载       │ 增大 Shared Pool</span><br><span class="line">library cache: mutex X           │ 硬解析/LC 内存分配   │ 绑定变量 + Shared Pool</span><br><span class="line">row cache lock                   │ DDL/硬解析字典查询   │ 减少 DDL + 绑定变量</span><br><span class="line">latch: shared pool               │ 内存分配争用         │ 增大 Shared Pool</span><br><span class="line">latch: cache buffers chains      │ 热点块争用           │ 分散数据/反向键索引</span><br><span class="line">latch: redo allocation           │ Redo 争用            │ 增大 Redo Buffer/批量提交</span><br></pre></td></tr></table></figure>
+
+<p>总结来说，Oracle 的 Latch&#x2F;Mutex 机制是数据库高并发运行的基石。理解其工作原理，掌握诊断工具，并在应用设计和参数调优两个层面做好预防，是每一位 Oracle DBA 应当具备的核心能力。在实际生产环境中，<strong>80% 的并发争用问题都可以通过绑定变量和合理的 SGA 配置来解决</strong>——看似简单的措施，往往是最有效的。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" rel="tag"># 性能调优</a>
+              <a href="/tags/Latch/" rel="tag"># Latch</a>
+              <a href="/tags/Mutex/" rel="tag"># Mutex</a>
+              <a href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag"># 并发</a>
+              <a href="/tags/Library-Cache/" rel="tag"># Library Cache</a>
+              <a href="/tags/Row-Cache/" rel="tag"># Row Cache</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/18/oracle/io-subsystem-optimization/" rel="prev" title="I&#x2F;O 子系统优化：从 ASM 到 Linux I&#x2F;O 栈的全链路调优">
+                  <i class="fa fa-angle-left"></i> I/O 子系统优化：从 ASM 到 Linux I/O 栈的全链路调优
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/28/oracle/decoding-ora-00600-ora-07445/" rel="next" title="解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位">
+                  解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

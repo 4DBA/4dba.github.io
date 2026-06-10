@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/01/26/oracle/rac-asm-multipath-storage/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/01/26/oracle/rac-asm-multipath-storage/","path":"2026/01/26/oracle/rac-asm-multipath-storage/","title":"RAC + ASM on Multipath 存储：从多路径配置到磁盘组管理的完整指南"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>RAC + ASM on Multipath 存储：从多路径配置到磁盘组管理的完整指南 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Linux-Multipath-%E5%8E%9F%E7%90%86"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 Linux Multipath 原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-ASM-%E7%A3%81%E7%9B%98%E5%8F%91%E7%8E%B0%E6%9C%BA%E5%88%B6"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 ASM 磁盘发现机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-ASM-%E5%86%97%E4%BD%99%E7%AD%96%E7%95%A5"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 ASM 冗余策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-ASM-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 ASM 权限管理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E5%A4%9A%E8%B7%AF%E5%BE%84%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 多路径配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96-SCSI-%E8%AE%BE%E5%A4%87%E7%9A%84-WWID"><span class="nav-number">3.1.1.</span> <span class="nav-text">获取 SCSI 设备的 WWID</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%8C%E6%95%B4%E7%9A%84-multipath-conf-%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.2.</span> <span class="nav-text">完整的 multipath.conf 配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81%E5%A4%9A%E8%B7%AF%E5%BE%84%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.3.</span> <span class="nav-text">验证多路径配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-ASM-%E7%A3%81%E7%9B%98%E5%87%86%E5%A4%87"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 ASM 磁盘准备</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%B8%80%EF%BC%9A%E4%BD%BF%E7%94%A8-udev-%E9%85%8D%E7%BD%AE%E7%A3%81%E7%9B%98%E6%9D%83%E9%99%90"><span class="nav-number">3.2.1.</span> <span class="nav-text">方案一：使用 udev 配置磁盘权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%BA%8C%EF%BC%9AASMFD-%E9%85%8D%E7%BD%AE%E6%B5%81%E7%A8%8B"><span class="nav-number">3.2.2.</span> <span class="nav-text">方案二：ASMFD 配置流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%B8%89%EF%BC%9Aoracleasm-createdisk"><span class="nav-number">3.2.3.</span> <span class="nav-text">方案三：oracleasm createdisk</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-ASM-%E7%A3%81%E7%9B%98%E7%BB%84%E5%88%9B%E5%BB%BA"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 ASM 磁盘组创建</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%89%E7%A7%8D%E5%86%97%E4%BD%99%E7%BA%A7%E5%88%AB%E7%9A%84%E7%A3%81%E7%9B%98%E7%BB%84%E5%88%9B%E5%BB%BA%E8%AF%AD%E5%8F%A5"><span class="nav-number">3.3.1.</span> <span class="nav-text">三种冗余级别的磁盘组创建语句</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%BC%E5%AE%B9%E6%80%A7%E5%B1%9E%E6%80%A7%E8%AF%B4%E6%98%8E"><span class="nav-number">3.3.2.</span> <span class="nav-text">兼容性属性说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9D%A1%E5%B8%A6%E5%8C%96%E4%B8%8E%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="nav-number">3.3.3.</span> <span class="nav-text">条带化与性能优化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-ASM-%E7%AE%A1%E7%90%86"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 ASM 管理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#asmcmd-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="nav-number">3.4.1.</span> <span class="nav-text">asmcmd 常用命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A3%81%E7%9B%98%E6%B7%BB%E5%8A%A0-%E5%88%A0%E9%99%A4-%E6%9B%BF%E6%8D%A2%E6%B5%81%E7%A8%8B"><span class="nav-number">3.4.2.</span> <span class="nav-text">磁盘添加&#x2F;删除&#x2F;替换流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9B%91%E6%8E%A7%E8%84%9A%E6%9C%AC"><span class="nav-number">3.4.3.</span> <span class="nav-text">自动化监控脚本</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-1-Multipath-%E5%B1%82%E9%AA%8C%E8%AF%81"><span class="nav-number">4.0.1.</span> <span class="nav-text">4.1 Multipath 层验证</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/01/26/oracle/rac-asm-multipath-storage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="RAC + ASM on Multipath 存储：从多路径配置到磁盘组管理的完整指南 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RAC + ASM on Multipath 存储：从多路径配置到磁盘组管理的完整指南
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-01-26 10:00:00" itemprop="dateCreated datePublished" datetime="2026-01-26T10:00:00+00:00">2026-01-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>Oracle RAC (Real Application Clusters) 配合 ASM (Automatic Storage Management) 是目前业界最经典的高可用数据库架构。RAC 解决了计算层的高可用与横向扩展，ASM 则在存储层提供了自动化的卷管理、条带化和镜像能力。然而，很多 DBA 在搭建 RAC 时往往将注意力集中在集群软件和数据库实例上，忽略了存储层——尤其是<strong>多路径（Multipath）</strong>——的正确配置。</p>
+<span id="more"></span>
+
+
+<p>存储层配置不当会导致一系列严重问题：</p>
+<ul>
+<li><strong>磁盘路径单点故障</strong>：HBA 卡、光纤线缆或存储控制器的任何一环出现故障，都会导致 IO 中断，RAC 节点直接被驱逐。</li>
+<li><strong>ASM 磁盘发现失败</strong>：如果存储映射变更后未正确配置设备发现路径，ASM 实例将无法找到磁盘，导致磁盘组 dismount。</li>
+<li><strong>权限问题</strong>：在 Linux 环境中，裸设备的 owner&#x2F;group 权限不正确会导致 Oracle 无法打开磁盘，安装过程直接报错 <code>ORA-15025</code>、<code>ORA-27041</code> 等。</li>
+</ul>
+<p>在生产环境中，存储阵列通常通过<strong>双控制器</strong>向主机暴露 LUN，主机端则通过<strong>双 HBA 卡</strong>连接存储。这就意味着同一块 LUN 在操作系统层面会看到多个 SCSI 设备（如 <code>/dev/sdb</code>、<code>/dev/sdc</code>、<code>/dev/sdd</code>、<code>/dev/sde</code>）。Multipath 的作用正是将这些底层物理路径聚合为一个逻辑设备，同时提供路径故障切换和负载均衡能力。</p>
+<p>本文将从理论到实践，完整讲解在 RAC + ASM 架构中如何正确配置 Multipath 存储，并给出磁盘组创建和管理的完整操作指南。</p>
+<hr>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-Linux-Multipath-原理"><a href="#2-1-Linux-Multipath-原理" class="headerlink" title="2.1 Linux Multipath 原理"></a>2.1 Linux Multipath 原理</h3><p>Linux 下的多路径功能由 <strong>DM (Device Mapper) Multipath</strong> 提供，它是内核 <code>device-mapper</code> 框架的一部分。其架构可以简单理解为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">应用层 (Oracle ASM)</span><br><span class="line">       ↓</span><br><span class="line">/dev/mapper/mpathX  (Multipath 逻辑设备)</span><br><span class="line">       ↓</span><br><span class="line">device-mapper 内核模块 (路径选择、故障切换)</span><br><span class="line">       ↓</span><br><span class="line">/dev/sdX (多个 SCSI 路径设备)</span><br><span class="line">       ↓</span><br><span class="line">HBA 卡 → FC 交换机 → 存储控制器</span><br></pre></td></tr></table></figure>
+
+<p><strong>Active-Passive 模式</strong>下，只有一条路径处于活动状态处理 IO，其余路径处于待命状态。当活动路径故障时，自动切换到备用路径。这种模式的路径切换时间较长（通常需要几秒），但实现简单、稳定性高。</p>
+<p><strong>Active-Active 模式</strong>下，所有路径同时处理 IO，实现真正的负载均衡。这要求存储阵列支持 ALUA (Asymmetric Logical Unit Access) 或明确支持并发 IO。大多数中高端存储（如 EMC Unity、HDS VSP、华为 OceanStor）都支持 ALUA。</p>
+<p>Multipath 的核心配置参数包括：</p>
+<ul>
+<li><strong>path_checker</strong>：路径健康检查方式，常用 <code>tur</code>（TEST UNIT READY 命令）或 <code>readsector0</code></li>
+<li><strong>path_grouping_policy</strong>：路径分组策略，<code>failover</code>（主备）、<code>multibus</code>（多路径共享）、<code>group_by_prio</code>（按优先级分组）</li>
+<li><strong>failback</strong>：故障恢复策略，<code>immediate</code>（立即回切）、<code>manual</code>（手动）、或指定秒数</li>
+<li><strong>no_path_retry</strong>：所有路径不可用时的重试策略，<code>queue</code> 表示排队等待，数字表示重试次数</li>
+</ul>
+<h3 id="2-2-ASM-磁盘发现机制"><a href="#2-2-ASM-磁盘发现机制" class="headerlink" title="2.2 ASM 磁盘发现机制"></a>2.2 ASM 磁盘发现机制</h3><p>ASM 在启动时需要发现可用的磁盘，这一过程由 <code>ASM_DISKSTRING</code> 参数控制。该参数支持通配符，例如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> asm_diskstring <span class="operator">=</span> <span class="string">&#x27;/dev/mapper/mpath*&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="comment">-- 或使用 ASMFD</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> asm_diskstring <span class="operator">=</span> <span class="string">&#x27;AFD:*&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br></pre></td></tr></table></figure>
+
+<p>ASM 发现磁盘后，会读取磁盘的<strong>前两个 AU</strong> 来获取 ASM 磁盘头信息。磁盘头结构称为 <strong>kfdhdb</strong>（Kernel File Directory Header Block），其中包含：</p>
+<ul>
+<li>磁盘名称、磁盘编号</li>
+<li>所属磁盘组名称和编号</li>
+<li>AU 大小</li>
+<li>版本兼容性信息</li>
+<li>分配表（AT）和空闲空间表（FST）的位置</li>
+</ul>
+<p><strong>AU (Allocation Unit)</strong> 是 ASM 的最小分配单元，默认大小为 1MB（12c 及以后支持 4MB）。ASM 的条带化分为两种粒度：</p>
+<ul>
+<li><strong>Fine-grained striping</strong>：128KB 条带，适合 OLTP 系统的小 IO 随机读写</li>
+<li><strong>Coarse-grained striping</strong>：AU 大小条带，适合数据仓库的大 IO 顺序读写</li>
+</ul>
+<h3 id="2-3-ASM-冗余策略"><a href="#2-3-ASM-冗余策略" class="headerlink" title="2.3 ASM 冗余策略"></a>2.3 ASM 冗余策略</h3><p>ASM 提供三种冗余策略，每种策略有不同的适用场景：</p>
+<p><strong>External Redundancy</strong>：不提供 ASM 级别的镜像，完全依赖底层存储的 RAID 保护。适用于已有企业级存储 RAID 保护的场景（RAID 10、RAID 5 等）。空间利用率最高，为 100%。</p>
+<p><strong>Normal Redundancy</strong>：提供 2-way mirror，ASM 将每个 extent 的两份副本分布在不同的故障组（Failure Group）中。至少需要两个故障组。空间利用率为 50%。适用于没有存储级镜像的场景，或对数据保护有额外要求的场景。</p>
+<p><strong>High Redundancy</strong>：提供 3-way mirror，三个副本分布在三个故障组中。空间利用率为 33%。适用于对数据可用性要求极高的核心业务系统。</p>
+<p>空间计算公式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">可用空间 = 磁盘组原始空间 × (1 / 冗余因子) - 文件系统开销</span><br></pre></td></tr></table></figure>
+
+<p>例如，10 块 1TB 磁盘的磁盘组，Normal Redundancy 的可用空间约为 <code>(10 × 1TB × 0.5) - 开销 ≈ 4.5TB</code>。</p>
+<h3 id="2-4-ASM-权限管理"><a href="#2-4-ASM-权限管理" class="headerlink" title="2.4 ASM 权限管理"></a>2.4 ASM 权限管理</h3><p>ASM 访问磁盘设备需要正确的权限配置。Linux 环境下有三种主要方案：</p>
+<p><strong>udev rules 方案</strong>：通过编写 udev 规则，将 Multipath 设备的 owner 设置为 <code>oracle:oinstall</code>，权限设置为 <code>0660</code>。这是最传统也是最通用的方案，适用于所有 Oracle 版本。</p>
+<p>**ASMFD (ASM Filter Driver)**：Oracle 12c 引入的专用驱动，在内核层拦截对 ASM 磁盘的 IO，防止意外覆写 ASM 磁盘头。ASMFD 还简化了磁盘管理，无需手动配置权限。推荐在 12c 及以后版本中使用。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- ASMFD 配置示例</span></span><br><span class="line">$ asmcmd afd_label DATA01 <span class="operator">/</span>dev<span class="operator">/</span>mapper<span class="operator">/</span>mpathb</span><br><span class="line">$ asmcmd afd_scan</span><br><span class="line">$ asmcmd afd_lslbl</span><br></pre></td></tr></table></figure>
+
+<p><strong>oracleasm 方案</strong>：使用 ASMLib 工具包，通过 <code>oracleasm createdisk</code> 命令标记磁盘。适用于 RHEL&#x2F;OEL 系统，但自 RHEL 8 起不再提供原生 ASMLib 支持，需要第三方源。配置时需注意设置 <code>ORACLEASM_SCANORDER=&quot;dm&quot;</code> 以优先扫描 Multipath 设备。</p>
+<hr>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-多路径配置"><a href="#3-1-多路径配置" class="headerlink" title="3.1 多路径配置"></a>3.1 多路径配置</h3><h4 id="获取-SCSI-设备的-WWID"><a href="#获取-SCSI-设备的-WWID" class="headerlink" title="获取 SCSI 设备的 WWID"></a>获取 SCSI 设备的 WWID</h4><p>首先需要确定存储映射的 LUN 对应的 SCSI ID（WWID），以便在 multipath.conf 中进行精确配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法一：使用 scsi_id 命令（RHEL 6/7）</span></span><br><span class="line">/lib/udev/scsi_id -g -u -d /dev/sdb</span><br><span class="line"><span class="comment"># 输出示例：360060160f8a03800c8e6c5b7e3c3e411</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法二：使用 /sys 文件系统（RHEL 8+）</span></span><br><span class="line">/lib/udev/scsi_id --whitelisted --device=/dev/sdb</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法三：查看所有 SCSI 设备信息</span></span><br><span class="line"><span class="built_in">cat</span> /sys/block/sd*/device/vendor</span><br><span class="line">lsscsi</span><br></pre></td></tr></table></figure>
+
+<h4 id="完整的-multipath-conf-配置"><a href="#完整的-multipath-conf-配置" class="headerlink" title="完整的 multipath.conf 配置"></a>完整的 multipath.conf 配置</h4><p>以下是一个适用于 Oracle RAC 环境的 <code>/etc/multipath.conf</code> 完整配置示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br></pre></td><td class="code"><pre><span class="line"># /etc/multipath.conf - Oracle RAC 环境配置</span><br><span class="line"># 适用于 EMC/DELL PowerStore、HDS VSP、华为 OceanStor 等常见存储</span><br><span class="line"></span><br><span class="line">defaults &#123;</span><br><span class="line">    udev_dir                /dev</span><br><span class="line">    polling_interval        10</span><br><span class="line">    path_selector           &quot;round-robin 0&quot;</span><br><span class="line">    path_grouping_policy    multibus</span><br><span class="line">    getuid_callout          &quot;/lib/udev/scsi_id -g -u -d /dev/%n&quot;</span><br><span class="line">    path_checker            tur</span><br><span class="line">    rr_min_io               100</span><br><span class="line">    rr_min_io_rq            1</span><br><span class="line">    max_fds                 8192</span><br><span class="line">    no_path_retry           fail</span><br><span class="line">    user_friendly_names     yes</span><br><span class="line">    find_multipaths         yes</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># 黑名单：排除本地磁盘和 USB 设备</span><br><span class="line">blacklist &#123;</span><br><span class="line">    devnode &quot;^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*&quot;</span><br><span class="line">    devnode &quot;^sd[a-b]$&quot;        # 本地系统盘，根据实际环境调整</span><br><span class="line">    device &#123;</span><br><span class="line">        vendor  &quot;Dell&quot;</span><br><span class="line">        product &quot;Virtual&quot;</span><br><span class="line">    &#125;</span><br><span class="line">    device &#123;</span><br><span class="line">        vendor  &quot;ATA&quot;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># 黑名单例外：确保存储设备不被误排除</span><br><span class="line">blacklist_exceptions &#123;</span><br><span class="line">    wwid    &quot;360060160*&quot;</span><br><span class="line">    # wwid  &quot;36000d310*&quot;     # 根据存储厂商的 wwid 前缀调整</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># 默认配置</span><br><span class="line">multipaths &#123;</span><br><span class="line">    multipath &#123;</span><br><span class="line">        wwid                360060160f8a03800c8e6c5b7e3c3e411</span><br><span class="line">        alias               asm_data01</span><br><span class="line">        path_grouping_policy    group_by_prio</span><br><span class="line">        path_selector           &quot;round-robin 0&quot;</span><br><span class="line">        failback                immediate</span><br><span class="line">        rr_weight               priorities</span><br><span class="line">        no_path_retry           12</span><br><span class="line">        prio                    alua</span><br><span class="line">    &#125;</span><br><span class="line">    multipath &#123;</span><br><span class="line">        wwid                360060160f8a03800c8e6c5b7e3c3e412</span><br><span class="line">        alias               asm_data02</span><br><span class="line">        path_grouping_policy    group_by_prio</span><br><span class="line">        path_selector           &quot;round-robin 0&quot;</span><br><span class="line">        failback                immediate</span><br><span class="line">        rr_weight               priorities</span><br><span class="line">        no_path_retry           12</span><br><span class="line">        prio                    alua</span><br><span class="line">    &#125;</span><br><span class="line">    multipath &#123;</span><br><span class="line">        wwid                360060160f8a03800c8e6c5b7e3c3e501</span><br><span class="line">        alias               asm_fra01</span><br><span class="line">        path_grouping_policy    group_by_prio</span><br><span class="line">        path_selector           &quot;round-robin 0&quot;</span><br><span class="line">        failback                immediate</span><br><span class="line">        rr_weight               priorities</span><br><span class="line">        no_path_retry           12</span><br><span class="line">        prio                    alua</span><br><span class="line">    &#125;</span><br><span class="line">    multipath &#123;</span><br><span class="line">        wwid                360060160f8a03800c8e6c5b7e3c3e601</span><br><span class="line">        alias               asm_ocr01</span><br><span class="line">        path_grouping_policy    group_by_prio</span><br><span class="line">        path_selector           &quot;round-robin 0&quot;</span><br><span class="line">        failback                immediate</span><br><span class="line">        rr_weight               priorities</span><br><span class="line">        no_path_retry           queue</span><br><span class="line">        prio                    alua</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">devices &#123;</span><br><span class="line">    device &#123;</span><br><span class="line">        vendor                  &quot;VNX&quot;</span><br><span class="line">        product                 &quot;.*&quot;</span><br><span class="line">        path_grouping_policy    group_by_prio</span><br><span class="line">        path_checker            tur</span><br><span class="line">        path_selector           &quot;round-robin 0&quot;</span><br><span class="line">        failback                immediate</span><br><span class="line">        prio                    emc</span><br><span class="line">        no_path_retry           12</span><br><span class="line">        hardware_handler        &quot;0&quot;</span><br><span class="line">    &#125;</span><br><span class="line">    # 华为 OceanStor 配置示例</span><br><span class="line">    device &#123;</span><br><span class="line">        vendor                  &quot;HUAWEI&quot;</span><br><span class="line">        product                 &quot;XSG1&quot;</span><br><span class="line">        path_grouping_policy    group_by_prio</span><br><span class="line">        path_checker            tur</span><br><span class="line">        path_selector           &quot;round-robin 0&quot;</span><br><span class="line">        failback                immediate</span><br><span class="line">        prio                    alua</span><br><span class="line">        no_path_retry           12</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="验证多路径配置"><a href="#验证多路径配置" class="headerlink" title="验证多路径配置"></a>验证多路径配置</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 重载 multipath 配置</span></span><br><span class="line">systemctl reload multipathd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看多路径状态</span></span><br><span class="line">multipath -ll</span><br><span class="line"></span><br><span class="line"><span class="comment"># 输出示例：</span></span><br><span class="line"><span class="comment"># asm_data01 (360060160f8a03800c8e6c5b7e3c3e411) dm-4 VNX,5300</span></span><br><span class="line"><span class="comment"># size=500G features=&#x27;1 queue_if_no_path&#x27; hwhandler=&#x27;1 alua&#x27;</span></span><br><span class="line"><span class="comment"># |- 3:0:0:0 sdb 8:16  active ready running</span></span><br><span class="line"><span class="comment"># |- 3:0:1:0 sdc 8:32  active ready running</span></span><br><span class="line"><span class="comment"># |- 4:0:0:0 sdd 8:48  active ready running</span></span><br><span class="line"><span class="comment"># `- 4:0:1:0 sde 8:64  active ready running</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 multipath 设备拓扑</span></span><br><span class="line">multipath -v3 -d      <span class="comment"># dry-run 模式，不实际执行</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 dm 设备信息</span></span><br><span class="line">dmsetup <span class="built_in">ls</span></span><br><span class="line">dmsetup status</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-ASM-磁盘准备"><a href="#3-2-ASM-磁盘准备" class="headerlink" title="3.2 ASM 磁盘准备"></a>3.2 ASM 磁盘准备</h3><h4 id="方案一：使用-udev-配置磁盘权限"><a href="#方案一：使用-udev-配置磁盘权限" class="headerlink" title="方案一：使用 udev 配置磁盘权限"></a>方案一：使用 udev 配置磁盘权限</h4><p>在 RHEL 7&#x2F;8 中，创建 udev 规则文件 <code>/etc/udev/rules.d/99-oracle-asmdevices.rules</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /etc/udev/rules.d/99-oracle-asmdevices.rules</span></span><br><span class="line"><span class="comment"># 方式一：按 wwid 匹配（推荐）</span></span><br><span class="line">ACTION==<span class="string">&quot;add|change&quot;</span>, ENV&#123;DM_UUID&#125;==<span class="string">&quot;mpath-360060160f8a03800c8e6c5b7e3c3e411&quot;</span>, OWNER=<span class="string">&quot;oracle&quot;</span>, GROUP=<span class="string">&quot;oinstall&quot;</span>, MODE=<span class="string">&quot;0660&quot;</span></span><br><span class="line">ACTION==<span class="string">&quot;add|change&quot;</span>, ENV&#123;DM_UUID&#125;==<span class="string">&quot;mpath-360060160f8a03800c8e6c5b7e3c3e412&quot;</span>, OWNER=<span class="string">&quot;oracle&quot;</span>, GROUP=<span class="string">&quot;oinstall&quot;</span>, MODE=<span class="string">&quot;0660&quot;</span></span><br><span class="line">ACTION==<span class="string">&quot;add|change&quot;</span>, ENV&#123;DM_UUID&#125;==<span class="string">&quot;mpath-360060160f8a03800c8e6c5b7e3c3e501&quot;</span>, OWNER=<span class="string">&quot;oracle&quot;</span>, GROUP=<span class="string">&quot;oinstall&quot;</span>, MODE=<span class="string">&quot;0660&quot;</span></span><br><span class="line">ACTION==<span class="string">&quot;add|change&quot;</span>, ENV&#123;DM_UUID&#125;==<span class="string">&quot;mpath-360060160f8a03800c8e6c5b7e3c3e601&quot;</span>, OWNER=<span class="string">&quot;oracle&quot;</span>, GROUP=<span class="string">&quot;oinstall&quot;</span>, MODE=<span class="string">&quot;0660&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 方式二：按 alias 匹配</span></span><br><span class="line"><span class="comment"># ACTION==&quot;add|change&quot;, ENV&#123;DM_NAME&#125;==&quot;asm_data01&quot;, OWNER=&quot;oracle&quot;, GROUP=&quot;oinstall&quot;, MODE=&quot;0660&quot;</span></span><br><span class="line"><span class="comment"># ACTION==&quot;add|change&quot;, ENV&#123;DM_NAME&#125;==&quot;asm_data02&quot;, OWNER=&quot;oracle&quot;, GROUP=&quot;oinstall&quot;, MODE=&quot;0660&quot;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 重载 udev 规则</span></span><br><span class="line">udevadm control --reload-rules</span><br><span class="line">udevadm trigger --<span class="built_in">type</span>=devices --action=change</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证权限</span></span><br><span class="line"><span class="built_in">ls</span> -l /dev/mapper/asm_*</span><br><span class="line"><span class="comment"># brw-rw---- 1 oracle oinstall 253,  4 Jun  5 10:00 /dev/mapper/asm_data01</span></span><br><span class="line"><span class="comment"># brw-rw---- 1 oracle oinstall 253,  5 Jun  5 10:00 /dev/mapper/asm_data02</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="方案二：ASMFD-配置流程"><a href="#方案二：ASMFD-配置流程" class="headerlink" title="方案二：ASMFD 配置流程"></a>方案二：ASMFD 配置流程</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 配置 ASMFD 驱动（在 Grid Infrastructure 安装前执行）</span></span><br><span class="line">$ asmcmd afd_configure</span><br><span class="line"><span class="comment"># 或在 GI 安装过程中选择 &quot;Configure ASM Filter Driver&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 标记磁盘</span></span><br><span class="line">$ asmcmd afd_label DATA01 /dev/mapper/asm_data01</span><br><span class="line">$ asmcmd afd_label DATA02 /dev/mapper/asm_data02</span><br><span class="line">$ asmcmd afd_label FRA01  /dev/mapper/asm_fra01</span><br><span class="line">$ asmcmd afd_label OCR01  /dev/mapper/asm_ocr01</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 扫描并验证</span></span><br><span class="line">$ asmcmd afd_scan</span><br><span class="line">$ asmcmd afd_lslbl</span><br><span class="line"><span class="comment"># ------------------------------------------------------------------------------------------------</span></span><br><span class="line"><span class="comment"># Label                     Duplicate  Path</span></span><br><span class="line"><span class="comment"># =================================================================================================</span></span><br><span class="line"><span class="comment"># DATA01                    No         /dev/mapper/asm_data01</span></span><br><span class="line"><span class="comment"># DATA02                    No         /dev/mapper/asm_data02</span></span><br><span class="line"><span class="comment"># FRA01                     No         /dev/mapper/asm_fra01</span></span><br><span class="line"><span class="comment"># OCR01                     No         /dev/mapper/asm_ocr01</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 在 RAC 的所有节点执行 afd_scan</span></span><br><span class="line">$ ssh racnode2 <span class="string">&quot;asmcmd afd_scan&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="方案三：oracleasm-createdisk"><a href="#方案三：oracleasm-createdisk" class="headerlink" title="方案三：oracleasm createdisk"></a>方案三：oracleasm createdisk</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在所有节点执行</span></span><br><span class="line"><span class="comment"># 1. 配置 oracleasm</span></span><br><span class="line">$ /etc/init.d/oracleasm configure</span><br><span class="line"><span class="comment"># Default user: oracle</span></span><br><span class="line"><span class="comment"># Default group: oinstall</span></span><br><span class="line"><span class="comment"># Start on boot: y</span></span><br><span class="line"><span class="comment"># Scan for disk on boot: y</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 关键：配置扫描顺序，优先扫描 multipath 设备</span></span><br><span class="line"><span class="comment"># 编辑 /etc/sysconfig/oracleasm</span></span><br><span class="line">ORACLEASM_SCANORDER=<span class="string">&quot;mpath dm&quot;</span></span><br><span class="line">ORACLEASM_SCANEXCLUDE=<span class="string">&quot;sd&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 创建 ASM 磁盘（在任一节点执行）</span></span><br><span class="line">$ /etc/init.d/oracleasm createdisk DATA01 /dev/mapper/asm_data01</span><br><span class="line">$ /etc/init.d/oracleasm createdisk DATA02 /dev/mapper/asm_data02</span><br><span class="line">$ /etc/init.d/oracleasm createdisk FRA01  /dev/mapper/asm_fra01</span><br><span class="line">$ /etc/init.d/oracleasm createdisk OCR01  /dev/mapper/asm_ocr01</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 在其他节点扫描</span></span><br><span class="line">$ /etc/init.d/oracleasm scandisks</span><br><span class="line">$ /etc/init.d/oracleasm listdisks</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-ASM-磁盘组创建"><a href="#3-3-ASM-磁盘组创建" class="headerlink" title="3.3 ASM 磁盘组创建"></a>3.3 ASM 磁盘组创建</h3><h4 id="三种冗余级别的磁盘组创建语句"><a href="#三种冗余级别的磁盘组创建语句" class="headerlink" title="三种冗余级别的磁盘组创建语句"></a>三种冗余级别的磁盘组创建语句</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 1. External Redundancy：用于 DATA 磁盘组（存储层已有 RAID 10 保护）</span></span><br><span class="line"><span class="keyword">CREATE</span> DISKGROUP DATA <span class="keyword">EXTERNAL</span> REDUNDANCY</span><br><span class="line">  DISK <span class="string">&#x27;/dev/mapper/asm_data01&#x27;</span> NAME DATA_001,</span><br><span class="line">  DISK <span class="string">&#x27;/dev/mapper/asm_data02&#x27;</span> NAME DATA_002</span><br><span class="line">  ATTRIBUTE</span><br><span class="line">    <span class="string">&#x27;compatible.asm&#x27;</span>    <span class="operator">=</span> <span class="string">&#x27;19.0&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;compatible.rdbms&#x27;</span>  <span class="operator">=</span> <span class="string">&#x27;19.0&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;au_size&#x27;</span>           <span class="operator">=</span> <span class="string">&#x27;4M&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 2. Normal Redundancy：用于 FRA 磁盘组</span></span><br><span class="line"><span class="keyword">CREATE</span> DISKGROUP FRA NORMAL REDUNDANCY</span><br><span class="line">  FAILGROUP FG1 DISK <span class="string">&#x27;/dev/mapper/asm_fra01&#x27;</span> NAME FRA_001</span><br><span class="line">  FAILGROUP FG2 DISK <span class="string">&#x27;/dev/mapper/asm_fra02&#x27;</span> NAME FRA_002</span><br><span class="line">  ATTRIBUTE</span><br><span class="line">    <span class="string">&#x27;compatible.asm&#x27;</span>    <span class="operator">=</span> <span class="string">&#x27;19.0&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;compatible.rdbms&#x27;</span>  <span class="operator">=</span> <span class="string">&#x27;19.0&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;au_size&#x27;</span>           <span class="operator">=</span> <span class="string">&#x27;4M&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 3. High Redundancy：用于 OCR/Voting Disk 磁盘组</span></span><br><span class="line"><span class="keyword">CREATE</span> DISKGROUP OCR HIGH REDUNDANCY</span><br><span class="line">  FAILGROUP FG1 DISK <span class="string">&#x27;/dev/mapper/asm_ocr01&#x27;</span> NAME OCR_001</span><br><span class="line">  FAILGROUP FG2 DISK <span class="string">&#x27;/dev/mapper/asm_ocr02&#x27;</span> NAME OCR_002</span><br><span class="line">  FAILGROUP FG3 DISK <span class="string">&#x27;/dev/mapper/asm_ocr03&#x27;</span> NAME OCR_003</span><br><span class="line">  ATTRIBUTE</span><br><span class="line">    <span class="string">&#x27;compatible.asm&#x27;</span>    <span class="operator">=</span> <span class="string">&#x27;19.0&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;compatible.rdbms&#x27;</span>  <span class="operator">=</span> <span class="string">&#x27;19.0&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="兼容性属性说明"><a href="#兼容性属性说明" class="headerlink" title="兼容性属性说明"></a>兼容性属性说明</h4><ul>
+<li><strong>compatible.asm</strong>：ASM 实例的最低兼容版本。设置后不可回退，影响 ASM 集群的功能特性。</li>
+<li><strong>compatible.rdbms</strong>：数据库实例的最低兼容版本。如果数据库版本低于此值，将无法挂载该磁盘组。</li>
+<li><strong>au_size</strong>：Allocation Unit 大小。12c 起支持 4MB，对大表空间能减少 extent map 的碎片化。</li>
+</ul>
+<h4 id="条带化与性能优化"><a href="#条带化与性能优化" class="headerlink" title="条带化与性能优化"></a>条带化与性能优化</h4><p>ASM 的条带化模式在 11g 以后默认使用 <strong>Coarse striping</strong>（AU 粒度）。对于 OLTP 系统，可以在文件级别设置 Fine striping：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在数据库层面创建表空间时使用 Fine-grained striping</span></span><br><span class="line"><span class="comment">-- 需要通过文件属性控制，通常建议让 ASM 自动管理</span></span><br></pre></td></tr></table></figure>
+
+<p>最佳实践是将数据文件和归档日志放在不同的磁盘组（DATA vs FRA），避免 IO 竞争。</p>
+<h3 id="3-4-ASM-管理"><a href="#3-4-ASM-管理" class="headerlink" title="3.4 ASM 管理"></a>3.4 ASM 管理</h3><h4 id="asmcmd-常用命令"><a href="#asmcmd-常用命令" class="headerlink" title="asmcmd 常用命令"></a>asmcmd 常用命令</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看磁盘组状态</span></span><br><span class="line">asmcmd lsdg</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看磁盘信息</span></span><br><span class="line">asmcmd lsblk</span><br><span class="line"><span class="comment"># 或在 SQL 中：</span></span><br><span class="line"><span class="comment"># SQL&gt; SELECT name, path, header_status, state, total_mb, free_mb FROM V$ASM_DISK;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看实例信息</span></span><br><span class="line">asmcmd lsinst</span><br><span class="line"></span><br><span class="line"><span class="comment"># 切换到特定磁盘组并浏览文件</span></span><br><span class="line">asmcmd</span><br><span class="line">ASMCMD&gt; <span class="built_in">cd</span> +DATA</span><br><span class="line">ASMCMD&gt; <span class="built_in">ls</span></span><br><span class="line">ASMCMD&gt; find +DATA -name <span class="string">&quot;*.dbf&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 手动 rebalance</span></span><br><span class="line">ASMCMD&gt; rebal -w   <span class="comment"># 等待 rebalance 完成</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 rebalance 进度</span></span><br><span class="line">ASMCMD&gt; lsop</span><br></pre></td></tr></table></figure>
+
+<h4 id="磁盘添加-删除-替换流程"><a href="#磁盘添加-删除-替换流程" class="headerlink" title="磁盘添加&#x2F;删除&#x2F;替换流程"></a>磁盘添加&#x2F;删除&#x2F;替换流程</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 1. 添加新磁盘到现有磁盘组</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA <span class="keyword">ADD</span></span><br><span class="line">  DISK <span class="string">&#x27;/dev/mapper/asm_data03&#x27;</span> NAME DATA_003</span><br><span class="line">  REBALANCE POWER <span class="number">8</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 2. 监控 rebalance 进度</span></span><br><span class="line"><span class="keyword">SELECT</span> group_number, operation, state, power, est_minutes</span><br><span class="line"><span class="keyword">FROM</span> V$ASM_OPERATION;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 3. 删除磁盘（rebalance 会自动迁移数据）</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA <span class="keyword">DROP</span> DISK DATA_003;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 4. 替换磁盘（先删后加）</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA</span><br><span class="line">  <span class="keyword">DROP</span> DISK DATA_001</span><br><span class="line">  <span class="keyword">ADD</span> DISK <span class="string">&#x27;/dev/mapper/asm_data04&#x27;</span> NAME DATA_004</span><br><span class="line">  REBALANCE POWER <span class="number">8</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 5. 在线调整 rebalance 功率（0-11，0 表示暂停）</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP <span class="keyword">ALL</span> REBALANCE POWER <span class="number">4</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 6. 挂载/卸载磁盘组</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA MOUNT;</span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA DISMOUNT;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 7. 检查磁盘组一致性</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA <span class="keyword">CHECK</span> <span class="keyword">ALL</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="自动化监控脚本"><a href="#自动化监控脚本" class="headerlink" title="自动化监控脚本"></a>自动化监控脚本</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 检查所有磁盘组的空间使用率</span></span><br><span class="line"><span class="keyword">SELECT</span> name,</span><br><span class="line">       type,</span><br><span class="line">       total_mb,</span><br><span class="line">       free_mb,</span><br><span class="line">       ROUND((<span class="number">1</span> <span class="operator">-</span> free_mb <span class="operator">/</span> total_mb) <span class="operator">*</span> <span class="number">100</span>, <span class="number">2</span>) <span class="keyword">AS</span> used_pct,</span><br><span class="line">       ROUND(free_mb <span class="operator">/</span> DECODE(type, <span class="string">&#x27;EXTERN&#x27;</span>, <span class="number">1</span>, <span class="string">&#x27;NORMAL&#x27;</span>, <span class="number">2</span>, <span class="string">&#x27;HIGH&#x27;</span>, <span class="number">3</span>), <span class="number">2</span>) <span class="keyword">AS</span> effective_free_mb</span><br><span class="line"><span class="keyword">FROM</span> V$ASM_DISKGROUP</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> used_pct <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 检查磁盘状态异常</span></span><br><span class="line"><span class="keyword">SELECT</span> name, path, header_status, mode_status, state</span><br><span class="line"><span class="keyword">FROM</span> V$ASM_DISK</span><br><span class="line"><span class="keyword">WHERE</span> header_status <span class="operator">!=</span> <span class="string">&#x27;MEMBER&#x27;</span></span><br><span class="line">   <span class="keyword">OR</span> mode_status <span class="operator">!=</span> <span class="string">&#x27;ONLINE&#x27;</span></span><br><span class="line">   <span class="keyword">OR</span> state <span class="operator">!=</span> <span class="string">&#x27;NORMAL&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><p>完成所有配置后，需要逐层验证整个存储链路：</p>
+<h4 id="4-1-Multipath-层验证"><a href="#4-1-Multipath-层验证" class="headerlink" title="4.1 Multipath 层验证"></a>4.1 Multipath 层验证</h4><pre><code class="bash"># 确认所有路径均为 active/ready
+multipath -ll | grep -E &quot;(active|faulty|failed)&quot;
+# 所有路径应显示 &quot;active ready running&quot;
+</code></pre>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RAC/" rel="tag"># RAC</a>
+              <a href="/tags/ASM/" rel="tag"># ASM</a>
+              <a href="/tags/%E5%AD%98%E5%82%A8/" rel="tag"># 存储</a>
+              <a href="/tags/Multipath/" rel="tag"># Multipath</a>
+              <a href="/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/" rel="tag"># 多路径</a>
+              <a href="/tags/%E5%86%97%E4%BD%99%E7%AD%96%E7%95%A5/" rel="tag"># 冗余策略</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/01/19/oracle/grid-infrastructure-deep-dive/" rel="prev" title="Grid Infrastructure 深度解析：OCR&#x2F;Voting Disk&#x2F;SCAN 与集群启动逻辑">
+                  <i class="fa fa-angle-left"></i> Grid Infrastructure 深度解析：OCR/Voting Disk/SCAN 与集群启动逻辑
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/01/31/oracle/ansible-automated-deployment/" rel="next" title="Ansible 自动化部署 Oracle：从 OS 准备到软件安装的全流程">
+                  Ansible 自动化部署 Oracle：从 OS 准备到软件安装的全流程 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

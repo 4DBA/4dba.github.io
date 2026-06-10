@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/04/02/oracle/locks-blocking-session-resolution/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/04/02/oracle/locks-blocking-session-resolution/","path":"2026/04/02/oracle/locks-blocking-session-resolution/","title":"TX/TM 锁机制详解与阻塞会话快速定位"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>TX/TM 锁机制详解与阻塞会话快速定位 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Oracle-%E9%94%81%E6%9C%BA%E5%88%B6%E6%A6%82%E8%A7%88"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 Oracle 锁机制概览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-TX-%E9%94%81-Transaction-Lock"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 TX 锁 (Transaction Lock)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-TM-%E9%94%81-DML-Enqueue"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 TM 锁 (DML Enqueue)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-%E9%98%BB%E5%A1%9E%E9%93%BE%E5%88%86%E6%9E%90"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 阻塞链分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E9%98%BB%E5%A1%9E%E4%BC%9A%E8%AF%9D%E5%AE%9A%E4%BD%8D"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 阻塞会话定位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E5%AE%89%E5%85%A8%E5%A4%84%E7%90%86%E9%98%BB%E5%A1%9E"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 安全处理阻塞</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E6%AD%BB%E9%94%81%E5%A4%84%E7%90%86"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 死锁处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-ITL-%E4%BA%89%E7%94%A8%E4%BC%98%E5%8C%96"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 ITL 争用优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%81%E9%97%AE%E9%A2%98%E7%9A%84%E9%A2%84%E9%98%B2%E7%AD%96%E7%95%A5"><span class="nav-number">5.1.</span> <span class="nav-text">锁问题的预防策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%B1%82%E4%BA%8B%E5%8A%A1%E8%AE%BE%E8%AE%A1%E5%BB%BA%E8%AE%AE"><span class="nav-number">5.2.</span> <span class="nav-text">应用层事务设计建议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E9%94%81%E9%97%AE%E9%A2%98%E5%BF%AB%E9%80%9F%E8%AF%8A%E6%96%AD%E6%B8%85%E5%8D%95"><span class="nav-number">5.3.</span> <span class="nav-text">常见锁问题快速诊断清单</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/04/02/oracle/locks-blocking-session-resolution/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="TX&#x2F;TM 锁机制详解与阻塞会话快速定位 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          TX/TM 锁机制详解与阻塞会话快速定位
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-04-02 10:00:00" itemprop="dateCreated datePublished" datetime="2026-04-02T10:00:00+00:00">2026-04-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在 Oracle 数据库的日常运维中，锁与阻塞问题是 DBA 最常面对的性能故障之一。一个未被及时处理的阻塞会话，可能在数分钟内引发连锁反应，导致整个业务系统的雪崩式瘫痪。本文将从 Oracle 锁机制的底层原理出发，系统讲解 TX 锁、TM 锁的工作机制，并提供一套完整的阻塞诊断与处理方案。</p>
+<span id="more"></span>
+
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>在生产环境中，锁与阻塞是最常见也最棘手的性能问题之一。当一个会话持有某个资源的锁，而另一个会话需要获取同一资源的兼容锁时，后者就必须等待——这就是阻塞（Blocking）。与简单的慢 SQL 不同，阻塞问题往往具有突发性和传染性。</p>
+<p><strong>阻塞的雪崩效应</strong>是 DBA 最担心的场景：当一个核心事务表上的行被长时间锁定，所有依赖该表的业务操作都会排队等待。随着等待队列的拉长，数据库连接池被迅速耗尽，应用服务器开始报连接超时，最终导致整个业务链路瘫痪。在实际案例中，一个简单的 <code>UPDATE</code> 语句未及时 <code>COMMIT</code>，就可能在 5 分钟内导致上百个会话进入等待状态。</p>
+<p><strong>死锁（Deadlock）</strong>则是锁问题的另一种极端形式。当两个或多个会话相互等待对方释放资源时，Oracle 会自动检测死锁并通过回滚其中一个会话来打破循环等待。虽然 Oracle 能自动处理死锁，但频繁的死锁往往意味着应用层事务设计存在根本性缺陷。</p>
+<p>因此，掌握 Oracle 的锁机制原理、具备快速定位和处理阻塞会话的能力，是每一位 DBA 的核心技能。</p>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-Oracle-锁机制概览"><a href="#2-1-Oracle-锁机制概览" class="headerlink" title="2.1 Oracle 锁机制概览"></a>2.1 Oracle 锁机制概览</h3><p>Oracle 的锁机制可以分为以下几大类：</p>
+<p><strong>按功能分类：</strong></p>
+<table>
+<thead>
+<tr>
+<th>锁类型</th>
+<th>说明</th>
+<th>典型场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DML Lock</td>
+<td>保护数据行和表结构不被并发修改</td>
+<td>SELECT FOR UPDATE, UPDATE, DELETE</td>
+</tr>
+<tr>
+<td>DDL Lock</td>
+<td>保护数据字典对象定义</td>
+<td>ALTER TABLE, DROP INDEX</td>
+</tr>
+<tr>
+<td>Latch</td>
+<td>内存结构的轻量级保护机制</td>
+<td>Buffer Cache, Shared Pool</td>
+</tr>
+<tr>
+<td>Mutex</td>
+<td>比 Latch 更细粒度的内存保护</td>
+<td>Cursor Pin, Library Cache</td>
+</tr>
+</tbody></table>
+<p><strong>DML 锁的模式（Lock Mode）：</strong></p>
+<p>Oracle 使用数字编码表示锁的级别，从低到高依次为：</p>
+<ul>
+<li>**Row Share (RS, Mode&#x3D;2)**：<code>SELECT ... FOR UPDATE</code> 获取，允许其他会话并发读写</li>
+<li>**Row Exclusive (RX, Mode&#x3D;3)**：<code>INSERT/UPDATE/DELETE</code> 获取，允许其他会话并发 DML</li>
+<li>**Share (S, Mode&#x3D;4)**：<code>CREATE INDEX</code> 获取，允许并发读但禁止写</li>
+<li>**Share Row Exclusive (SRX, Mode&#x3D;5)**：较少使用，介于 Share 和 Exclusive 之间</li>
+<li>**Exclusive (X, Mode&#x3D;6)**：最高级别，完全独占资源</li>
+</ul>
+<p>锁的兼容性矩阵决定了并发行为：两个 Row Exclusive 锁可以共存（所以多个会话可以同时对同一张表做 DML），但 Exclusive 锁与任何其他锁都不兼容。</p>
+<h3 id="2-2-TX-锁-Transaction-Lock"><a href="#2-2-TX-锁-Transaction-Lock" class="headerlink" title="2.2 TX 锁 (Transaction Lock)"></a>2.2 TX 锁 (Transaction Lock)</h3><p>TX 锁是 Oracle 中最重要的锁类型之一，它与事务（Transaction）紧密关联。</p>
+<p><strong>TX 锁的获取时机：</strong></p>
+<p>当一个会话执行 DML 操作并修改数据时，Oracle 会在 Undo Segment 的事务表中分配一个事务槽（Slot），同时在被修改的数据行上标记事务信息。此时该会话就持有了一个 TX 锁。注意，TX 锁是在事务提交或回滚之前一直持有的，而不是在语句执行完就释放。</p>
+<p><strong>TX 锁的 Enqueue Type：</strong></p>
+<p>在 <code>V$LOCK</code> 视图中，TX 锁的 <code>TYPE</code> 列值为 <code>&#39;TX&#39;</code>，而 <code>REQUEST</code> 和 <code>LMODE</code> 列的组合揭示了等待的具体原因：</p>
+<ul>
+<li><p><strong>TX-4（Mode&#x3D;4，ITL 等待）</strong>：请求者需要在数据块的 ITL（Interested Transaction List）中分配一个事务槽，但所有可用的 ITL 槽都已被占用。这通常发生在高并发场景下，或者表的 <code>INITRANS</code> 参数设置过低时。</p>
+</li>
+<li><p><strong>TX-6（Mode&#x3D;6，行锁等待）</strong>：请求者想要修改某一行，但该行已经被另一个活动事务锁定。这是最常见的 TX 等待类型，通常由长事务引起。</p>
+</li>
+</ul>
+<p><strong>ITL 争用详解：</strong></p>
+<p>ITL（Interested Transaction List）位于每个数据块的块头区域，记录了哪些事务正在修改该块中的数据。每个 ITL 条目占 24 字节，默认情况下，一个数据块至少有 <code>INITRANS</code> 个 ITL 槽（默认值为 2），最多可以动态扩展到 <code>MAXTRANS</code> 个（11g 以后 MAXTRANS 固定为 255）。</p>
+<p>当大量并发事务同时修改同一个数据块时，如果 ITL 槽不足，新的事务就必须等待——这就是 ITL 争用。在 <code>V$LOCK</code> 中表现为 <code>TYPE=&#39;TX&#39;</code> 且 <code>REQUEST=4</code>。</p>
+<h3 id="2-3-TM-锁-DML-Enqueue"><a href="#2-3-TM-锁-DML-Enqueue" class="headerlink" title="2.3 TM 锁 (DML Enqueue)"></a>2.3 TM 锁 (DML Enqueue)</h3><p>TM 锁（也称为 DML Enqueue）用于保护表的结构不被 DML 操作期间的 DDL 操作修改。当一个会话对某张表执行 DML 操作时，Oracle 会在表级别获取一个 TM 锁。</p>
+<p><strong>TM 锁的模式与 DML 操作的关系：</strong></p>
+<ul>
+<li><code>INSERT/UPDATE/DELETE</code> 获取 <strong>Row Exclusive (RX, Mode&#x3D;3)</strong> 的 TM 锁</li>
+<li><code>SELECT ... FOR UPDATE</code> 获取 <strong>Row Share (RS, Mode&#x3D;2)</strong> 的 TM 锁</li>
+<li><code>LOCK TABLE ... IN SHARE MODE</code> 获取 <strong>Share (S, Mode&#x3D;4)</strong> 的 TM 锁</li>
+</ul>
+<p>由于多个 RX 锁可以兼容共存，所以正常的并发 DML 不会因为 TM 锁产生阻塞。</p>
+<p><strong>外键缺失索引导致的 TM 锁升级：</strong></p>
+<p>这是一个经典的 Oracle 性能陷阱。当子表的外键列没有索引时，对父表执行 <code>DELETE</code> 或 <code>UPDATE</code> 主键操作时，Oracle 必须对子表加 <strong>Share (S, Mode&#x3D;4)</strong> 级别的 TM 锁来检查是否存在子记录。Share 锁与 Row Exclusive 锁不兼容，这意味着在锁持有期间，子表上的任何 DML 操作都会被阻塞。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 检查外键列缺失索引的情况</span></span><br><span class="line"><span class="keyword">SELECT</span></span><br><span class="line">    c.table_name      <span class="keyword">AS</span> child_table,</span><br><span class="line">    c.constraint_name <span class="keyword">AS</span> fk_constraint,</span><br><span class="line">    cc.column_name    <span class="keyword">AS</span> fk_column</span><br><span class="line"><span class="keyword">FROM</span></span><br><span class="line">    user_constraints  p</span><br><span class="line">    <span class="keyword">JOIN</span> user_constraints  c  <span class="keyword">ON</span> c.r_constraint_name <span class="operator">=</span> p.constraint_name</span><br><span class="line">    <span class="keyword">JOIN</span> user_cons_columns cc <span class="keyword">ON</span> cc.constraint_name  <span class="operator">=</span> c.constraint_name</span><br><span class="line"><span class="keyword">WHERE</span></span><br><span class="line">    p.constraint_type <span class="operator">=</span> <span class="string">&#x27;P&#x27;</span></span><br><span class="line">    <span class="keyword">AND</span> c.constraint_type   <span class="operator">=</span> <span class="string">&#x27;R&#x27;</span></span><br><span class="line">    <span class="keyword">AND</span> <span class="keyword">NOT</span> <span class="keyword">EXISTS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> <span class="number">1</span></span><br><span class="line">        <span class="keyword">FROM</span> user_ind_columns i</span><br><span class="line">        <span class="keyword">WHERE</span> i.table_name  <span class="operator">=</span> cc.table_name</span><br><span class="line">          <span class="keyword">AND</span> i.column_name <span class="operator">=</span> cc.column_name</span><br><span class="line">          <span class="keyword">AND</span> i.column_position <span class="operator">=</span> cc.position</span><br><span class="line">    );</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-4-阻塞链分析"><a href="#2-4-阻塞链分析" class="headerlink" title="2.4 阻塞链分析"></a>2.4 阻塞链分析</h3><p>在复杂的生产环境中，阻塞往往不是简单的”一个会话阻塞另一个”，而是形成一条甚至多条阻塞链（Blocking Chain）。</p>
+<p><strong>锁等待链的形成：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Session A (持有锁) → 阻塞 → Session B (等待锁) → 阻塞 → Session C (等待锁)</span><br></pre></td></tr></table></figure>
+
+<p>Session B 等待 A 释放锁，而 Session C 又因为 B 持有的另一个资源而等待 B。这种链式反应在高并发系统中非常常见。</p>
+<p><strong>V$LOCK, V$SESSION, V$TRANSACTION 的关系：</strong></p>
+<ul>
+<li><code>V$LOCK</code>：记录所有持有的锁和请求中的锁</li>
+<li><code>V$SESSION</code>：通过 <code>LOCKWAIT</code> 列关联到 <code>V$LOCK</code> 的 <code>KADDR</code></li>
+<li><code>V$TRANSACTION</code>：通过 <code>V$SESSION.TADDR</code> 关联，获取事务的详细信息（Undo 使用量等）</li>
+</ul>
+<p>理解这三张视图的关系是诊断锁问题的关键。<code>V$LOCK</code> 中 <code>BLOCK=1</code> 的记录表示该会话正在阻塞其他会话，而 <code>REQUEST&gt;0</code> 的记录表示该会话正在等待获取锁。</p>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-阻塞会话定位"><a href="#3-1-阻塞会话定位" class="headerlink" title="3.1 阻塞会话定位"></a>3.1 阻塞会话定位</h3><p>以下是我在日常运维中使用的核心阻塞诊断脚本，已经过多生产环境验证：</p>
+<p><strong>脚本一：快速定位阻塞源</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 快速查看当前所有阻塞关系</span></span><br><span class="line"><span class="keyword">SELECT</span></span><br><span class="line">    s1.sid              <span class="keyword">AS</span> blocking_sid,</span><br><span class="line">    s1.serial#          <span class="keyword">AS</span> blocking_serial,</span><br><span class="line">    s1.username         <span class="keyword">AS</span> blocking_user,</span><br><span class="line">    s1.machine          <span class="keyword">AS</span> blocking_machine,</span><br><span class="line">    s1.program          <span class="keyword">AS</span> blocking_program,</span><br><span class="line">    s1.status           <span class="keyword">AS</span> blocking_status,</span><br><span class="line">    s2.sid              <span class="keyword">AS</span> waiting_sid,</span><br><span class="line">    s2.serial#          <span class="keyword">AS</span> waiting_serial,</span><br><span class="line">    s2.username         <span class="keyword">AS</span> waiting_user,</span><br><span class="line">    s2.sql_id           <span class="keyword">AS</span> waiting_sql_id,</span><br><span class="line">    w.type              <span class="keyword">AS</span> lock_type,</span><br><span class="line">    w.id1               <span class="keyword">AS</span> lock_id1,</span><br><span class="line">    w.id2               <span class="keyword">AS</span> lock_id2,</span><br><span class="line">    w.ctime             <span class="keyword">AS</span> wait_seconds</span><br><span class="line"><span class="keyword">FROM</span></span><br><span class="line">    v$lock  w</span><br><span class="line">    <span class="keyword">JOIN</span> v$session s2 <span class="keyword">ON</span> s2.sid       <span class="operator">=</span> w.sid</span><br><span class="line">    <span class="keyword">JOIN</span> v$lock  h    <span class="keyword">ON</span> h.type       <span class="operator">=</span> w.type</span><br><span class="line">                     <span class="keyword">AND</span> h.id1        <span class="operator">=</span> w.id1</span><br><span class="line">                     <span class="keyword">AND</span> h.id2        <span class="operator">=</span> w.id2</span><br><span class="line">                     <span class="keyword">AND</span> h.lmode      <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">    <span class="keyword">JOIN</span> v$session s1 <span class="keyword">ON</span> s1.sid       <span class="operator">=</span> h.sid</span><br><span class="line"><span class="keyword">WHERE</span></span><br><span class="line">    w.request <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">    <span class="keyword">AND</span> h.lmode <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">    <span class="keyword">AND</span> s1.sid <span class="operator">!=</span> s2.sid</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span></span><br><span class="line">    w.ctime <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>脚本二：完整阻塞链分析</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 递归查询完整阻塞链</span></span><br><span class="line"><span class="keyword">WITH</span> blocking_tree <span class="keyword">AS</span> (</span><br><span class="line">    <span class="comment">-- 锚点：找到所有阻塞源（没有被别人阻塞的会话）</span></span><br><span class="line">    <span class="keyword">SELECT</span></span><br><span class="line">        s.sid,</span><br><span class="line">        s.serial#,</span><br><span class="line">        s.username,</span><br><span class="line">        s.machine,</span><br><span class="line">        s.program,</span><br><span class="line">        s.sql_id,</span><br><span class="line">        s.status,</span><br><span class="line">        s.last_call_et,</span><br><span class="line">        t.used_ublk     <span class="keyword">AS</span> undo_blocks,</span><br><span class="line">        t.start_time,</span><br><span class="line">        <span class="built_in">CAST</span>(s.sid <span class="keyword">AS</span> VARCHAR2(<span class="number">1000</span>)) <span class="keyword">AS</span> path,</span><br><span class="line">        <span class="number">0</span>                <span class="keyword">AS</span> level</span><br><span class="line">    <span class="keyword">FROM</span></span><br><span class="line">        v$session       s</span><br><span class="line">        <span class="keyword">JOIN</span> v$lock l   <span class="keyword">ON</span> l.sid <span class="operator">=</span> s.sid <span class="keyword">AND</span> l.type <span class="operator">=</span> <span class="string">&#x27;TX&#x27;</span> <span class="keyword">AND</span> l.lmode <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">        <span class="keyword">LEFT</span> <span class="keyword">JOIN</span> v$transaction t <span class="keyword">ON</span> s.taddr <span class="operator">=</span> t.addr</span><br><span class="line">    <span class="keyword">WHERE</span></span><br><span class="line">        s.sid <span class="keyword">IN</span> (</span><br><span class="line">            <span class="keyword">SELECT</span> h.sid</span><br><span class="line">            <span class="keyword">FROM</span> v$lock h</span><br><span class="line">            <span class="keyword">WHERE</span> h.request <span class="operator">=</span> <span class="number">0</span> <span class="keyword">AND</span> h.lmode <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">              <span class="keyword">AND</span> h.type <span class="operator">=</span> <span class="string">&#x27;TX&#x27;</span></span><br><span class="line">        )</span><br><span class="line">        <span class="keyword">AND</span> s.sid <span class="keyword">NOT</span> <span class="keyword">IN</span> (</span><br><span class="line">            <span class="keyword">SELECT</span> w.sid</span><br><span class="line">            <span class="keyword">FROM</span> v$lock w</span><br><span class="line">            <span class="keyword">WHERE</span> w.request <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">        )</span><br><span class="line">    <span class="keyword">UNION</span> <span class="keyword">ALL</span></span><br><span class="line">    <span class="comment">-- 递归：找到被当前层阻塞的会话</span></span><br><span class="line">    <span class="keyword">SELECT</span></span><br><span class="line">        s2.sid,</span><br><span class="line">        s2.serial#,</span><br><span class="line">        s2.username,</span><br><span class="line">        s2.machine,</span><br><span class="line">        s2.program,</span><br><span class="line">        s2.sql_id,</span><br><span class="line">        s2.status,</span><br><span class="line">        s2.last_call_et,</span><br><span class="line">        <span class="keyword">NULL</span>,</span><br><span class="line">        <span class="keyword">NULL</span>,</span><br><span class="line">        bt.path <span class="operator">||</span> <span class="string">&#x27; -&gt; &#x27;</span> <span class="operator">||</span> s2.sid,</span><br><span class="line">        bt.level <span class="operator">+</span> <span class="number">1</span></span><br><span class="line">    <span class="keyword">FROM</span></span><br><span class="line">        blocking_tree bt</span><br><span class="line">        <span class="keyword">JOIN</span> v$lock w  <span class="keyword">ON</span> w.request <span class="operator">&gt;</span> <span class="number">0</span> <span class="keyword">AND</span> w.type <span class="operator">=</span> <span class="string">&#x27;TX&#x27;</span></span><br><span class="line">        <span class="keyword">JOIN</span> v$lock h  <span class="keyword">ON</span> h.type <span class="operator">=</span> w.type <span class="keyword">AND</span> h.id1 <span class="operator">=</span> w.id1</span><br><span class="line">                      <span class="keyword">AND</span> h.id2 <span class="operator">=</span> w.id2 <span class="keyword">AND</span> h.lmode <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">                      <span class="keyword">AND</span> h.sid   <span class="operator">=</span> bt.sid</span><br><span class="line">        <span class="keyword">JOIN</span> v$session s2 <span class="keyword">ON</span> s2.sid <span class="operator">=</span> w.sid</span><br><span class="line">)</span><br><span class="line"><span class="keyword">SELECT</span></span><br><span class="line">    LPAD(<span class="string">&#x27; &#x27;</span>, level <span class="operator">*</span> <span class="number">2</span>, <span class="string">&#x27; &#x27;</span>) <span class="operator">||</span> sid    <span class="keyword">AS</span> blocking_tree,</span><br><span class="line">    username,</span><br><span class="line">    machine,</span><br><span class="line">    status,</span><br><span class="line">    sql_id,</span><br><span class="line">    last_call_et   <span class="keyword">AS</span> idle_seconds,</span><br><span class="line">    undo_blocks,</span><br><span class="line">    path</span><br><span class="line"><span class="keyword">FROM</span></span><br><span class="line">    blocking_tree</span><br><span class="line"><span class="keyword">START</span> <span class="keyword">WITH</span></span><br><span class="line">    level <span class="operator">=</span> <span class="number">0</span></span><br><span class="line"><span class="keyword">CONNECT</span> <span class="keyword">BY</span></span><br><span class="line">    PRIOR sid <span class="operator">=</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> h.sid</span><br><span class="line">        <span class="keyword">FROM</span> v$lock h</span><br><span class="line">        <span class="keyword">WHERE</span> h.type <span class="operator">=</span> <span class="string">&#x27;TX&#x27;</span> <span class="keyword">AND</span> h.lmode <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">          <span class="keyword">AND</span> h.id1 <span class="operator">=</span> (</span><br><span class="line">              <span class="keyword">SELECT</span> w2.id1 <span class="keyword">FROM</span> v$lock w2</span><br><span class="line">              <span class="keyword">WHERE</span> w2.sid <span class="operator">=</span> PRIOR sid <span class="keyword">AND</span> w2.request <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">          )</span><br><span class="line">          <span class="keyword">AND</span> ROWNUM <span class="operator">=</span> <span class="number">1</span></span><br><span class="line">    )</span><br><span class="line"><span class="keyword">ORDER</span> SIBLINGS <span class="keyword">BY</span></span><br><span class="line">    last_call_et <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>脚本三：等待事件关联分析</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 结合等待事件查看阻塞会话的详细信息</span></span><br><span class="line"><span class="keyword">SELECT</span></span><br><span class="line">    s.sid,</span><br><span class="line">    s.serial#,</span><br><span class="line">    s.username,</span><br><span class="line">    s.sql_id,</span><br><span class="line">    s.event,</span><br><span class="line">    s.wait_class,</span><br><span class="line">    s.seconds_in_wait,</span><br><span class="line">    s.state,</span><br><span class="line">    sw.p1              <span class="keyword">AS</span> p1_raw,</span><br><span class="line">    sw.p2              <span class="keyword">AS</span> p2_raw,</span><br><span class="line">    sw.p3              <span class="keyword">AS</span> p3_raw,</span><br><span class="line">    DECODE(sw.event,</span><br><span class="line">        <span class="string">&#x27;enq: TX - row lock contention&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;行锁等待 P1=&#x27;</span>  <span class="operator">||</span> TO_CHAR(sw.p1,<span class="string">&#x27;FM0XXXXXXX&#x27;</span>)</span><br><span class="line">            <span class="operator">||</span> <span class="string">&#x27; P2=&#x27;</span>      <span class="operator">||</span> sw.p2</span><br><span class="line">            <span class="operator">||</span> <span class="string">&#x27; P3=&#x27;</span>      <span class="operator">||</span> sw.p3,</span><br><span class="line">        <span class="string">&#x27;enq: TX - allocate ITL entry&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;ITL等待&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;enq: TM - contention&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;TM锁等待 Obj#=&#x27;</span> <span class="operator">||</span> sw.p2,</span><br><span class="line">        sw.event</span><br><span class="line">    ) <span class="keyword">AS</span> lock_detail</span><br><span class="line"><span class="keyword">FROM</span></span><br><span class="line">    v$session s</span><br><span class="line">    <span class="keyword">JOIN</span> v$session_wait sw <span class="keyword">ON</span> sw.sid <span class="operator">=</span> s.sid</span><br><span class="line"><span class="keyword">WHERE</span></span><br><span class="line">    s.blocking_session <span class="keyword">IS</span> <span class="keyword">NOT NULL</span></span><br><span class="line">    <span class="keyword">OR</span> s.sid <span class="keyword">IN</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> sid <span class="keyword">FROM</span> v$lock <span class="keyword">WHERE</span> request <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">    )</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span></span><br><span class="line">    s.seconds_in_wait <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>V$LOCK 视图关键列解读：</strong></p>
+<table>
+<thead>
+<tr>
+<th>列名</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SID</code></td>
+<td>持有或请求锁的会话 ID</td>
+</tr>
+<tr>
+<td><code>TYPE</code></td>
+<td>锁类型（TX, TM, UL 等）</td>
+</tr>
+<tr>
+<td><code>ID1, ID2</code></td>
+<td>锁资源标识符，TX 锁中 ID1&#x3D;回滚段号，ID2&#x3D;事务槽号</td>
+</tr>
+<tr>
+<td><code>LMODE</code></td>
+<td>持有的锁模式（0&#x3D;无，2&#x3D;RS，3&#x3D;RX，4&#x3D;S，5&#x3D;SRX，6&#x3D;X）</td>
+</tr>
+<tr>
+<td><code>REQUEST</code></td>
+<td>请求的锁模式（&gt;0 表示正在等待）</td>
+</tr>
+<tr>
+<td><code>CTIME</code></td>
+<td>锁已持有或等待的时间（秒）</td>
+</tr>
+<tr>
+<td><code>BLOCK</code></td>
+<td>是否正在阻塞其他会话（1&#x3D;是）</td>
+</tr>
+</tbody></table>
+<h3 id="3-2-安全处理阻塞"><a href="#3-2-安全处理阻塞" class="headerlink" title="3.2 安全处理阻塞"></a>3.2 安全处理阻塞</h3><p>定位到阻塞源后，需要根据具体情况决定处理策略。</p>
+<p><strong>Kill Session 的最佳实践：</strong></p>
+<p>在确认阻塞源后，优先联系应用端确认该事务是否可以回滚。如果需要 DBA 介入，使用以下命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 标准 Kill Session（等待事务回滚完成后释放）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> KILL SESSION <span class="string">&#x27;sid,serial#&#x27;</span> ;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 强制 Kill Session（立即断开连接，异步回滚事务）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> KILL SESSION <span class="string">&#x27;sid,serial#&#x27;</span> IMMEDIATE;</span><br></pre></td></tr></table></figure>
+
+<p><strong><code>IMMEDIATE</code> 选项的注意事项：</strong></p>
+<ul>
+<li><code>IMMEDIATE</code> 并不意味着跳过回滚，它只是立即断开客户端连接，事务回滚在后台异步进行</li>
+<li>在 RAC 环境中需要指定 <code>INST_ID</code>：<code>ALTER SYSTEM KILL SESSION &#39;sid,serial#,@inst_id&#39; IMMEDIATE;</code></li>
+<li>被 Kill 的会话如果涉及大量 DML，回滚过程可能持续很长时间，在此期间相关资源仍被锁定</li>
+</ul>
+<p><strong>ORA-00031 处理：</strong></p>
+<p>如果 Kill Session 后会话仍然存在（状态为 <code>KILLED</code>），需要在操作系统层面清理：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查找被 Kill 但仍存在的会话的 SPID</span></span><br><span class="line"><span class="keyword">SELECT</span> sid, serial#, status, spid, program</span><br><span class="line"><span class="keyword">FROM</span> v$session s <span class="keyword">JOIN</span> v$process p <span class="keyword">ON</span> s.paddr <span class="operator">=</span> p.addr</span><br><span class="line"><span class="keyword">WHERE</span> status <span class="operator">=</span> <span class="string">&#x27;KILLED&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 在操作系统层面终止进程（Linux/Unix）</span></span><br><span class="line"><span class="comment">-- kill -9 &lt;spid&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-死锁处理"><a href="#3-3-死锁处理" class="headerlink" title="3.3 死锁处理"></a>3.3 死锁处理</h3><p><strong>ORA-00060 错误分析：</strong></p>
+<p>当 Oracle 检测到死锁时，会在被选为牺牲者的会话上抛出 <code>ORA-00060: deadlock detected while waiting for resource</code> 错误，同时自动回滚该会话的当前语句。</p>
+<p><strong>Deadlock Trace 文件解读：</strong></p>
+<p>Oracle 在检测到死锁时会在 <code>USER_DUMP_DEST</code>（或 <code>DIAGNOSTIC_DEST</code>）目录下生成 Trace 文件。以下是一个典型的死锁 Trace 文件关键片段：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Deadlock graph:</span><br><span class="line">                       ---------Blocker(s)--------  ---------Waiter(s)---------</span><br><span class="line">Resource Name          process session holds waits  process session holds waits</span><br><span class="line">TX-000a001f-000002e8        32     143     X             35     208           X</span><br><span class="line">TX-00090015-000002f0        35     208     X             32     143           X</span><br><span class="line"></span><br><span class="line">session 143: DID 0001-0020-00000002  session 208: DID 0001-0023-00000001</span><br><span class="line">session 208: DID 0001-0023-00000001  session 143: DID 0001-0020-00000002</span><br><span class="line"></span><br><span class="line">Rows waited on:</span><br><span class="line">  Session 143: obj - rowid = 00012345 - AAAPoCAAEAAABbXAAA</span><br><span class="line">  Session 208: obj - rowid = 00012346 - AAAPoDAAEAAACcYBBB</span><br><span class="line"></span><br><span class="line">----- Current SQL Statement for this session -----</span><br><span class="line">UPDATE orders SET status = &#x27;SHIPPED&#x27; WHERE order_id = 1001;</span><br></pre></td></tr></table></figure>
+
+<p><strong>解读要点：</strong></p>
+<ol>
+<li><strong>Blocker&#x2F;Waiter 矩阵</strong>：清楚展示了两个会话的相互等待关系。Session 143 持有 TX-…2e8 的 X 锁并等待 TX-…2f0 的 X 锁，而 Session 208 恰好相反。</li>
+<li><strong>Rowid</strong>：<code>Rows waited on</code> 部分指出了具体等待的数据行，可以通过 <code>DBMS_ROWID</code> 包定位到具体的表和数据块。</li>
+<li><strong>SQL 语句</strong>：Trace 文件会记录发生死锁时正在执行的 SQL，这是分析根因的关键。</li>
+</ol>
+<p><strong>实战死锁分析案例：</strong></p>
+<p>某电商系统频繁报 ORA-00060，分析 Trace 文件发现如下模式：</p>
+<ul>
+<li>Session A 执行：<code>UPDATE parent_table SET ... WHERE id = 1</code>（锁定父表行）</li>
+<li>Session A 执行：<code>UPDATE child_table SET ... WHERE parent_id = 2</code>（尝试锁定子表行）</li>
+<li>Session B 执行：<code>UPDATE parent_table SET ... WHERE id = 2</code>（锁定父表行）</li>
+<li>Session B 执行：<code>UPDATE child_table SET ... WHERE parent_id = 1</code>（尝试锁定子表行）</li>
+</ul>
+<p>两个会话交叉锁定不同资源，形成经典死锁。<strong>解决方案</strong>：在应用层统一对 <code>parent_id</code> 排序后再执行更新，确保所有事务按相同的顺序获取锁。</p>
+<p><strong>常见死锁模式与预防：</strong></p>
+<ol>
+<li><strong>交叉更新死锁</strong>：不同事务以不同顺序更新相同资源集 → 统一加锁顺序</li>
+<li><strong>外键死锁</strong>：子表外键列缺失索引，父表删除与子表插入冲突 → 为外键列创建索引</li>
+<li><strong>位图索引死锁</strong>：位图索引的行锁粒度为数据块级别 → 高并发表避免使用位图索引</li>
+<li><strong>ITL 争用死锁</strong>：INITRANS 设置过低导致事务无法获得 ITL 槽 → 调整 INITRANS</li>
+</ol>
+<h3 id="3-4-ITL-争用优化"><a href="#3-4-ITL-争用优化" class="headerlink" title="3.4 ITL 争用优化"></a>3.4 ITL 争用优化</h3><p><strong>INITRANS 参数调整：</strong></p>
+<p>当 <code>V$LOCK</code> 中频繁出现 <code>TYPE=&#39;TX&#39;</code> 且 <code>REQUEST=4</code> 的等待时，说明存在 ITL 争用。调整方法如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看当前表的 INITRANS 设置</span></span><br><span class="line"><span class="keyword">SELECT</span> table_name, ini_trans, max_trans</span><br><span class="line"><span class="keyword">FROM</span> user_tables</span><br><span class="line"><span class="keyword">WHERE</span> table_name <span class="operator">=</span> <span class="string">&#x27;YOUR_TABLE&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 修改 INITRANS（需要重建表或在线重定义）</span></span><br><span class="line"><span class="keyword">ALTER TABLE</span> your_table INITRANS <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 对于已有的高并发表，建议通过 Online Rebuild 生效</span></span><br><span class="line"><span class="keyword">ALTER</span> INDEX your_idx REBUILD ONLINE INITRANS <span class="number">20</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>高并发表的 ITL 配置建议：</strong></p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>INITRANS 建议</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>普通业务表</td>
+<td>2-5（默认 2）</td>
+<td>一般场景无需调整</td>
+</tr>
+<tr>
+<td>热点表（大量并发更新）</td>
+<td>10-20</td>
+<td>如订单表、库存表</td>
+</tr>
+<tr>
+<td>频繁批处理表</td>
+<td>10-15</td>
+<td>批量更新同一数据块</td>
+</tr>
+<tr>
+<td>高并发索引</td>
+<td>10-25</td>
+<td>B-Tree 索引根块和分支块热点</td>
+</tr>
+</tbody></table>
+<p>需要注意的是，<code>INITRANS</code> 只影响新分配的数据块。对于已有数据块，需要通过 <code>ALTER TABLE ... MOVE</code> 或 <code>ALTER INDEX ... REBUILD</code> 来重新组织。</p>
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><p>在处理完阻塞问题后，需要进行一系列验证来确保业务恢复正常。</p>
+<p><strong>阻塞解除确认：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 确认没有残留的阻塞关系</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> blocking_count</span><br><span class="line"><span class="keyword">FROM</span> v$lock w</span><br><span class="line"><span class="keyword">WHERE</span> w.request <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">  <span class="keyword">AND</span> <span class="keyword">EXISTS</span> (</span><br><span class="line">      <span class="keyword">SELECT</span> <span class="number">1</span> <span class="keyword">FROM</span> v$lock h</span><br><span class="line">      <span class="keyword">WHERE</span> h.type <span class="operator">=</span> w.type</span><br><span class="line">        <span class="keyword">AND</span> h.id1  <span class="operator">=</span> w.id1</span><br><span class="line">        <span class="keyword">AND</span> h.id2  <span class="operator">=</span> w.id2</span><br><span class="line">        <span class="keyword">AND</span> h.lmode <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line">        <span class="keyword">AND</span> h.sid  <span class="operator">!=</span> w.sid</span><br><span class="line">  );</span><br><span class="line"><span class="comment">-- 期望返回 0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 确认被影响的会话已经恢复</span></span><br><span class="line"><span class="keyword">SELECT</span> sid, serial#, status, event, seconds_in_wait</span><br><span class="line"><span class="keyword">FROM</span> v$session</span><br><span class="line"><span class="keyword">WHERE</span> event <span class="keyword">LIKE</span> <span class="string">&#x27;%enq: TX%&#x27;</span></span><br><span class="line">   <span class="keyword">OR</span> event <span class="keyword">LIKE</span> <span class="string">&#x27;%enq: TM%&#x27;</span>;</span><br><span class="line"><span class="comment">-- 期望返回无结果或会话已正常执行</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>锁等待指标监控：</strong></p>
+<p>建立监控基线，持续跟踪以下指标：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 当前锁等待统计（定期采集）</span></span><br><span class="line"><span class="keyword">SELECT</span></span><br><span class="line">    event,</span><br><span class="line">    <span class="built_in">COUNT</span>(<span class="operator">*</span>)           <span class="keyword">AS</span> session_count,</span><br><span class="line">    <span class="built_in">MAX</span>(seconds_in_wait) <span class="keyword">AS</span> max_wait_seconds,</span><br><span class="line">    <span class="built_in">AVG</span>(seconds_in_wait) <span class="keyword">AS</span> avg_wait_seconds</span><br><span class="line"><span class="keyword">FROM</span> v$session</span><br><span class="line"><span class="keyword">WHERE</span> wait_class <span class="operator">=</span> <span class="string">&#x27;Application&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> event <span class="keyword">LIKE</span> <span class="string">&#x27;%enq:%&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> event</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> session_count <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>应用层事务优化验证：</strong></p>
+<ul>
+<li>确认长事务已优化，事务持有时间缩短</li>
+<li>验证外键索引已补全</li>
+<li>检查 <code>INITRANS</code> 调整后 ITL 争用是否消除</li>
+<li>通过 AWR 报告对比调整前后的 <code>enq: TX</code> 等待事件</li>
+</ul>
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="锁问题的预防策略"><a href="#锁问题的预防策略" class="headerlink" title="锁问题的预防策略"></a>锁问题的预防策略</h3><ol>
+<li><p><strong>监控先行</strong>：部署锁等待的实时监控告警，在阻塞演变为雪崩之前及时介入。建议设置阈值：单个阻塞链超过 5 个等待会话或阻塞时间超过 60 秒时触发告警。</p>
+</li>
+<li><p><strong>外键索引全覆盖</strong>：这是一条铁律——所有外键列都必须有索引。可以在建表规范中强制要求，或定期运行前面提供的外键缺失索引检查脚本。</p>
+</li>
+<li><p><strong>合理设置 INITRANS</strong>：对于已知的热点表和高并发索引，提前设置较高的 <code>INITRANS</code> 值，避免上线后的 ITL 争用问题。</p>
+</li>
+<li><p><strong>避免长事务</strong>：事务持有时间越长，锁冲突的概率越大。应用设计时应遵循”短事务”原则——尽快提交或回滚。</p>
+</li>
+</ol>
+<h3 id="应用层事务设计建议"><a href="#应用层事务设计建议" class="headerlink" title="应用层事务设计建议"></a>应用层事务设计建议</h3><ul>
+<li><strong>统一加锁顺序</strong>：当多个事务需要修改相同资源集时，确保按相同的顺序获取锁，从根本上避免死锁。</li>
+<li><strong>合理使用隔离级别</strong>：不要盲目使用 <code>SERIALIZABLE</code>，它会显著增加锁冲突的概率。</li>
+<li><strong>批量操作分段提交</strong>：大批量的 <code>UPDATE/DELETE</code> 操作应分批执行并定期 <code>COMMIT</code>，避免长时间持有锁。</li>
+<li><strong>避免在事务中包含外部调用</strong>：HTTP 请求、文件 I&#x2F;O 等外部操作不应放在数据库事务中，否则会将事务时间拉长数倍。</li>
+</ul>
+<h3 id="常见锁问题快速诊断清单"><a href="#常见锁问题快速诊断清单" class="headerlink" title="常见锁问题快速诊断清单"></a>常见锁问题快速诊断清单</h3><table>
+<thead>
+<tr>
+<th>现象</th>
+<th>可能原因</th>
+<th>快速诊断方法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>大量会话等待 <code>enq: TX - row lock contention</code></td>
+<td>长事务阻塞</td>
+<td>查 <code>V$LOCK</code> 的 <code>BLOCK=1</code> 会话</td>
+</tr>
+<tr>
+<td>大量会话等待 <code>enq: TX - allocate ITL entry</code></td>
+<td>ITL 争用</td>
+<td>检查热点表的 <code>INITRANS</code></td>
+</tr>
+<tr>
+<td>大量会话等待 <code>enq: TM - contention</code></td>
+<td>TM 锁升级</td>
+<td>检查外键列缺失索引</td>
+</tr>
+<tr>
+<td>频繁 ORA-00060</td>
+<td>应用死锁</td>
+<td>分析 Deadlock Trace 文件</td>
+</tr>
+<tr>
+<td>Kill Session 后会话不消失</td>
+<td>回滚未完成</td>
+<td>OS 层面 kill SPID</td>
+</tr>
+<tr>
+<td><code>V$TRANSACTION</code> 中大量 Undo 使用</td>
+<td>超长事务</td>
+<td>查 <code>USED_UBLK</code> 和 <code>START_TIME</code></td>
+</tr>
+</tbody></table>
+<p>锁问题的处理看似复杂，但只要掌握了 <code>V$LOCK</code> &#x2F; <code>V$SESSION</code> &#x2F; <code>V$TRANSACTION</code> 三张核心视图的关系，配合本文提供的诊断脚本，绝大多数锁问题都能在几分钟内定位根因并完成处理。记住，预防永远优于治疗——合理的事务设计和完善的监控体系，才是避免锁问题影响业务的根本保障。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" rel="tag"># 故障排查</a>
+              <a href="/tags/%E9%94%81/" rel="tag"># 锁</a>
+              <a href="/tags/TX%E9%94%81/" rel="tag"># TX锁</a>
+              <a href="/tags/TM%E9%94%81/" rel="tag"># TM锁</a>
+              <a href="/tags/%E9%98%BB%E5%A1%9E/" rel="tag"># 阻塞</a>
+              <a href="/tags/Deadlock/" rel="tag"># Deadlock</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/28/oracle/decoding-ora-00600-ora-07445/" rel="prev" title="解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位">
+                  <i class="fa fa-angle-left"></i> 解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/04/07/oracle/startup-failures-controlfile-recovery/" rel="next" title="Oracle 启动故障排查与 Control File 恢复实战">
+                  Oracle 启动故障排查与 Control File 恢复实战 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

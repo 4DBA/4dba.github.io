@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/03/18/oracle/io-subsystem-optimization/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/03/18/oracle/io-subsystem-optimization/","path":"2026/03/18/oracle/io-subsystem-optimization/","title":"I/O 子系统优化：从 ASM 到 Linux I/O 栈的全链路调优"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>I/O 子系统优化：从 ASM 到 Linux I/O 栈的全链路调优 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#I-O-%E6%98%AF%E6%95%B0%E6%8D%AE%E5%BA%93%E6%80%A7%E8%83%BD%E7%9A%84%E6%9C%80%E7%BB%88%E7%93%B6%E9%A2%88"><span class="nav-number">1.1.</span> <span class="nav-text">I&#x2F;O 是数据库性能的最终瓶颈</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E7%9A%84%E4%B8%9A%E5%8A%A1%E5%BD%B1%E5%93%8D"><span class="nav-number">1.2.</span> <span class="nav-text">存储性能问题的业务影响</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Oracle-I-O-%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 Oracle I&#x2F;O 模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5-I-O-%E4%B8%8E%E5%90%8C%E6%AD%A5-I-O"><span class="nav-number">2.1.1.</span> <span class="nav-text">异步 I&#x2F;O 与同步 I&#x2F;O</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Direct-I-O-%E4%B8%8E-Buffered-I-O"><span class="nav-number">2.1.2.</span> <span class="nav-text">Direct I&#x2F;O 与 Buffered I&#x2F;O</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DBWR-%E4%B8%8E-LGWR-%E7%9A%84-I-O-%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.1.3.</span> <span class="nav-text">DBWR 与 LGWR 的 I&#x2F;O 模式</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-ASM-%E6%9D%A1%E5%B8%A6%E5%8C%96"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 ASM 条带化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ASM-Fine-grained-vs-Coarse-grained-%E6%9D%A1%E5%B8%A6"><span class="nav-number">2.2.1.</span> <span class="nav-text">ASM Fine-grained vs Coarse-grained 条带</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ASM-AU-%E5%A4%A7%E5%B0%8F%E9%80%89%E6%8B%A9"><span class="nav-number">2.2.2.</span> <span class="nav-text">ASM AU 大小选择</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Rebalance-%E6%9C%BA%E5%88%B6%E4%B8%8E%E6%80%A7%E8%83%BD%E5%BD%B1%E5%93%8D"><span class="nav-number">2.2.3.</span> <span class="nav-text">Rebalance 机制与性能影响</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Linux-I-O-%E6%A0%88"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 Linux I&#x2F;O 栈</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#I-O-Scheduler-%E9%80%89%E6%8B%A9"><span class="nav-number">2.3.1.</span> <span class="nav-text">I&#x2F;O Scheduler 选择</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E9%80%89%E6%8B%A9"><span class="nav-number">2.3.2.</span> <span class="nav-text">文件系统选择</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5-I-O-%E9%85%8D%E7%BD%AE"><span class="nav-number">2.3.3.</span> <span class="nav-text">异步 I&#x2F;O 配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-%E5%AD%98%E5%82%A8%E5%A4%9A%E8%B7%AF%E5%BE%84"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 存储多路径</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5"><span class="nav-number">2.4.1.</span> <span class="nav-text">负载均衡策略</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-I-O-%E6%80%A7%E8%83%BD%E8%AF%8A%E6%96%AD"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 I&#x2F;O 性能诊断</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#iostat-%E4%B8%8E-iowait-%E7%BB%BC%E5%90%88%E8%AF%8A%E6%96%AD%E8%84%9A%E6%9C%AC"><span class="nav-number">3.1.1.</span> <span class="nav-text">iostat 与 iowait 综合诊断脚本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E5%86%85%E9%83%A8-I-O-%E7%9B%91%E6%8E%A7"><span class="nav-number">3.1.2.</span> <span class="nav-text">数据库内部 I&#x2F;O 监控</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AWR-%E6%8A%A5%E5%91%8A-I-O-%E7%AB%A0%E8%8A%82%E8%A7%A3%E8%AF%BB"><span class="nav-number">3.1.3.</span> <span class="nav-text">AWR 报告 I&#x2F;O 章节解读</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-ASM-%E4%BC%98%E5%8C%96"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 ASM 优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ASM-%E7%A3%81%E7%9B%98%E7%BB%84%E7%AE%A1%E7%90%86%E4%B8%8E-Rebalance"><span class="nav-number">3.2.1.</span> <span class="nav-text">ASM 磁盘组管理与 Rebalance</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ASM-%E7%A3%81%E7%9B%98%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7"><span class="nav-number">3.2.2.</span> <span class="nav-text">ASM 磁盘性能监控</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-Linux-I-O-%E8%B0%83%E4%BC%98"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 Linux I&#x2F;O 调优</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#I-O-Scheduler-%E9%85%8D%E7%BD%AE"><span class="nav-number">3.3.1.</span> <span class="nav-text">I&#x2F;O Scheduler 配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E6%8C%82%E8%BD%BD%E9%80%89%E9%A1%B9"><span class="nav-number">3.3.2.</span> <span class="nav-text">文件系统挂载选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5-I-O-%E7%B3%BB%E7%BB%9F%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE"><span class="nav-number">3.3.3.</span> <span class="nav-text">异步 I&#x2F;O 系统参数配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-Oracle-I-O-%E5%8F%82%E6%95%B0"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 Oracle I&#x2F;O 参数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E9%94%AE-I-O-%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE"><span class="nav-number">3.4.1.</span> <span class="nav-text">关键 I&#x2F;O 参数配置</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#I-O-%E5%BB%B6%E8%BF%9F%E6%8C%87%E6%A0%87%E5%AF%B9%E6%AF%94"><span class="nav-number">4.1.</span> <span class="nav-text">I&#x2F;O 延迟指标对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AWR-%E6%8A%A5%E5%91%8A-I-O-%E6%8C%87%E6%A0%87%E9%AA%8C%E8%AF%81"><span class="nav-number">4.2.</span> <span class="nav-text">AWR 报告 I&#x2F;O 指标验证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="nav-number">4.3.</span> <span class="nav-text">性能测试结果</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#I-O-%E4%BC%98%E5%8C%96%E7%9A%84%E4%BC%98%E5%85%88%E7%BA%A7"><span class="nav-number">5.1.</span> <span class="nav-text">I&#x2F;O 优化的优先级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E9%80%89%E5%9E%8B%E5%BB%BA%E8%AE%AE"><span class="nav-number">5.2.</span> <span class="nav-text">存储选型建议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81-I-O-%E9%97%AE%E9%A2%98%E5%BF%AB%E9%80%9F%E5%AE%9A%E4%BD%8D"><span class="nav-number">5.3.</span> <span class="nav-text">常见 I&#x2F;O 问题快速定位</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/03/18/oracle/io-subsystem-optimization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="I&#x2F;O 子系统优化：从 ASM 到 Linux I&#x2F;O 栈的全链路调优 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          I/O 子系统优化：从 ASM 到 Linux I/O 栈的全链路调优
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-18 10:00:00" itemprop="dateCreated datePublished" datetime="2026-03-18T10:00:00+00:00">2026-03-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在 Oracle 数据库的性能优化领域中，CPU 和内存的问题往往可以通过相对直观的方式定位和解决，而 I&#x2F;O 子系统则是最为隐蔽、影响最为深远的性能瓶颈。作为 OCM 认证的 DBA，我在多年的生产环境实践中深刻体会到：<strong>绝大多数严重的数据库性能问题，最终都会归结到 I&#x2F;O 层面</strong>。本文将从理论到实践，系统性地介绍 Oracle I&#x2F;O 子系统的全链路优化方法。</p>
+<span id="more"></span>
+
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><h3 id="I-O-是数据库性能的最终瓶颈"><a href="#I-O-是数据库性能的最终瓶颈" class="headerlink" title="I&#x2F;O 是数据库性能的最终瓶颈"></a>I&#x2F;O 是数据库性能的最终瓶颈</h3><p>无论数据库的 SQL 优化做得多么精妙，无论 SGA 配置得多么合理，最终所有的数据变更都需要持久化到存储设备上。当 I&#x2F;O 子系统成为瓶颈时，整个数据库的性能表现将急剧下降。</p>
+<p>在实际生产环境中，最常见的 I&#x2F;O 相关等待事件包括：</p>
+<ul>
+<li><strong>db file sequential read</strong>：通常与索引访问相关，表示单块 I&#x2F;O 读取，最常见的原因是索引范围扫描和通过 ROWID 访问表数据</li>
+<li><strong>db file scattered read</strong>：通常与全表扫描相关，表示多块 I&#x2F;O 读取，对应 <code>DB_FILE_MULTIBLOCK_READ_COUNT</code> 参数</li>
+<li><strong>log file sync</strong>：LGWR 将 Redo Log Buffer 写入 Online Redo Log 的等待，直接影响事务提交延迟</li>
+<li><strong>db file parallel write</strong>：DBWR 将脏块写入数据文件的等待</li>
+</ul>
+<h3 id="存储性能问题的业务影响"><a href="#存储性能问题的业务影响" class="headerlink" title="存储性能问题的业务影响"></a>存储性能问题的业务影响</h3><p>当 I&#x2F;O 子系统出现性能瓶颈时，业务层面通常表现为：</p>
+<ol>
+<li><strong>交易响应时间波动剧烈</strong>：正常情况下毫秒级响应的交易，偶尔飙升到秒级甚至更高</li>
+<li><strong>批量任务执行时间显著增长</strong>：ETL、报表等批处理任务运行时间翻倍甚至更长</li>
+<li><strong>系统整体吞吐量下降</strong>：并发用户数增加时，系统性能出现断崖式下降而非线性衰减</li>
+</ol>
+<p>曾经遇到一个典型案例：某核心业务系统在业务高峰期频繁出现 “enq: TX - row lock contention”，看似是锁竞争问题，深入分析后发现根因是存储阵列缓存（Cache）命中率下降，导致 I&#x2F;O 延迟从 1ms 飙升到 50ms 以上，LGWR 写入延迟增大，进而导致 log file sync 等待增加，事务持锁时间延长，最终表现为锁竞争。</p>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-Oracle-I-O-模型"><a href="#2-1-Oracle-I-O-模型" class="headerlink" title="2.1 Oracle I&#x2F;O 模型"></a>2.1 Oracle I&#x2F;O 模型</h3><h4 id="异步-I-O-与同步-I-O"><a href="#异步-I-O-与同步-I-O" class="headerlink" title="异步 I&#x2F;O 与同步 I&#x2F;O"></a>异步 I&#x2F;O 与同步 I&#x2F;O</h4><p>Oracle 数据库在 I&#x2F;O 操作上支持两种模式：</p>
+<ul>
+<li><strong>同步 I&#x2F;O（Synchronous I&#x2F;O）</strong>：进程发起 I&#x2F;O 请求后阻塞等待，直到 I&#x2F;O 完成后才继续执行。这种方式编程模型简单，但对高并发场景下会浪费大量 CPU 时间在等待 I&#x2F;O 上</li>
+<li><strong>异步 I&#x2F;O（Asynchronous I&#x2F;O）</strong>：进程发起 I&#x2F;O 请求后立即返回，不等待 I&#x2F;O 完成，通过回调或轮询机制获取 I&#x2F;O 完成状态。这种方式允许进程在等待 I&#x2F;O 完成的同时处理其他任务，显著提高 CPU 利用率</li>
+</ul>
+<p>在 Oracle 中，异步 I&#x2F;O 的启用由以下参数控制：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看当前异步 I/O 配置</span></span><br><span class="line"><span class="keyword">SELECT</span> name, <span class="keyword">value</span> <span class="keyword">FROM</span> v$<span class="keyword">parameter</span> </span><br><span class="line"><span class="keyword">WHERE</span> name <span class="keyword">IN</span> (<span class="string">&#x27;disk_asynch_io&#x27;</span>, <span class="string">&#x27;filesystemio_options&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- filesystemio_options 参数值含义：</span></span><br><span class="line"><span class="comment">-- NONE          : 禁用 Direct I/O 和异步 I/O</span></span><br><span class="line"><span class="comment">-- ASYNCH        : 启用异步 I/O，使用 Buffered I/O</span></span><br><span class="line"><span class="comment">-- DIRECTIO      : 启用 Direct I/O，使用同步 I/O  </span></span><br><span class="line"><span class="comment">-- SETALL        : 同时启用 Direct I/O 和异步 I/O（推荐）</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Direct-I-O-与-Buffered-I-O"><a href="#Direct-I-O-与-Buffered-I-O" class="headerlink" title="Direct I&#x2F;O 与 Buffered I&#x2F;O"></a>Direct I&#x2F;O 与 Buffered I&#x2F;O</h4><ul>
+<li><strong>Buffered I&#x2F;O</strong>：数据先经过操作系统 Page Cache，再写入磁盘。优点是可以利用 OS 的缓存机制；缺点是数据经过两次拷贝（OS Cache → SGA），且存在数据一致性风险</li>
+<li><strong>Direct I&#x2F;O</strong>：数据绕过操作系统 Page Cache，直接从用户空间写入磁盘设备。避免了双重缓存，减少了 CPU 开销和内存拷贝</li>
+</ul>
+<p>对于 Oracle 数据库，<strong>强烈建议使用 Direct I&#x2F;O</strong>。因为 Oracle 自身有完善的缓存管理机制（SGA&#x2F;Buffer Cache），OS Page Cache 的存在不仅多余，还会导致内存浪费和额外的 CPU 开销。</p>
+<h4 id="DBWR-与-LGWR-的-I-O-模式"><a href="#DBWR-与-LGWR-的-I-O-模式" class="headerlink" title="DBWR 与 LGWR 的 I&#x2F;O 模式"></a>DBWR 与 LGWR 的 I&#x2F;O 模式</h4><ul>
+<li><strong>DBWR（Database Writer）</strong>：负责将 Buffer Cache 中的脏块（Dirty Blocks）写入数据文件。DBWR 支持异步 I&#x2F;O 和批量写入（Write Batch），以提高写入效率。在高并发 OLTP 系统中，DBWR 的写入能力直接影响 Checkpoint 效率和 Buffer Cache 的可用空间</li>
+<li><strong>LGWR（Log Writer）</strong>：负责将 Redo Log Buffer 的内容写入 Online Redo Log 文件。LGWR 的 I&#x2F;O 模式直接影响事务提交延迟（log file sync 等待时间）。LGWR 需要低延迟、高优先级的 I&#x2F;O 路径</li>
+</ul>
+<h3 id="2-2-ASM-条带化"><a href="#2-2-ASM-条带化" class="headerlink" title="2.2 ASM 条带化"></a>2.2 ASM 条带化</h3><h4 id="ASM-Fine-grained-vs-Coarse-grained-条带"><a href="#ASM-Fine-grained-vs-Coarse-grained-条带" class="headerlink" title="ASM Fine-grained vs Coarse-grained 条带"></a>ASM Fine-grained vs Coarse-grained 条带</h4><p>ASM（Automatic Storage Management）提供两种条带化粒度：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>Fine-grained</th>
+<th>Coarse-grained</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>条带大小</td>
+<td>128KB</td>
+<td>1 AU（通常 1MB&#x2F;4MB）</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>OLTP（小 I&#x2F;O、随机读写）</td>
+<td>DSS&#x2F;数据仓库（大 I&#x2F;O、顺序读写）</td>
+</tr>
+<tr>
+<td>条带宽度</td>
+<td>跨所有磁盘</td>
+<td>跨所有磁盘</td>
+</tr>
+<tr>
+<td>I&#x2F;O 分布</td>
+<td>更均匀</td>
+<td>相对集中</td>
+</tr>
+</tbody></table>
+<h4 id="ASM-AU-大小选择"><a href="#ASM-AU-大小选择" class="headerlink" title="ASM AU 大小选择"></a>ASM AU 大小选择</h4><p>ASM Allocation Unit（AU）大小的选择对性能有重要影响：</p>
+<ul>
+<li><strong>1MB</strong>（默认）：适合大多数 OLTP 场景</li>
+<li><strong>4MB</strong>：适合大型数据仓库，减少元数据开销</li>
+<li><strong>8MB&#x2F;16MB&#x2F;32MB&#x2F;64MB</strong>：超大规模数据库</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看磁盘组的 AU 大小</span></span><br><span class="line"><span class="keyword">SELECT</span> name, allocation_unit_size<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> au_size_mb </span><br><span class="line"><span class="keyword">FROM</span> v$asm_diskgroup;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 创建磁盘组时指定 AU 大小</span></span><br><span class="line"><span class="keyword">CREATE</span> DISKGROUP DATA </span><br><span class="line">  NORMAL REDUNDANCY</span><br><span class="line">  DISK <span class="string">&#x27;/dev/sdb1&#x27;</span>, <span class="string">&#x27;/dev/sdc1&#x27;</span></span><br><span class="line">  ATTRIBUTE <span class="string">&#x27;au_size&#x27;</span> <span class="operator">=</span> <span class="string">&#x27;4M&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Rebalance-机制与性能影响"><a href="#Rebalance-机制与性能影响" class="headerlink" title="Rebalance 机制与性能影响"></a>Rebalance 机制与性能影响</h4><p>当 ASM 磁盘组发生变更（添加&#x2F;删除磁盘、磁盘故障）时，ASM 会自动执行 Rebalance 操作，重新分布数据以保持负载均衡。Rebalance 操作会消耗大量 I&#x2F;O 资源，对在线业务产生影响。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看 Rebalance 操作进度</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> v$asm_operation;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 手动控制 Rebalance 速度（Power 值 0-11，0 表示暂停）</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA REBALANCE POWER <span class="number">4</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 在低峰期执行 Rebalance</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA REBALANCE POWER <span class="number">8</span> WAIT;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-Linux-I-O-栈"><a href="#2-3-Linux-I-O-栈" class="headerlink" title="2.3 Linux I&#x2F;O 栈"></a>2.3 Linux I&#x2F;O 栈</h3><h4 id="I-O-Scheduler-选择"><a href="#I-O-Scheduler-选择" class="headerlink" title="I&#x2F;O Scheduler 选择"></a>I&#x2F;O Scheduler 选择</h4><p>Linux 内核提供了多种 I&#x2F;O 调度器，对数据库性能影响显著：</p>
+<ul>
+<li><strong>mq-deadline</strong>：多队列版本的 Deadline 调度器，为每个 I&#x2F;O 请求设置截止时间，兼顾读写公平性和延迟保障。<strong>推荐用于大多数 Oracle 数据库场景</strong></li>
+<li><strong>none（noop）</strong>：不进行任何调度，直接将 I&#x2F;O 请求发送到设备。<strong>推荐用于 NVMe SSD 和 SAN 存储</strong>，因为这些设备自身已有完善的调度逻辑</li>
+<li><strong>kyber</strong>：基于目标延迟的调度器，适合快速设备</li>
+<li><strong>bfq</strong>：Budget Fair Queuing，适合桌面和交互式场景，不推荐用于数据库</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前 I/O Scheduler</span></span><br><span class="line"><span class="built_in">cat</span> /sys/block/sda/queue/scheduler</span><br><span class="line"></span><br><span class="line"><span class="comment"># 临时修改 I/O Scheduler</span></span><br><span class="line"><span class="built_in">echo</span> mq-deadline &gt; /sys/block/sda/queue/scheduler</span><br><span class="line"></span><br><span class="line"><span class="comment"># 永久修改（通过 GRUB 参数）</span></span><br><span class="line"><span class="comment"># 编辑 /etc/default/grub，在 GRUB_CMDLINE_LINUX 中添加：</span></span><br><span class="line"><span class="comment"># elevator=mq-deadline</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="文件系统选择"><a href="#文件系统选择" class="headerlink" title="文件系统选择"></a>文件系统选择</h4><table>
+<thead>
+<tr>
+<th>文件系统</th>
+<th>特点</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>XFS</td>
+<td>高性能、支持大文件、优秀的并发性能</td>
+<td><strong>推荐用于 Oracle 数据文件</strong></td>
+</tr>
+<tr>
+<td>EXT4</td>
+<td>成熟稳定、广泛支持</td>
+<td>通用场景</td>
+</tr>
+<tr>
+<td>ASM</td>
+<td>Oracle 原生存储管理</td>
+<td><strong>生产环境首选</strong></td>
+</tr>
+</tbody></table>
+<h4 id="异步-I-O-配置"><a href="#异步-I-O-配置" class="headerlink" title="异步 I&#x2F;O 配置"></a>异步 I&#x2F;O 配置</h4><p>Linux 系统中，异步 I&#x2F;O 的并发数由内核参数 <code>fs.aio-max-nr</code> 控制：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前设置</span></span><br><span class="line">sysctl fs.aio-max-nr</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改为更大值（推荐至少 1048576）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;fs.aio-max-nr = 1048576&quot;</span> &gt;&gt; /etc/sysctl.conf</span><br><span class="line">sysctl -p</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看当前已使用的 AIO 请求数</span></span><br><span class="line"><span class="built_in">cat</span> /proc/sys/fs/aio-nr</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-4-存储多路径"><a href="#2-4-存储多路径" class="headerlink" title="2.4 存储多路径"></a>2.4 存储多路径</h3><p>在 SAN 存储环境中，主机到存储阵列之间通常存在多条物理路径。使用 Multipath（DM-Multipath）可以实现路径冗余和 I&#x2F;O 负载均衡。</p>
+<h4 id="负载均衡策略"><a href="#负载均衡策略" class="headerlink" title="负载均衡策略"></a>负载均衡策略</h4><p>常用的负载均衡策略包括：</p>
+<ul>
+<li><strong>round-robin</strong>：轮询方式，将 I&#x2F;O 均匀分配到所有路径</li>
+<li><strong>service-time</strong>：根据路径的服务时间动态分配 I&#x2F;O，延迟低的路径获得更多 I&#x2F;O</li>
+<li><strong>queue-length</strong>：根据路径上的队列长度分配 I&#x2F;O</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /etc/multipath.conf 配置示例</span></span><br><span class="line">defaults &#123;</span><br><span class="line">    polling_interval    30</span><br><span class="line">    path_grouping_policy  multibus</span><br><span class="line">    path_selector       <span class="string">&quot;round-robin 0&quot;</span></span><br><span class="line">    failback            immediate</span><br><span class="line">    no_path_retry       5</span><br><span class="line">    rr_min_io           100</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-I-O-性能诊断"><a href="#3-1-I-O-性能诊断" class="headerlink" title="3.1 I&#x2F;O 性能诊断"></a>3.1 I&#x2F;O 性能诊断</h3><h4 id="iostat-与-iowait-综合诊断脚本"><a href="#iostat-与-iowait-综合诊断脚本" class="headerlink" title="iostat 与 iowait 综合诊断脚本"></a>iostat 与 iowait 综合诊断脚本</h4><p>以下是一个生产环境中常用的 I&#x2F;O 性能诊断脚本，综合了 <code>iostat</code> 和系统级 I&#x2F;O 指标：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment"># io_diagnosis.sh - Oracle I/O 性能诊断脚本</span></span><br><span class="line"><span class="comment"># 用法: ./io_diagnosis.sh [采样间隔秒数] [采样次数]</span></span><br><span class="line"></span><br><span class="line">INTERVAL=<span class="variable">$&#123;1:-5&#125;</span></span><br><span class="line">COUNT=<span class="variable">$&#123;2:-12&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;============================================&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;  Oracle I/O 子系统性能诊断报告&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;  采集时间: <span class="subst">$(date &#x27;+%Y-%m-%d %H:%M:%S&#x27;)</span>&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;  采样间隔: <span class="variable">$&#123;INTERVAL&#125;</span>s, 采样次数: <span class="variable">$&#123;COUNT&#125;</span>&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;============================================&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. CPU iowait 概览</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;--- CPU I/O Wait 概览 ---&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;us    sy    id    wa    st&quot;</span></span><br><span class="line">mpstat 1 <span class="variable">$&#123;COUNT&#125;</span> | grep -v <span class="string">&quot;CPU\|^$&quot;</span> | <span class="built_in">tail</span> -<span class="variable">$&#123;COUNT&#125;</span> | \</span><br><span class="line">  awk <span class="string">&#x27;&#123;printf &quot;%-6s%-6s%-6s%-6s%-6s\n&quot;, $3, $5, $12, $6, $7&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 各磁盘 I/O 详细统计</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;--- 磁盘 I/O 详细统计 (iostat -xz) ---&quot;</span></span><br><span class="line">iostat -xz <span class="variable">$&#123;INTERVAL&#125;</span> <span class="variable">$&#123;COUNT&#125;</span> | grep -E <span class="string">&quot;Device|sd[a-z]|nvme&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. I/O 等待最高的进程</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;--- I/O 等待最高的 Top 10 进程 ---&quot;</span></span><br><span class="line">iotop -b -o -n <span class="variable">$&#123;COUNT&#125;</span> -d <span class="variable">$&#123;INTERVAL&#125;</span> 2&gt;/dev/null | <span class="built_in">head</span> -20 || \</span><br><span class="line">  <span class="built_in">echo</span> <span class="string">&quot;(iotop 不可用，请安装: yum install iotop)&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. Oracle I/O 等待事件</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;--- Oracle I/O 相关等待事件 (需要 sqlplus) ---&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;请在 SQL*Plus 中执行以下查询：&quot;</span></span><br><span class="line"><span class="built_in">cat</span> &lt;&lt; <span class="string">&#x27;SQL&#x27;</span></span><br><span class="line">SELECT event, total_waits, time_waited_micro/1000000 AS time_waited_sec,</span><br><span class="line">       ROUND(average_wait/1000, 2) AS avg_wait_ms</span><br><span class="line">FROM v<span class="variable">$system_event</span></span><br><span class="line">WHERE event IN (</span><br><span class="line">    <span class="string">&#x27;db file sequential read&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;db file scattered read&#x27;</span>, </span><br><span class="line">    <span class="string">&#x27;log file sync&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;db file parallel write&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;log file parallel write&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;direct path read&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;direct path write&#x27;</span></span><br><span class="line">)</span><br><span class="line">ORDER BY time_waited_micro DESC;</span><br><span class="line">SQL</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>iostat</code> 输出中的关键指标：</p>
+<ul>
+<li><strong>%util</strong>：磁盘繁忙百分比。持续超过 80% 表示磁盘已接近饱和</li>
+<li><strong>await</strong>：平均 I&#x2F;O 等待时间（毫秒）。HDD 应低于 10ms，SSD 应低于 1ms</li>
+<li><strong>avgqu-sz</strong>：平均 I&#x2F;O 队列长度。值越大说明 I&#x2F;O 越繁忙</li>
+<li><strong>r&#x2F;s, w&#x2F;s</strong>：每秒读写次数（IOPS）</li>
+<li><strong>rkB&#x2F;s, wkB&#x2F;s</strong>：每秒读写吞吐量</li>
+</ul>
+<h4 id="数据库内部-I-O-监控"><a href="#数据库内部-I-O-监控" class="headerlink" title="数据库内部 I&#x2F;O 监控"></a>数据库内部 I&#x2F;O 监控</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看各数据文件的 I/O 统计</span></span><br><span class="line"><span class="keyword">SELECT</span> f.file#,</span><br><span class="line">       d.name <span class="keyword">AS</span> file_name,</span><br><span class="line">       f.phyrds  <span class="keyword">AS</span> physical_reads,</span><br><span class="line">       f.phywrts <span class="keyword">AS</span> physical_writes,</span><br><span class="line">       f.readtim <span class="keyword">AS</span> read_time_cs,</span><br><span class="line">       f.writetim <span class="keyword">AS</span> write_time_cs,</span><br><span class="line">       <span class="keyword">CASE</span> <span class="keyword">WHEN</span> f.phyrds <span class="operator">&gt;</span> <span class="number">0</span> </span><br><span class="line">            <span class="keyword">THEN</span> ROUND(f.readtim <span class="operator">*</span> <span class="number">10</span> <span class="operator">/</span> f.phyrds, <span class="number">2</span>) </span><br><span class="line">            <span class="keyword">ELSE</span> <span class="number">0</span> <span class="keyword">END</span> <span class="keyword">AS</span> avg_read_ms,</span><br><span class="line">       <span class="keyword">CASE</span> <span class="keyword">WHEN</span> f.phywrts <span class="operator">&gt;</span> <span class="number">0</span> </span><br><span class="line">            <span class="keyword">THEN</span> ROUND(f.writetim <span class="operator">*</span> <span class="number">10</span> <span class="operator">/</span> f.phywrts, <span class="number">2</span>) </span><br><span class="line">            <span class="keyword">ELSE</span> <span class="number">0</span> <span class="keyword">END</span> <span class="keyword">AS</span> avg_write_ms</span><br><span class="line"><span class="keyword">FROM</span> v$filestat f, v$datafile d</span><br><span class="line"><span class="keyword">WHERE</span> f.file# <span class="operator">=</span> d.file#</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> f.phyrds <span class="operator">+</span> f.phywrts <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 详细的 I/O 按文件类型统计（12c+）</span></span><br><span class="line"><span class="keyword">SELECT</span> filetype_name,</span><br><span class="line">       <span class="built_in">SUM</span>(small_read_megabytes) <span class="keyword">AS</span> small_read_mb,</span><br><span class="line">       <span class="built_in">SUM</span>(large_read_megabytes) <span class="keyword">AS</span> large_read_mb,</span><br><span class="line">       <span class="built_in">SUM</span>(small_write_megabytes) <span class="keyword">AS</span> small_write_mb,</span><br><span class="line">       <span class="built_in">SUM</span>(large_write_megabytes) <span class="keyword">AS</span> large_write_mb,</span><br><span class="line">       ROUND(<span class="built_in">AVG</span>(small_sync_read_latency), <span class="number">2</span>) <span class="keyword">AS</span> avg_sync_read_ms</span><br><span class="line"><span class="keyword">FROM</span> v$iostat_file</span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> filetype_name</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> small_read_mb <span class="operator">+</span> large_read_mb <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="AWR-报告-I-O-章节解读"><a href="#AWR-报告-I-O-章节解读" class="headerlink" title="AWR 报告 I&#x2F;O 章节解读"></a>AWR 报告 I&#x2F;O 章节解读</h4><p>AWR 报告中 I&#x2F;O 相关的关键部分：</p>
+<ol>
+<li><strong>Tablespace I&#x2F;O Statistics</strong>：各表空间的 I&#x2F;O 吞吐量和延迟，识别热点表空间</li>
+<li><strong>File I&#x2F;O Statistics</strong>：各数据文件的 I&#x2F;O 分布，检查是否存在 I&#x2F;O 热点文件</li>
+<li><strong>Buffer Pool Statistics</strong>：Buffer Cache 命中率，过低说明频繁物理读</li>
+<li><strong>Instance Activity Stats</strong>：关注 <code>physical reads</code>、<code>physical writes</code>、<code>redo size</code> 等指标</li>
+</ol>
+<h3 id="3-2-ASM-优化"><a href="#3-2-ASM-优化" class="headerlink" title="3.2 ASM 优化"></a>3.2 ASM 优化</h3><h4 id="ASM-磁盘组管理与-Rebalance"><a href="#ASM-磁盘组管理与-Rebalance" class="headerlink" title="ASM 磁盘组管理与 Rebalance"></a>ASM 磁盘组管理与 Rebalance</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看所有磁盘组状态</span></span><br><span class="line"><span class="keyword">SELECT</span> name, state, type, total_mb, free_mb,</span><br><span class="line">       ROUND(free_mb<span class="operator">/</span>total_mb<span class="operator">*</span><span class="number">100</span>, <span class="number">2</span>) <span class="keyword">AS</span> free_pct</span><br><span class="line"><span class="keyword">FROM</span> v$asm_diskgroup;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看磁盘组中各磁盘的 I/O 分布</span></span><br><span class="line"><span class="keyword">SELECT</span> dg.name <span class="keyword">AS</span> diskgroup,</span><br><span class="line">       d.path,</span><br><span class="line">       d.reads,</span><br><span class="line">       d.writes,</span><br><span class="line">       d.read_errs,</span><br><span class="line">       d.write_errs,</span><br><span class="line">       d.read_time,</span><br><span class="line">       d.write_time,</span><br><span class="line">       d.bytes_read<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> read_mb,</span><br><span class="line">       d.bytes_written<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> write_mb</span><br><span class="line"><span class="keyword">FROM</span> v$asm_disk d, v$asm_diskgroup dg</span><br><span class="line"><span class="keyword">WHERE</span> d.group_number <span class="operator">=</span> dg.group_number</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> dg.name, d.reads <span class="operator">+</span> d.writes <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 检查磁盘组 Rebalance 操作</span></span><br><span class="line"><span class="keyword">SELECT</span> group_number, operation, state, power, est_minutes</span><br><span class="line"><span class="keyword">FROM</span> v$asm_operation;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 调整 Rebalance Power（0=暂停, 1-11=速度递增）</span></span><br><span class="line"><span class="comment">-- 生产环境建议使用较低的 Power 值（2-4）以减少业务影响</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA REBALANCE POWER <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 添加新磁盘到磁盘组</span></span><br><span class="line"><span class="keyword">ALTER</span> DISKGROUP DATA <span class="keyword">ADD</span> DISK <span class="string">&#x27;/dev/sdd1&#x27;</span> NAME DATA_0004;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看 ASM 模板</span></span><br><span class="line"><span class="keyword">SELECT</span> dg.name <span class="keyword">AS</span> diskgroup, t.name <span class="keyword">AS</span> template, </span><br><span class="line">       t.redundancy, t.stripe</span><br><span class="line"><span class="keyword">FROM</span> v$asm_template t, v$asm_diskgroup dg</span><br><span class="line"><span class="keyword">WHERE</span> t.group_number <span class="operator">=</span> dg.group_number</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> dg.name, t.name;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ASM-磁盘性能监控"><a href="#ASM-磁盘性能监控" class="headerlink" title="ASM 磁盘性能监控"></a>ASM 磁盘性能监控</h4><p>建议定期监控 ASM 磁盘的 I&#x2F;O 分布均匀性。如果发现某些磁盘的读写量显著高于其他磁盘（偏差超过 20%），可能需要执行 Rebalance 或重新规划磁盘布局。</p>
+<h3 id="3-3-Linux-I-O-调优"><a href="#3-3-Linux-I-O-调优" class="headerlink" title="3.3 Linux I&#x2F;O 调优"></a>3.3 Linux I&#x2F;O 调优</h3><h4 id="I-O-Scheduler-配置"><a href="#I-O-Scheduler-配置" class="headerlink" title="I&#x2F;O Scheduler 配置"></a>I&#x2F;O Scheduler 配置</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 针对 NVMe SSD 使用 none 调度器</span></span><br><span class="line"><span class="keyword">for</span> dev <span class="keyword">in</span> /sys/block/nvme*; <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">echo</span> none &gt; <span class="variable">$&#123;dev&#125;</span>/queue/scheduler</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;Set <span class="variable">$&#123;dev&#125;</span> to none scheduler&quot;</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 针对 SAS/SATA HDD 使用 mq-deadline 调度器</span></span><br><span class="line"><span class="keyword">for</span> dev <span class="keyword">in</span> /sys/block/sd*; <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">echo</span> mq-deadline &gt; <span class="variable">$&#123;dev&#125;</span>/queue/scheduler</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;Set <span class="variable">$&#123;dev&#125;</span> to mq-deadline scheduler&quot;</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 调整 mq-deadline 调度器参数</span></span><br><span class="line"><span class="comment"># 读请求截止时间（毫秒）</span></span><br><span class="line"><span class="built_in">echo</span> 500 &gt; /sys/block/sda/queue/iosched/read_expire</span><br><span class="line"><span class="comment"># 写请求截止时间（毫秒） </span></span><br><span class="line"><span class="built_in">echo</span> 5000 &gt; /sys/block/sda/queue/iosched/write_expire</span><br><span class="line"><span class="comment"># 写批次大小</span></span><br><span class="line"><span class="built_in">echo</span> 16 &gt; /sys/block/sda/queue/iosched/writes_starved</span><br></pre></td></tr></table></figure>
+
+<h4 id="文件系统挂载选项"><a href="#文件系统挂载选项" class="headerlink" title="文件系统挂载选项"></a>文件系统挂载选项</h4><p>对于 Oracle 数据文件使用的 XFS 文件系统，推荐以下挂载选项：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /etc/fstab 中的 XFS 推荐挂载选项</span></span><br><span class="line">/dev/mapper/data_lv  /oradata  xfs  rw,noatime,nodiratime,logbufs=8,logbsize=256k,allocsize=64m  0 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 选项说明：</span></span><br><span class="line"><span class="comment"># noatime     - 不更新文件访问时间戳，减少元数据写入</span></span><br><span class="line"><span class="comment"># nodiratime  - 不更新目录访问时间戳</span></span><br><span class="line"><span class="comment"># logbufs=8   - 增加日志缓冲区数量</span></span><br><span class="line"><span class="comment"># logbsize=256k - 增加日志缓冲区大小</span></span><br><span class="line"><span class="comment"># allocsize=64m - 预分配大小，优化大文件写入</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="异步-I-O-系统参数配置"><a href="#异步-I-O-系统参数配置" class="headerlink" title="异步 I&#x2F;O 系统参数配置"></a>异步 I&#x2F;O 系统参数配置</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /etc/sysctl.conf 中的 I/O 相关参数</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 异步 I/O 最大请求数</span></span><br><span class="line">fs.aio-max-nr = 1048576</span><br><span class="line"></span><br><span class="line"><span class="comment"># 虚拟内存相关优化</span></span><br><span class="line">vm.dirty_ratio = 5</span><br><span class="line">vm.dirty_background_ratio = 2</span><br><span class="line">vm.dirty_expire_centisecs = 300</span><br><span class="line">vm.dirty_writeback_centisecs = 100</span><br><span class="line"></span><br><span class="line"><span class="comment"># 应用配置</span></span><br><span class="line">sysctl -p</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证 Oracle 使用了异步 I/O</span></span><br><span class="line"><span class="comment"># 查看 Oracle 进程的 I/O 方式</span></span><br><span class="line">strace -e io_submit,io_getevents -p &lt;oracle_pid&gt; -c</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-Oracle-I-O-参数"><a href="#3-4-Oracle-I-O-参数" class="headerlink" title="3.4 Oracle I&#x2F;O 参数"></a>3.4 Oracle I&#x2F;O 参数</h3><h4 id="关键-I-O-参数配置"><a href="#关键-I-O-参数配置" class="headerlink" title="关键 I&#x2F;O 参数配置"></a>关键 I&#x2F;O 参数配置</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- FILESYSTEMIO_OPTIONS: 控制文件系统的 I/O 方式</span></span><br><span class="line"><span class="comment">-- 推荐设置为 SETALL（同时启用 Direct I/O 和异步 I/O）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> FILESYSTEMIO_OPTIONS<span class="operator">=</span><span class="string">&#x27;SETALL&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- DISK_ASYNCH_IO: 启用磁盘异步 I/O</span></span><br><span class="line"><span class="comment">-- 使用 ASM 时默认为 TRUE</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DISK_ASYNCH_IO<span class="operator">=</span><span class="literal">TRUE</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- DB_FILE_MULTIBLOCK_READ_COUNT: 多块读的块数</span></span><br><span class="line"><span class="comment">-- 影响全表扫描性能，一般设置为 16 或 32</span></span><br><span class="line"><span class="comment">-- 12c 以后可以设置为 0，由 Oracle 自动调优</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DB_FILE_MULTIBLOCK_READ_COUNT<span class="operator">=</span><span class="number">16</span> <span class="keyword">SCOPE</span><span class="operator">=</span><span class="keyword">BOTH</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- DB_WRITER_PROCESSES: DBWR 进程数量</span></span><br><span class="line"><span class="comment">-- 默认为 CPU_COUNT/8，高 I/O 负载环境可适当增加</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DB_WRITER_PROCESSES<span class="operator">=</span><span class="number">4</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 相关隐含参数（仅在特殊场景下使用，需 Oracle Support 确认）</span></span><br><span class="line"><span class="comment">-- _db_file_direct_io_count: Direct I/O 的大小</span></span><br><span class="line"><span class="comment">-- _lgwr_io_slaves: LGWR I/O 从进程数量</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证参数生效</span></span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> FILESYSTEMIO_OPTIONS;</span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> DISK_ASYNCH_IO;</span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> DB_FILE_MULTIBLOCK_READ_COUNT;</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><h3 id="I-O-延迟指标对比"><a href="#I-O-延迟指标对比" class="headerlink" title="I&#x2F;O 延迟指标对比"></a>I&#x2F;O 延迟指标对比</h3><p>优化前后的典型 I&#x2F;O 延迟对比：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>优化前</th>
+<th>优化后</th>
+<th>改善幅度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>db file sequential read 平均等待</td>
+<td>8.5ms</td>
+<td>1.2ms</td>
+<td>86%</td>
+</tr>
+<tr>
+<td>db file scattered read 平均等待</td>
+<td>12.3ms</td>
+<td>2.1ms</td>
+<td>83%</td>
+</tr>
+<tr>
+<td>log file sync 平均等待</td>
+<td>5.6ms</td>
+<td>0.8ms</td>
+<td>86%</td>
+</tr>
+<tr>
+<td>iostat await (数据盘)</td>
+<td>15ms</td>
+<td>2ms</td>
+<td>87%</td>
+</tr>
+<tr>
+<td>Buffer Cache Hit Ratio</td>
+<td>92%</td>
+<td>99.5%</td>
+<td>-</td>
+</tr>
+</tbody></table>
+<h3 id="AWR-报告-I-O-指标验证"><a href="#AWR-报告-I-O-指标验证" class="headerlink" title="AWR 报告 I&#x2F;O 指标验证"></a>AWR 报告 I&#x2F;O 指标验证</h3><p>优化完成后，通过 AWR 报告验证以下关键指标：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 对比优化前后的 AWR 快照</span></span><br><span class="line"><span class="comment">-- 获取 I/O 相关的统计信息变化</span></span><br><span class="line"><span class="keyword">SELECT</span> sn.snap_id,</span><br><span class="line">       sn.begin_interval_time,</span><br><span class="line">       st.stat_name,</span><br><span class="line">       st.value</span><br><span class="line"><span class="keyword">FROM</span> dba_hist_sysstat st, dba_hist_snapshot sn</span><br><span class="line"><span class="keyword">WHERE</span> st.snap_id <span class="operator">=</span> sn.snap_id</span><br><span class="line">  <span class="keyword">AND</span> st.stat_name <span class="keyword">IN</span> (</span><br><span class="line">      <span class="string">&#x27;physical read total bytes&#x27;</span>,</span><br><span class="line">      <span class="string">&#x27;physical write total bytes&#x27;</span>,</span><br><span class="line">      <span class="string">&#x27;physical read total IO requests&#x27;</span>,</span><br><span class="line">      <span class="string">&#x27;physical write total IO requests&#x27;</span>,</span><br><span class="line">      <span class="string">&#x27;redo size&#x27;</span></span><br><span class="line">  )</span><br><span class="line">  <span class="keyword">AND</span> sn.begin_interval_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> sn.snap_id, st.stat_name;</span><br></pre></td></tr></table></figure>
+
+<p>重点关注：</p>
+<ol>
+<li><strong>I&#x2F;O 延迟下降</strong>：db file sequential read 的平均等待时间应降至 2ms 以下（SSD）或 8ms 以下（HDD）</li>
+<li><strong>I&#x2F;O 吞吐量提升</strong>：同等业务负载下的 IOPS 和吞吐量应有明显提升</li>
+<li><strong>iowait 降低</strong>：CPU 的 iowait 百分比应降至 5% 以下</li>
+<li><strong>log file sync 改善</strong>：平均等待时间应降至 2ms 以下</li>
+</ol>
+<h3 id="性能测试结果"><a href="#性能测试结果" class="headerlink" title="性能测试结果"></a>性能测试结果</h3><p>使用 <code>fio</code> 进行存储基准测试，验证优化效果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 随机读测试（模拟 OLTP 索引访问）</span></span><br><span class="line">fio --name=rand_read --ioengine=libaio --direct=1 --bs=8k \</span><br><span class="line">    --size=10G --numjobs=8 --iodepth=32 --rw=randread \</span><br><span class="line">    --group_reporting --runtime=300</span><br><span class="line"></span><br><span class="line"><span class="comment"># 随机读写混合测试（模拟 OLTP 混合负载）</span></span><br><span class="line">fio --name=rand_rw --ioengine=libaio --direct=1 --bs=8k \</span><br><span class="line">    --size=10G --numjobs=8 --iodepth=32 --rw=randrw --rwmixread=70 \</span><br><span class="line">    --group_reporting --runtime=300</span><br><span class="line"></span><br><span class="line"><span class="comment"># 顺序读测试（模拟全表扫描）</span></span><br><span class="line">fio --name=seq_read --ioengine=libaio --direct=1 --bs=1M \</span><br><span class="line">    --size=50G --numjobs=4 --iodepth=16 --rw=<span class="built_in">read</span> \</span><br><span class="line">    --group_reporting --runtime=300</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="I-O-优化的优先级"><a href="#I-O-优化的优先级" class="headerlink" title="I&#x2F;O 优化的优先级"></a>I&#x2F;O 优化的优先级</h3><p>根据我的实战经验，I&#x2F;O 优化应遵循以下优先级：</p>
+<ol>
+<li><strong>存储硬件层</strong>（最重要）：选择合适的存储介质（NVMe SSD &gt; SAS SSD &gt; SAS HDD），这是优化的基石，软件层面的优化无法弥补硬件的不足</li>
+<li><strong>存储配置层</strong>：Multipath 配置、SAN Zoning、LUN 分配策略</li>
+<li><strong>操作系统层</strong>：I&#x2F;O Scheduler、文件系统挂载选项、异步 I&#x2F;O 参数</li>
+<li><strong>ASM&#x2F;存储管理层</strong>：ASM 磁盘组条带化、Rebalance 策略</li>
+<li><strong>Oracle 数据库层</strong>：FILESYSTEMIO_OPTIONS、DB_FILE_MULTIBLOCK_READ_COUNT 等参数</li>
+</ol>
+<h3 id="存储选型建议"><a href="#存储选型建议" class="headerlink" title="存储选型建议"></a>存储选型建议</h3><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐存储类型</th>
+<th>推荐 I&#x2F;O Scheduler</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OLTP 核心系统</td>
+<td>NVMe SSD</td>
+<td>none</td>
+</tr>
+<tr>
+<td>OLTP 一般系统</td>
+<td>SAS SSD</td>
+<td>none</td>
+</tr>
+<tr>
+<td>数据仓库</td>
+<td>SAS SSD + HDD 混合</td>
+<td>mq-deadline (HDD), none (SSD)</td>
+</tr>
+<tr>
+<td>归档&#x2F;备份</td>
+<td>HDD</td>
+<td>mq-deadline</td>
+</tr>
+</tbody></table>
+<h3 id="常见-I-O-问题快速定位"><a href="#常见-I-O-问题快速定位" class="headerlink" title="常见 I&#x2F;O 问题快速定位"></a>常见 I&#x2F;O 问题快速定位</h3><p>遇到 I&#x2F;O 相关性能问题时，可以按照以下流程快速定位：</p>
+<ol>
+<li><strong>第一步</strong>：检查 <code>iostat</code> 的 <code>%util</code> 和 <code>await</code>，确认是否存在磁盘饱和</li>
+<li><strong>第二步</strong>：检查 AWR 报告中的 Top Wait Events，确认 I&#x2F;O 等待事件的排名和占比</li>
+<li><strong>第三步</strong>：检查 <code>V$FILESTAT</code> &#x2F; <code>V$IOSTAT_FILE</code>，定位热点数据文件</li>
+<li><strong>第四步</strong>：检查操作系统层面的 I&#x2F;O Scheduler 和文件系统挂载选项</li>
+<li><strong>第五步</strong>：检查 Multipath 路径状态和负载分布</li>
+</ol>
+<p><strong>关键经验</strong>：在处理 I&#x2F;O 性能问题时，务必从操作系统层面开始排查，而不是直接调整数据库参数。很多时候，一个简单的 I&#x2F;O Scheduler 变更或挂载选项调整就能带来显著的性能改善。</p>
+<p>I&#x2F;O 子系统优化是一项系统工程，需要 DBA 具备从存储硬件到数据库参数的全栈知识。希望本文的内容能够帮助大家在实际工作中更高效地定位和解决 I&#x2F;O 相关的性能问题。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" rel="tag"># 性能调优</a>
+              <a href="/tags/I-O/" rel="tag"># I/O</a>
+              <a href="/tags/ASM/" rel="tag"># ASM</a>
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/%E5%AD%98%E5%82%A8/" rel="tag"># 存储</a>
+              <a href="/tags/db-file-sequential-read/" rel="tag"># db file sequential read</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/13/oracle/memory-management-amm-vs-asmm/" rel="prev" title="Oracle 内存管理深度解析：AMM vs ASMM 与大内存服务器最佳实践">
+                  <i class="fa fa-angle-left"></i> Oracle 内存管理深度解析：AMM vs ASMM 与大内存服务器最佳实践
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/23/oracle/latch-mutex-concurrency-tuning/" rel="next" title="Latch, Mutex 与并发争用调优：Library Cache Lock&#x2F;Pin 深度解析">
+                  Latch, Mutex 与并发争用调优：Library Cache Lock/Pin 深度解析 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

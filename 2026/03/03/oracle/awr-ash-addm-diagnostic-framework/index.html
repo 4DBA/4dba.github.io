@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/03/03/oracle/awr-ash-addm-diagnostic-framework/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/03/03/oracle/awr-ash-addm-diagnostic-framework/","path":"2026/03/03/oracle/awr-ash-addm-diagnostic-framework/","title":"AWR/ASH/ADDM 诊断框架：从采样到根因的完整方法论"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>AWR/ASH/ADDM 诊断框架：从采样到根因的完整方法论 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-AWR-Automatic-Workload-Repository"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 AWR (Automatic Workload Repository)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%87%87%E6%A0%B7%E6%9C%BA%E5%88%B6"><span class="nav-number">2.1.1.</span> <span class="nav-text">采样机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E8%A7%86%E5%9B%BE"><span class="nav-number">2.1.2.</span> <span class="nav-text">核心视图</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AWR-%E6%8A%A5%E5%91%8A%E7%BB%93%E6%9E%84"><span class="nav-number">2.1.3.</span> <span class="nav-text">AWR 报告结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AWR-%E5%9F%BA%E7%BA%BF%E7%AE%A1%E7%90%86"><span class="nav-number">2.1.4.</span> <span class="nav-text">AWR 基线管理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-ASH-Active-Session-History"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 ASH (Active Session History)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%87%87%E6%A0%B7%E6%9C%BA%E5%88%B6-1"><span class="nav-number">2.2.1.</span> <span class="nav-text">采样机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E8%A7%86%E5%9B%BE%E5%AF%B9%E6%AF%94"><span class="nav-number">2.2.2.</span> <span class="nav-text">核心视图对比</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%87%87%E9%9B%86%E7%9A%84%E5%85%B3%E9%94%AE%E4%BF%A1%E6%81%AF"><span class="nav-number">2.2.3.</span> <span class="nav-text">采集的关键信息</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-ADDM-Automatic-Database-Diagnostic-Monitor"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 ADDM (Automatic Database Diagnostic Monitor)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Top-Down-%E5%88%86%E6%9E%90%E9%80%BB%E8%BE%91"><span class="nav-number">2.3.1.</span> <span class="nav-text">Top-Down 分析逻辑</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BB%BA%E8%AE%AE%E7%9A%84%E4%BC%98%E5%85%88%E7%BA%A7%E4%B8%8E%E5%88%86%E7%B1%BB"><span class="nav-number">2.3.2.</span> <span class="nav-text">建议的优先级与分类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ADDM-vs-%E6%89%8B%E5%B7%A5%E5%88%86%E6%9E%90"><span class="nav-number">2.3.3.</span> <span class="nav-text">ADDM vs 手工分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-%E4%B8%89%E8%80%85%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 三者的关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-AWR-%E6%8A%A5%E5%91%8A%E7%94%9F%E6%88%90%E4%B8%8E%E5%88%86%E6%9E%90"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 AWR 报告生成与分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%9F%E6%88%90-AWR-%E6%8A%A5%E5%91%8A"><span class="nav-number">3.1.1.</span> <span class="nav-text">生成 AWR 报告</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E7%AB%A0%E8%8A%82%E8%A7%A3%E8%AF%BB%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.1.2.</span> <span class="nav-text">关键章节解读示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AWR-%E5%AF%B9%E6%AF%94%E6%8A%A5%E5%91%8A"><span class="nav-number">3.1.3.</span> <span class="nav-text">AWR 对比报告</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-ASH-%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 ASH 数据分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Top-SQL-by-DB-Time"><span class="nav-number">3.2.1.</span> <span class="nav-text">Top SQL by DB Time</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Top-Wait-Events"><span class="nav-number">3.2.2.</span> <span class="nav-text">Top Wait Events</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%98%BB%E5%A1%9E%E9%93%BE%E5%88%86%E6%9E%90"><span class="nav-number">3.2.3.</span> <span class="nav-text">阻塞链分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%B2%BE%E7%A1%AE%E5%AE%9A%E4%BD%8D%E6%9F%90%E4%B8%80%E5%88%86%E9%92%9F%E7%9A%84%E6%B4%BB%E5%8A%A8"><span class="nav-number">3.2.4.</span> <span class="nav-text">精确定位某一分钟的活动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8C%89%E6%A8%A1%E5%9D%97%E5%88%86%E6%9E%90"><span class="nav-number">3.2.5.</span> <span class="nav-text">按模块分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-ADDM-%E4%BD%BF%E7%94%A8"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 ADDM 使用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA-ADDM-Task"><span class="nav-number">3.3.1.</span> <span class="nav-text">创建 ADDM Task</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B-ADDM-%E6%8A%A5%E5%91%8A"><span class="nav-number">3.3.2.</span> <span class="nav-text">查看 ADDM 报告</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ADDM-%E6%8A%A5%E5%91%8A%E8%A7%A3%E8%AF%BB%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.3.3.</span> <span class="nav-text">ADDM 报告解读示例</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-%E7%BB%BC%E5%90%88%E8%AF%8A%E6%96%AD%E6%B5%81%E7%A8%8B"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 综合诊断流程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%87%E5%87%86%E8%AF%8A%E6%96%AD-SOP"><span class="nav-number">3.4.1.</span> <span class="nav-text">标准诊断 SOP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9E%AC%E6%97%B6%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E7%9A%84-ASH-%E5%BF%AB%E9%80%9F%E5%AE%9A%E4%BD%8D"><span class="nav-number">3.4.2.</span> <span class="nav-text">瞬时性能问题的 ASH 快速定位</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%91%A8%E6%9C%9F%E6%80%A7%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E7%9A%84-AWR-%E8%B6%8B%E5%8A%BF%E5%88%86%E6%9E%90"><span class="nav-number">3.4.3.</span> <span class="nav-text">周期性性能问题的 AWR 趋势分析</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#AWR-%E6%8A%A5%E5%91%8A%E5%85%B3%E9%94%AE%E6%8C%87%E6%A0%87%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="nav-number">4.1.</span> <span class="nav-text">AWR 报告关键指标检查清单</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ASH-Top-Events-%E9%AA%8C%E8%AF%81"><span class="nav-number">4.2.</span> <span class="nav-text">ASH Top Events 验证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ADDM-%E5%BB%BA%E8%AE%AE%E6%89%A7%E8%A1%8C%E5%90%8E%E7%9A%84%E6%95%88%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.3.</span> <span class="nav-text">ADDM 建议执行后的效果验证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#AWR-%E6%8A%A5%E5%91%8A%E7%9A%84-5-%E5%88%86%E9%92%9F%E9%80%9F%E8%AF%BB%E6%B3%95"><span class="nav-number">5.1.</span> <span class="nav-text">AWR 报告的 5 分钟速读法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%AD%89%E5%BE%85%E4%BA%8B%E4%BB%B6%E9%80%9F%E6%9F%A5%E8%A1%A8"><span class="nav-number">5.2.</span> <span class="nav-text">常见等待事件速查表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ASH-%E5%9C%A8%E7%B4%A7%E6%80%A5%E6%95%85%E9%9A%9C%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8"><span class="nav-number">5.3.</span> <span class="nav-text">ASH 在紧急故障中的应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%9F%BA%E7%BA%BF%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">5.4.</span> <span class="nav-text">性能基线管理最佳实践</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/03/03/oracle/awr-ash-addm-diagnostic-framework/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="AWR&#x2F;ASH&#x2F;ADDM 诊断框架：从采样到根因的完整方法论 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AWR/ASH/ADDM 诊断框架：从采样到根因的完整方法论
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-03 10:00:00" itemprop="dateCreated datePublished" datetime="2026-03-03T10:00:00+00:00">2026-03-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>在日常数据库运维中，性能问题是最常见也最具挑战性的故障类型。一个典型的场景：业务方反馈”系统慢了”，DBA 登录数据库后面对的是数百个等待事件、数千条 SQL、上百个会话——<strong>信息过载与关键指标缺失同时存在</strong>。</p>
+<p>没有系统方法论时，典型的低效排查路径是这样的：</p>
+<ol>
+<li>看 <code>V$SESSION</code>，发现很多会话，但不知道哪个是瓶颈</li>
+<li>手工抓 <code>V$SQL</code>，按执行时间排序，但不确定是否在采样窗口内</li>
+<li>反复登出登入，执行各种查询，等结果出来时问题可能已经消失</li>
+<li>最终凭经验猜测，缺乏数据支撑</li>
+</ol>
+<p>这种”人肉诊断”模式的效率极低，且高度依赖个人经验。Oracle 从 10g 开始引入的 <strong>AWR&#x2F;ASH&#x2F;ADDM 三位一体诊断体系</strong>，正是为了解决这个问题。它们构成了一个从宏观到微观、从数据采集到智能分析的完整闭环：</p>
+<ul>
+<li><strong>AWR</strong> 负责宏观工作负载统计（每小时快照）</li>
+<li><strong>ASH</strong> 负责微观会话采样（每秒采样）</li>
+<li><strong>ADDME</strong> 负责智能诊断建议（基于 AWR 数据的自动分析）</li>
+</ul>
+<p>理解并掌握这三者的原理与协作方式，是从”经验驱动”走向”数据驱动”诊断的关键一步。</p>
+<span id="more"></span>
+
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-AWR-Automatic-Workload-Repository"><a href="#2-1-AWR-Automatic-Workload-Repository" class="headerlink" title="2.1 AWR (Automatic Workload Repository)"></a>2.1 AWR (Automatic Workload Repository)</h3><h4 id="采样机制"><a href="#采样机制" class="headerlink" title="采样机制"></a>采样机制</h4><p>AWR 的核心是<strong>快照（Snapshot）</strong>机制。默认每 <strong>60 分钟</strong>由 MMON（Manageability Monitor）后台进程自动采集一次数据库工作负载统计数据，写入 SYSAUX 表空间中的 AWR 相关表。</p>
+<p>每个快照包含的统计维度：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>时间模型统计</td>
+<td>DB Time, CPU Time, Parse Time 等</td>
+</tr>
+<tr>
+<td>等待事件统计</td>
+<td>Wait Events 的总等待时间和次数</td>
+</tr>
+<tr>
+<td>SQL 统计</td>
+<td>Top SQL 的执行次数、耗时、逻辑读等</td>
+</tr>
+<tr>
+<td>系统统计</td>
+<td>I&#x2F;O、网络、内存、Redo 等系统级指标</td>
+</tr>
+<tr>
+<td>段统计</td>
+<td>热点段、锁等待段等</td>
+</tr>
+<tr>
+<td>参数变更</td>
+<td>快照期间变更的初始化参数</td>
+</tr>
+</tbody></table>
+<h4 id="核心视图"><a href="#核心视图" class="headerlink" title="核心视图"></a>核心视图</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看快照信息</span></span><br><span class="line"><span class="keyword">SELECT</span> snap_id, begin_interval_time, end_interval_time, snap_level</span><br><span class="line"><span class="keyword">FROM</span>   dba_hist_snapshot</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> snap_id <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">10</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看历史SQL统计</span></span><br><span class="line"><span class="keyword">SELECT</span> snap_id, sql_id, executions_delta, elapsed_time_delta,</span><br><span class="line">       buffer_gets_delta, disk_reads_delta</span><br><span class="line"><span class="keyword">FROM</span>   dba_hist_sqlstat</span><br><span class="line"><span class="keyword">WHERE</span>  snap_id <span class="operator">=</span> (<span class="keyword">SELECT</span> <span class="built_in">MAX</span>(snap_id) <span class="keyword">FROM</span> dba_hist_sqlstat)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> elapsed_time_delta <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看历史等待事件</span></span><br><span class="line"><span class="keyword">SELECT</span> snap_id, event_name, total_waits_fg, time_waited_micro_fg</span><br><span class="line"><span class="keyword">FROM</span>   dba_hist_system_event</span><br><span class="line"><span class="keyword">WHERE</span>  snap_id <span class="operator">=</span> (<span class="keyword">SELECT</span> <span class="built_in">MAX</span>(snap_id) <span class="keyword">FROM</span> dba_hist_system_event)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> time_waited_micro_fg <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="AWR-报告结构"><a href="#AWR-报告结构" class="headerlink" title="AWR 报告结构"></a>AWR 报告结构</h4><p>一份完整的 AWR 报告通常包含以下关键章节：</p>
+<ol>
+<li><strong>Report Summary</strong> — 数据库基本信息、快照时间范围、DB Time 概览</li>
+<li><strong>Load Profile</strong> — 每秒&#x2F;每事务的负载指标</li>
+<li><strong>Instance Efficiency Percentages</strong> — Buffer Hit, Library Hit 等命中率</li>
+<li><strong>Top 5&#x2F;10 Timed Foreground Events</strong> — 最重要的等待事件</li>
+<li><strong>SQL Statistics</strong> — 按不同维度排序的 Top SQL</li>
+<li><strong>Instance Activity Stats</strong> — 实例级活动统计</li>
+<li><strong>IO Statistics</strong> — 表空间和文件级 I&#x2F;O 统计</li>
+<li><strong>Advisory Statistics</strong> — 内存、PGA、Shared Pool 等顾问建议</li>
+</ol>
+<h4 id="AWR-基线管理"><a href="#AWR-基线管理" class="headerlink" title="AWR 基线管理"></a>AWR 基线管理</h4><p>基线（Baseline）是一组被标记保存的快照，用于后续对比分析。基线的价值在于建立”正常状态”的参照系：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建固定基线</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_WORKLOAD_REPOSITORY.CREATE_BASELINE(</span><br><span class="line">    start_snap_id <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">1000</span>,</span><br><span class="line">    end_snap_id   <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">1050</span>,</span><br><span class="line">    baseline_name <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;NORMAL_WORKLOAD_202606&#x27;</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 创建移动窗口基线（用于自适应阈值）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_WORKLOAD_REPOSITORY.MODIFY_BASELINE_WINDOW_SIZE(</span><br><span class="line">    window_size <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">30</span>  <span class="comment">-- 30天</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看基线信息</span></span><br><span class="line"><span class="keyword">SELECT</span> baseline_id, baseline_name, start_snap_id, end_snap_id</span><br><span class="line"><span class="keyword">FROM</span>   dba_hist_baseline;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-ASH-Active-Session-History"><a href="#2-2-ASH-Active-Session-History" class="headerlink" title="2.2 ASH (Active Session History)"></a>2.2 ASH (Active Session History)</h3><h4 id="采样机制-1"><a href="#采样机制-1" class="headerlink" title="采样机制"></a>采样机制</h4><p>ASH 是 Oracle 诊断体系中最具实战价值的组件。它<strong>每秒</strong>对所有活动会话（非 IDLE 状态）进行采样，记录会话的等待事件、SQL 信息、执行计划步骤等详细数据。</p>
+<p>关键设计特点：</p>
+<ul>
+<li><strong>采样而非全量记录</strong>：每秒只记录活动会话，数据量可控</li>
+<li><strong>循环缓冲区</strong>：内存中使用环形缓冲区（在 SGA 中），旧数据会被覆盖</li>
+<li><strong>异步持久化</strong>：MMON 进程定期将 ASH 数据刷到 AWR 历史表</li>
+</ul>
+<h4 id="核心视图对比"><a href="#核心视图对比" class="headerlink" title="核心视图对比"></a>核心视图对比</h4><table>
+<thead>
+<tr>
+<th>视图</th>
+<th>数据范围</th>
+<th>保留时间</th>
+<th>数据来源</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>V$ACTIVE_SESSION_HISTORY</code></td>
+<td>当前在内存中的数据</td>
+<td>约 1 小时（取决于活动会话量）</td>
+<td>SGA 循环缓冲区</td>
+</tr>
+<tr>
+<td><code>DBA_HIST_ACTIVE_SESS_HISTORY</code></td>
+<td>已持久化的历史数据</td>
+<td>受 AWR 保留策略控制（默认 8 天）</td>
+<td>AWR 快照写入</td>
+</tr>
+</tbody></table>
+<h4 id="采集的关键信息"><a href="#采集的关键信息" class="headerlink" title="采集的关键信息"></a>采集的关键信息</h4><p>每个 ASH 采样点记录的信息极为丰富：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">SAMPLE_TIME        -- 采样时间</span><br><span class="line">SESSION_ID         -- 会话ID</span><br><span class="line">SESSION_SERIAL#    -- 会话序列号</span><br><span class="line">USER_ID            -- 用户ID</span><br><span class="line">SQL_ID             -- 当前执行的SQL</span><br><span class="line">SQL_PLAN_HASH_VALUE -- 执行计划HASH</span><br><span class="line">SQL_OPCODE         -- SQL操作类型（SELECT/INSERT/UPDATE等）</span><br><span class="line">WAIT_CLASS         -- 等待事件类别</span><br><span class="line">EVENT              -- 具体等待事件</span><br><span class="line">P1, P2, P3         -- 等待事件参数</span><br><span class="line">SESSION_STATE      -- ON_CPU / WAITING</span><br><span class="line">BLOCKING_SESSION   -- 阻塞会话</span><br><span class="line">MODULE / ACTION    -- 应用模块信息</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-ADDM-Automatic-Database-Diagnostic-Monitor"><a href="#2-3-ADDM-Automatic-Database-Diagnostic-Monitor" class="headerlink" title="2.3 ADDM (Automatic Database Diagnostic Monitor)"></a>2.3 ADDM (Automatic Database Diagnostic Monitor)</h3><h4 id="Top-Down-分析逻辑"><a href="#Top-Down-分析逻辑" class="headerlink" title="Top-Down 分析逻辑"></a>Top-Down 分析逻辑</h4><p>ADDM 采用自顶向下的分析方法，其核心算法如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">1. 计算两个相邻快照之间的 DB Time 变化</span><br><span class="line">2. 识别 DB Time 增长的主要贡献者</span><br><span class="line">3. 按以下层级逐级下钻：</span><br><span class="line">   等待事件类别 (Wait Class)</span><br><span class="line">     → 具体等待事件 (Wait Event)</span><br><span class="line">       → SQL 语句 (SQL_ID)</span><br><span class="line">         → 执行计划 (Plan Hash Value)</span><br><span class="line">           → 根因分析 (Root Cause)</span><br><span class="line">4. 生成带有优先级的诊断建议</span><br></pre></td></tr></table></figure>
+
+<h4 id="建议的优先级与分类"><a href="#建议的优先级与分类" class="headerlink" title="建议的优先级与分类"></a>建议的优先级与分类</h4><p>ADDM 建议分为几个主要类别：</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>说明</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Finding</td>
+<td>发现的问题</td>
+<td>“SQL 执行消耗了 60% 的 DB Time”</td>
+</tr>
+<tr>
+<td>Recommendation</td>
+<td>具体建议</td>
+<td>“为 SQL xxx 创建索引”</td>
+</tr>
+<tr>
+<td>Action</td>
+<td>可执行的操作</td>
+<td>“执行 CREATE INDEX 语句”</td>
+</tr>
+</tbody></table>
+<p>每条 Finding 附带 <strong>Impact</strong> 评分，表示该问题对 DB Time 的影响百分比。Impact 越高，优先级越高。</p>
+<h4 id="ADDM-vs-手工分析"><a href="#ADDM-vs-手工分析" class="headerlink" title="ADDM vs 手工分析"></a>ADDM vs 手工分析</h4><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>ADDM</th>
+<th>手工 AWR 分析</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>速度</td>
+<td>自动生成，秒级</td>
+<td>人工阅读报告，分钟到小时级</td>
+</tr>
+<tr>
+<td>全面性</td>
+<td>自动覆盖所有维度</td>
+<td>受限于人工经验和注意力</td>
+</tr>
+<tr>
+<td>深度</td>
+<td>提供到根因的完整链路</td>
+<td>可能遗漏关联分析</td>
+</tr>
+<tr>
+<td>灵活性</td>
+<td>受限于内置算法</td>
+<td>可以跨时间段、跨维度自由分析</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>快速获取方向性建议</td>
+<td>深入定制化分析</td>
+</tr>
+</tbody></table>
+<p><strong>最佳实践是两者结合</strong>：先用 ADDM 快速定位方向，再用手工 AWR&#x2F;ASH 深入验证。</p>
+<h3 id="2-4-三者的关系"><a href="#2-4-三者的关系" class="headerlink" title="2.4 三者的关系"></a>2.4 三者的关系</h3><p>AWR、ASH、ADDM 三者的关系可以用一个简单的比喻来理解：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────┐</span><br><span class="line">│              ADDM (智能分析师)               │</span><br><span class="line">│   基于 AWR 数据自动生成诊断建议             │</span><br><span class="line">│                                             │</span><br><span class="line">│   ┌─────────────┐    ┌──────────────┐       │</span><br><span class="line">│   │  AWR        │    │  ASH         │       │</span><br><span class="line">│   │  (宏观相机)  │    │  (显微镜)    │       │</span><br><span class="line">│   │             │    │              │       │</span><br><span class="line">│   │ 每小时一张   │    │ 每秒一帧     │       │</span><br><span class="line">│   │ 全景快照     │    │ 活动会话     │       │</span><br><span class="line">│   │ 统计汇总     │    │ 采样详情     │       │</span><br><span class="line">│   └─────────────┘    └──────────────┘       │</span><br><span class="line">└─────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>时间点定位流程</strong>：</p>
+<ol>
+<li>用户报告 “14:30 系统卡顿 5 分钟”</li>
+<li>ADDM → 查看 14:00~15:00 的 ADDM 报告，获取 Top Finding</li>
+<li>AWR → 查看该时段的 AWR 报告，确认 Top Wait Events 和 Top SQL</li>
+<li>ASH → 精确定位 14:30~14:35 每秒的会话状态，找到阻塞链</li>
+</ol>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-AWR-报告生成与分析"><a href="#3-1-AWR-报告生成与分析" class="headerlink" title="3.1 AWR 报告生成与分析"></a>3.1 AWR 报告生成与分析</h3><h4 id="生成-AWR-报告"><a href="#生成-AWR-报告" class="headerlink" title="生成 AWR 报告"></a>生成 AWR 报告</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 方式一：使用 awrrpt.sql（文本格式）</span></span><br><span class="line">@$ORACLE_HOME<span class="operator">/</span>rdbms<span class="operator">/</span>admin<span class="operator">/</span>awrrpt.sql</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 方式二：使用 awrrpti.sql（指定DBID和实例）</span></span><br><span class="line">@$ORACLE_HOME<span class="operator">/</span>rdbms<span class="operator">/</span>admin<span class="operator">/</span>awrrpti.sql</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 方式三：生成 HTML 格式</span></span><br><span class="line">@$ORACLE_HOME<span class="operator">/</span>rdbms<span class="operator">/</span>admin<span class="operator">/</span>awrrpt.html</span><br></pre></td></tr></table></figure>
+
+<h4 id="关键章节解读示例"><a href="#关键章节解读示例" class="headerlink" title="关键章节解读示例"></a>关键章节解读示例</h4><p><strong>Load Profile 示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Load Profile                    Per Second    Per Transaction</span><br><span class="line">~~~~~~~~~~~~~~~            ---------------    ---------------</span><br><span class="line">DB Time(s):                        12.5               0.3</span><br><span class="line">DB CPU(s):                          8.2               0.2</span><br><span class="line">Redo size:                    524,288.0          12,582.9</span><br><span class="line">Logical reads:                 45,678.0           1,096.3</span><br><span class="line">Physical reads:                 3,456.0              82.9</span><br><span class="line">User calls:                     2,345.0              56.3</span><br><span class="line">Hard parses:                      125.0               3.0</span><br></pre></td></tr></table></figure>
+
+<p><strong>解读要点</strong>：</p>
+<ul>
+<li>DB Time (12.5s) 远大于 DB CPU (8.2s)，说明有约 35% 的时间花在等待上</li>
+<li>Hard Parse 比例 &#x3D; 125&#x2F;总解析，若过高需关注绑定变量使用</li>
+<li>Physical reads&#x2F;LLogical reads 比值反映缓存效率</li>
+</ul>
+<p><strong>Top Timed Events 示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Top 5 Timed Foreground Events</span><br><span class="line">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">Event                          Waits    Time(s)  Avg wait  DB Time  Wait Class</span><br><span class="line">------------------------------ ------  --------  --------  -------  ----------</span><br><span class="line">db file sequential read       125,678   1,245.3    9.9ms     45.2%  User I/O</span><br><span class="line">db file scattered read         45,230     523.1   11.6ms     19.0%  User I/O</span><br><span class="line">enq: TX - row lock contention   1,250     389.2   311.4ms    14.1%  Application</span><br><span class="line">log file sync                   8,900     156.7    17.6ms      5.7%  Commit</span><br><span class="line">library cache lock                 89      98.5  1107.1ms     3.6%  Concurrency</span><br></pre></td></tr></table></figure>
+
+<p><strong>解读要点</strong>：</p>
+<ul>
+<li>db file sequential read 占比 45.2%，是单块读（索引读），需检查索引效率</li>
+<li>enq: TX - row lock contention 平均等待 311ms，存在行锁竞争</li>
+<li>library cache lock 单次等待超 1 秒，可能存在硬解析或DDL竞争</li>
+</ul>
+<p><strong>SQL Statistics 解读</strong>：</p>
+<p>重点关注以下维度排序：</p>
+<ul>
+<li><strong>Elapsed Time</strong>：总耗时最长的 SQL，优先优化</li>
+<li><strong>CPU Time</strong>：消耗 CPU 最多的 SQL</li>
+<li><strong>Buffer Gets</strong>：逻辑读最多的 SQL，通常是全表扫描</li>
+<li><strong>Executions</strong>：执行频率最高的 SQL，微小优化的累积效应大</li>
+</ul>
+<h4 id="AWR-对比报告"><a href="#AWR-对比报告" class="headerlink" title="AWR 对比报告"></a>AWR 对比报告</h4><p>对比报告可以发现两个时间段的差异：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 生成对比报告</span></span><br><span class="line">@$ORACLE_HOME<span class="operator">/</span>rdbms<span class="operator">/</span>admin<span class="operator">/</span>awrddrpt.sql</span><br></pre></td></tr></table></figure>
+
+<p>对比报告的价值：</p>
+<ul>
+<li>对比正常时段 vs 故障时段，快速发现变化点</li>
+<li>对比优化前 vs 优化后，量化优化效果</li>
+<li>对比工作日 vs 周末，发现负载模式差异</li>
+</ul>
+<h3 id="3-2-ASH-数据分析"><a href="#3-2-ASH-数据分析" class="headerlink" title="3.2 ASH 数据分析"></a>3.2 ASH 数据分析</h3><p>以下是实战中最常用的 ASH 查询脚本：</p>
+<h4 id="Top-SQL-by-DB-Time"><a href="#Top-SQL-by-DB-Time" class="headerlink" title="Top SQL by DB Time"></a>Top SQL by DB Time</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 按DB Time排序的Top SQL（过去1小时）</span></span><br><span class="line"><span class="keyword">SELECT</span> sql_id,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>)                                               <span class="keyword">AS</span> ash_samples,</span><br><span class="line">       ROUND(<span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="operator">*</span> <span class="number">100</span> <span class="operator">/</span> <span class="built_in">SUM</span>(<span class="built_in">COUNT</span>(<span class="operator">*</span>)) <span class="keyword">OVER</span>(), <span class="number">2</span>)       <span class="keyword">AS</span> pct,</span><br><span class="line">       <span class="built_in">MIN</span>(sample_time)                                       <span class="keyword">AS</span> first_seen,</span><br><span class="line">       <span class="built_in">MAX</span>(sample_time)                                       <span class="keyword">AS</span> last_seen</span><br><span class="line"><span class="keyword">FROM</span>   v$active_session_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span><span class="operator">/</span><span class="number">24</span></span><br><span class="line"><span class="keyword">AND</span>    session_type <span class="operator">=</span> <span class="string">&#x27;FOREGROUND&#x27;</span></span><br><span class="line"><span class="keyword">AND</span>    sql_id <span class="keyword">IS</span> <span class="keyword">NOT NULL</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> sql_id</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> ash_samples <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">15</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Top-Wait-Events"><a href="#Top-Wait-Events" class="headerlink" title="Top Wait Events"></a>Top Wait Events</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- Top等待事件（过去30分钟）</span></span><br><span class="line"><span class="keyword">SELECT</span> event,</span><br><span class="line">       wait_class,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>)                                               <span class="keyword">AS</span> ash_samples,</span><br><span class="line">       ROUND(<span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="operator">*</span> <span class="number">100</span> <span class="operator">/</span> <span class="built_in">SUM</span>(<span class="built_in">COUNT</span>(<span class="operator">*</span>)) <span class="keyword">OVER</span>(), <span class="number">2</span>)       <span class="keyword">AS</span> pct</span><br><span class="line"><span class="keyword">FROM</span>   v$active_session_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">30</span><span class="operator">/</span><span class="number">1440</span></span><br><span class="line"><span class="keyword">AND</span>    session_state <span class="operator">=</span> <span class="string">&#x27;WAITING&#x27;</span></span><br><span class="line"><span class="keyword">AND</span>    event <span class="keyword">IS</span> <span class="keyword">NOT NULL</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> event, wait_class</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> ash_samples <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="阻塞链分析"><a href="#阻塞链分析" class="headerlink" title="阻塞链分析"></a>阻塞链分析</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 阻塞链分析：找出阻塞源头</span></span><br><span class="line"><span class="keyword">SELECT</span> blocking_session,</span><br><span class="line">       blocking_session_serial#,</span><br><span class="line">       blocking_inst_id,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>)                   <span class="keyword">AS</span> blocked_samples,</span><br><span class="line">       <span class="built_in">MIN</span>(sample_time)           <span class="keyword">AS</span> start_time,</span><br><span class="line">       <span class="built_in">MAX</span>(sample_time)           <span class="keyword">AS</span> end_time</span><br><span class="line"><span class="keyword">FROM</span>   gv$active_session_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span><span class="operator">/</span><span class="number">24</span></span><br><span class="line"><span class="keyword">AND</span>    blocking_session <span class="keyword">IS</span> <span class="keyword">NOT NULL</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> blocking_session, blocking_session_serial#, blocking_inst_id</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> blocked_samples <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">10</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="精确定位某一分钟的活动"><a href="#精确定位某一分钟的活动" class="headerlink" title="精确定位某一分钟的活动"></a>精确定位某一分钟的活动</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 精确定位特定时间点的会话活动</span></span><br><span class="line"><span class="comment">-- 假设故障发生在 2026-06-07 14:30~14:35</span></span><br><span class="line"><span class="keyword">SELECT</span> TO_CHAR(sample_time, <span class="string">&#x27;HH24:MI:SS&#x27;</span>) <span class="keyword">AS</span> sample_ts,</span><br><span class="line">       session_id,</span><br><span class="line">       sql_id,</span><br><span class="line">       event,</span><br><span class="line">       wait_class,</span><br><span class="line">       p1, p2, p3,</span><br><span class="line">       blocking_session</span><br><span class="line"><span class="keyword">FROM</span>   dba_hist_active_sess_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="keyword">BETWEEN</span> TO_DATE(<span class="string">&#x27;2026-06-07 14:30&#x27;</span>, <span class="string">&#x27;YYYY-MM-DD HH24:MI&#x27;</span>)</span><br><span class="line">                       <span class="keyword">AND</span> TO_DATE(<span class="string">&#x27;2026-06-07 14:35&#x27;</span>, <span class="string">&#x27;YYYY-MM-DD HH24:MI&#x27;</span>)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> sample_time, session_id;</span><br></pre></td></tr></table></figure>
+
+<h4 id="按模块分析"><a href="#按模块分析" class="headerlink" title="按模块分析"></a>按模块分析</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 按应用模块分析ASH活动</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">module</span>,</span><br><span class="line">       action,</span><br><span class="line">       sql_id,</span><br><span class="line">       event,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> samples</span><br><span class="line"><span class="keyword">FROM</span>   v$active_session_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span><span class="operator">/</span><span class="number">24</span></span><br><span class="line"><span class="keyword">AND</span>    <span class="keyword">module</span> <span class="keyword">IS</span> <span class="keyword">NOT NULL</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> <span class="keyword">module</span>, action, sql_id, event</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> samples <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-ADDM-使用"><a href="#3-3-ADDM-使用" class="headerlink" title="3.3 ADDM 使用"></a>3.3 ADDM 使用</h3><h4 id="创建-ADDM-Task"><a href="#创建-ADDM-Task" class="headerlink" title="创建 ADDM Task"></a>创建 ADDM Task</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 方式一：使用DBMS_ADDM包（12c+）</span></span><br><span class="line"><span class="keyword">DECLARE</span></span><br><span class="line">  task_name VARCHAR2(<span class="number">100</span>);</span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  task_name :<span class="operator">=</span> DBMS_ADDM.ANALYZE_INST(</span><br><span class="line">    begin_snap   <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">1000</span>,</span><br><span class="line">    end_snap     <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">1001</span>,</span><br><span class="line">    instance_number <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">1</span>,</span><br><span class="line">    db_id        <span class="operator">=</span><span class="operator">&gt;</span> <span class="keyword">NULL</span>  <span class="comment">-- 当前库</span></span><br><span class="line">  );</span><br><span class="line">  DBMS_OUTPUT.PUT_LINE(<span class="string">&#x27;Task: &#x27;</span> <span class="operator">||</span> task_name);</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 方式二：使用DBMS_ADVISOR包（通用方式）</span></span><br><span class="line"><span class="keyword">DECLARE</span></span><br><span class="line">  task_id   NUMBER;</span><br><span class="line">  task_name VARCHAR2(<span class="number">100</span>) :<span class="operator">=</span> <span class="string">&#x27;ADDM_TASK_&#x27;</span> <span class="operator">||</span> TO_CHAR(SYSDATE, <span class="string">&#x27;YYYYMMDD_HH24MI&#x27;</span>);</span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_ADVISOR.CREATE_TASK(</span><br><span class="line">    advisor_name <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;ADDM&#x27;</span>,</span><br><span class="line">    task_id      <span class="operator">=</span><span class="operator">&gt;</span> task_id,</span><br><span class="line">    task_name    <span class="operator">=</span><span class="operator">&gt;</span> task_name</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  DBMS_ADVISOR.SET_TASK_PARAMETER(</span><br><span class="line">    task_name <span class="operator">=</span><span class="operator">&gt;</span> task_name,</span><br><span class="line">    <span class="keyword">parameter</span> <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;START_SNAPSHOT&#x27;</span>,</span><br><span class="line">    <span class="keyword">value</span>     <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">1000</span></span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  DBMS_ADVISOR.SET_TASK_PARAMETER(</span><br><span class="line">    task_name <span class="operator">=</span><span class="operator">&gt;</span> task_name,</span><br><span class="line">    <span class="keyword">parameter</span> <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;END_SNAPSHOT&#x27;</span>,</span><br><span class="line">    <span class="keyword">value</span>     <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">1001</span></span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  DBMS_ADVISOR.EXECUTE_TASK(task_name);</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="查看-ADDM-报告"><a href="#查看-ADDM-报告" class="headerlink" title="查看 ADDM 报告"></a>查看 ADDM 报告</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 方式一：使用DBMS_ADDM获取文本报告</span></span><br><span class="line"><span class="keyword">SELECT</span> DBMS_ADDM.GET_REPORT(<span class="string">&#x27;任务名称&#x27;</span>) <span class="keyword">FROM</span> dual;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 方式二：通过视图查询Findings</span></span><br><span class="line"><span class="keyword">SELECT</span> task_name, finding_name, impact, message</span><br><span class="line"><span class="keyword">FROM</span>   dba_advisor_findings</span><br><span class="line"><span class="keyword">WHERE</span>  task_name <span class="keyword">LIKE</span> <span class="string">&#x27;ADDM%&#x27;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> task_id <span class="keyword">DESC</span>, impact <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ADDM-报告解读示例"><a href="#ADDM-报告解读示例" class="headerlink" title="ADDM 报告解读示例"></a>ADDM 报告解读示例</h4><p>一份典型的 ADDM Finding 输出如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">FINDING 1: 67% impact on DB Time</span><br><span class="line">SQL statement &quot;SELECT * FROM orders WHERE customer_id = :1 AND status = :2&quot;</span><br><span class="line">was consuming significant database time.</span><br><span class="line">  RECOMMENDATION 1: SQL Tuning</span><br><span class="line">    Action: Run SQL Tuning Advisor for SQL_ID abc123def</span><br><span class="line">    Rationale: Estimated 45% improvement with new execution plan</span><br><span class="line">  RECOMMENDATION 2: Schema Modification</span><br><span class="line">    Action: CREATE INDEX idx_orders_cust_status ON orders(customer_id, status)</span><br><span class="line">    Rationale: The current plan uses full table scan on ORDERS (3.2M rows)</span><br><span class="line"></span><br><span class="line">FINDING 2: 15% impact on DB Time</span><br><span class="line">Log file sync waits were consuming significant database time.</span><br><span class="line">  RECOMMENDATION 1: Configuration</span><br><span class="line">    Action: Increase redo log file size from 200M to 1G</span><br><span class="line">    Rationale: Average log file parallel write latency is 12ms</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-综合诊断流程"><a href="#3-4-综合诊断流程" class="headerlink" title="3.4 综合诊断流程"></a>3.4 综合诊断流程</h3><h4 id="标准诊断-SOP"><a href="#标准诊断-SOP" class="headerlink" title="标准诊断 SOP"></a>标准诊断 SOP</h4><p>以下是从发现问题到定位根因的标准流程：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">故障报告</span><br><span class="line">  │</span><br><span class="line">  ▼</span><br><span class="line">Step 1: ADDM 快速诊断</span><br><span class="line">  │  执行 ADDM 分析最近一个快照周期</span><br><span class="line">  │  获取 Top Findings 和建议</span><br><span class="line">  │</span><br><span class="line">  ▼</span><br><span class="line">Step 2: AWR 趋势确认</span><br><span class="line">  │  生成 AWR 报告，确认 Load Profile</span><br><span class="line">  │  查看 Top Timed Events</span><br><span class="line">  │  识别 Top SQL（按 Elapsed Time, Buffer Gets）</span><br><span class="line">  │</span><br><span class="line">  ▼</span><br><span class="line">Step 3: ASH 精确定位</span><br><span class="line">  │  按时间点缩小 ASH 查询范围</span><br><span class="line">  │  分析等待事件的具体参数（P1, P2, P3）</span><br><span class="line">  │  追踪阻塞链（blocking_session）</span><br><span class="line">  │  定位具体 SQL 和执行计划</span><br><span class="line">  │</span><br><span class="line">  ▼</span><br><span class="line">Step 4: 根因确认与修复</span><br><span class="line">  │  确认根因（索引缺失、绑定变量窥探、锁竞争等）</span><br><span class="line">  │  执行修复操作</span><br><span class="line">  │</span><br><span class="line">  ▼</span><br><span class="line">Step 5: 效果验证</span><br><span class="line">     对比修复前后的 AWR 指标</span><br><span class="line">     确认 ASH 中等待事件是否消失</span><br><span class="line">     ADDM 重新分析确认问题已消除</span><br></pre></td></tr></table></figure>
+
+<h4 id="瞬时性能问题的-ASH-快速定位"><a href="#瞬时性能问题的-ASH-快速定位" class="headerlink" title="瞬时性能问题的 ASH 快速定位"></a>瞬时性能问题的 ASH 快速定位</h4><p>当问题发生时（比如正在发生的锁等待），ASH 是最直接的工具：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 实时查看当前活动会话的等待情况</span></span><br><span class="line"><span class="keyword">SELECT</span> s.sid,</span><br><span class="line">       s.serial#,</span><br><span class="line">       s.sql_id,</span><br><span class="line">       s.event,</span><br><span class="line">       s.wait_class,</span><br><span class="line">       s.seconds_in_wait,</span><br><span class="line">       s.blocking_session,</span><br><span class="line">       q.sql_text</span><br><span class="line"><span class="keyword">FROM</span>   v$session s</span><br><span class="line"><span class="keyword">LEFT</span> <span class="keyword">JOIN</span> v$<span class="keyword">sql</span> q <span class="keyword">ON</span> s.sql_id <span class="operator">=</span> q.sql_id</span><br><span class="line"><span class="keyword">WHERE</span>  s.status <span class="operator">=</span> <span class="string">&#x27;ACTIVE&#x27;</span></span><br><span class="line"><span class="keyword">AND</span>    s.wait_class <span class="operator">!=</span> <span class="string">&#x27;Idle&#x27;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> s.seconds_in_wait <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="周期性性能问题的-AWR-趋势分析"><a href="#周期性性能问题的-AWR-趋势分析" class="headerlink" title="周期性性能问题的 AWR 趋势分析"></a>周期性性能问题的 AWR 趋势分析</h4><p>对于每天固定时段出现的性能问题：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 对比最近7天同一时段的DB Time趋势</span></span><br><span class="line"><span class="keyword">SELECT</span> TO_CHAR(sn.begin_interval_time, <span class="string">&#x27;DY HH24:MI&#x27;</span>) <span class="keyword">AS</span> snap_time,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(st.db_time_delta)<span class="operator">/</span><span class="number">1e6</span>, <span class="number">2</span>)           <span class="keyword">AS</span> db_time_sec,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(st.cpu_time_delta)<span class="operator">/</span><span class="number">1e6</span>, <span class="number">2</span>)           <span class="keyword">AS</span> cpu_time_sec</span><br><span class="line"><span class="keyword">FROM</span>   dba_hist_sys_time_model st</span><br><span class="line"><span class="keyword">JOIN</span>   dba_hist_snapshot sn</span><br><span class="line">       <span class="keyword">ON</span> st.snap_id <span class="operator">=</span> sn.snap_id</span><br><span class="line">      <span class="keyword">AND</span> st.instance_number <span class="operator">=</span> sn.instance_number</span><br><span class="line"><span class="keyword">WHERE</span>  sn.begin_interval_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">7</span></span><br><span class="line"><span class="keyword">AND</span>    st.stat_name <span class="operator">=</span> <span class="string">&#x27;DB time&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> sn.snap_id, sn.begin_interval_time</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> sn.begin_interval_time;</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><h3 id="AWR-报告关键指标检查清单"><a href="#AWR-报告关键指标检查清单" class="headerlink" title="AWR 报告关键指标检查清单"></a>AWR 报告关键指标检查清单</h3><table>
+<thead>
+<tr>
+<th>检查项</th>
+<th>重点关注</th>
+<th>警告阈值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DB Time vs Elapsed Time</td>
+<td>DB Time 是否超过 Elapsed Time</td>
+<td>&gt; 1x（多会话并发）</td>
+</tr>
+<tr>
+<td>DB CPU %</td>
+<td>CPU 在 DB Time 中的占比</td>
+<td>&lt; 50%（说明等待严重）</td>
+</tr>
+<tr>
+<td>Buffer Cache Hit Ratio</td>
+<td>缓存命中率</td>
+<td>&lt; 90%</td>
+</tr>
+<tr>
+<td>Library Cache Hit Ratio</td>
+<td>库缓存命中率</td>
+<td>&lt; 95%</td>
+</tr>
+<tr>
+<td>Hard Parse %</td>
+<td>硬解析占比</td>
+<td>&gt; 5%</td>
+</tr>
+<tr>
+<td>Redo Log Switch&#x2F;hour</td>
+<td>日志切换频率</td>
+<td>&gt; 6次&#x2F;小时</td>
+</tr>
+<tr>
+<td>Top Wait Event 占比</td>
+<td>第一等待事件占比</td>
+<td>&gt; 30%（需关注）</td>
+</tr>
+<tr>
+<td>Top SQL 占比</td>
+<td>第一SQL的DB Time占比</td>
+<td>&gt; 50%（集中度高）</td>
+</tr>
+</tbody></table>
+<h3 id="ASH-Top-Events-验证"><a href="#ASH-Top-Events-验证" class="headerlink" title="ASH Top Events 验证"></a>ASH Top Events 验证</h3><p>修复操作后，通过 ASH 验证等待事件是否消除：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 对比修复前后某等待事件的ASH采样数</span></span><br><span class="line"><span class="comment">-- 假设修复前时间段：10:00-11:00，修复后：11:00-12:00</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="string">&#x27;修复前&#x27;</span> <span class="keyword">AS</span> <span class="keyword">period</span>,</span><br><span class="line">       event,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> samples</span><br><span class="line"><span class="keyword">FROM</span>   dba_hist_active_sess_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="keyword">BETWEEN</span> TO_DATE(<span class="string">&#x27;2026-06-07 10:00&#x27;</span>, <span class="string">&#x27;YYYY-MM-DD HH24:MI&#x27;</span>)</span><br><span class="line">                       <span class="keyword">AND</span> TO_DATE(<span class="string">&#x27;2026-06-07 11:00&#x27;</span>, <span class="string">&#x27;YYYY-MM-DD HH24:MI&#x27;</span>)</span><br><span class="line"><span class="keyword">AND</span>    event <span class="operator">=</span> <span class="string">&#x27;enq: TX - row lock contention&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> event</span><br><span class="line"><span class="keyword">UNION</span> <span class="keyword">ALL</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="string">&#x27;修复后&#x27;</span> <span class="keyword">AS</span> <span class="keyword">period</span>,</span><br><span class="line">       event,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> samples</span><br><span class="line"><span class="keyword">FROM</span>   dba_hist_active_sess_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="keyword">BETWEEN</span> TO_DATE(<span class="string">&#x27;2026-06-07 11:00&#x27;</span>, <span class="string">&#x27;YYYY-MM-DD HH24:MI&#x27;</span>)</span><br><span class="line">                       <span class="keyword">AND</span> TO_DATE(<span class="string">&#x27;2026-06-07 12:00&#x27;</span>, <span class="string">&#x27;YYYY-MM-DD HH24:MI&#x27;</span>)</span><br><span class="line"><span class="keyword">AND</span>    event <span class="operator">=</span> <span class="string">&#x27;enq: TX - row lock contention&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> event;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ADDM-建议执行后的效果验证"><a href="#ADDM-建议执行后的效果验证" class="headerlink" title="ADDM 建议执行后的效果验证"></a>ADDM 建议执行后的效果验证</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建修复后的ADDM任务，对比Finding数量和Impact</span></span><br><span class="line"><span class="comment">-- 如果原Finding的Impact大幅下降或消失，说明修复有效</span></span><br><span class="line"><span class="keyword">SELECT</span> task_name,</span><br><span class="line">       finding_name,</span><br><span class="line">       ROUND(impact, <span class="number">2</span>) <span class="keyword">AS</span> impact_pct,</span><br><span class="line">       message</span><br><span class="line"><span class="keyword">FROM</span>   dba_advisor_findings</span><br><span class="line"><span class="keyword">WHERE</span>  task_name <span class="keyword">IN</span> (<span class="string">&#x27;ADDM_BEFORE&#x27;</span>, <span class="string">&#x27;ADDM_AFTER&#x27;</span>)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> task_name, impact <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="AWR-报告的-5-分钟速读法"><a href="#AWR-报告的-5-分钟速读法" class="headerlink" title="AWR 报告的 5 分钟速读法"></a>AWR 报告的 5 分钟速读法</h3><p>在紧急情况下，按照以下顺序快速阅读 AWR 报告：</p>
+<ol>
+<li><strong>看时间范围</strong>（30秒） — 确认快照时间和持续时间</li>
+<li><strong>看 Load Profile</strong>（60秒） — DB Time vs Elapsed，判断整体负载</li>
+<li><strong>看 Top 5 Timed Events</strong>（120秒） — 确定主要瓶颈类型</li>
+<li><strong>看 Top SQL by Elapsed</strong>（90秒） — 找到最耗时的 SQL</li>
+<li><strong>看 IO Statistics</strong>（60秒） — 确认是否有 I&#x2F;O 瓶颈</li>
+</ol>
+<p>整个过程不超过 5 分钟，即可形成初步诊断方向。</p>
+<h3 id="常见等待事件速查表"><a href="#常见等待事件速查表" class="headerlink" title="常见等待事件速查表"></a>常见等待事件速查表</h3><table>
+<thead>
+<tr>
+<th>Wait Event</th>
+<th>Wait Class</th>
+<th>常见原因</th>
+<th>处理方向</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>db file sequential read</td>
+<td>User I&#x2F;O</td>
+<td>索引范围扫描、单块读</td>
+<td>检查索引效率、I&#x2F;O 子系统</td>
+</tr>
+<tr>
+<td>db file scattered read</td>
+<td>User I&#x2F;O</td>
+<td>全表扫描、多块读</td>
+<td>添加索引、优化 SQL</td>
+</tr>
+<tr>
+<td>enq: TX - row lock contention</td>
+<td>Application</td>
+<td>行锁竞争</td>
+<td>检查事务提交频率、应用逻辑</td>
+</tr>
+<tr>
+<td>enq: TM - contention</td>
+<td>Application</td>
+<td>表级锁（DML 与 DDL 冲突）</td>
+<td>检查外键索引、DDL 时机</td>
+</tr>
+<tr>
+<td>log file sync</td>
+<td>Commit</td>
+<td>事务提交等待日志写入</td>
+<td>增大 redo log、优化 I&#x2F;O</td>
+</tr>
+<tr>
+<td>latch: shared pool</td>
+<td>Concurrency</td>
+<td>硬解析过多、Shared Pool 碎片化</td>
+<td>使用绑定变量、调整 Shared Pool</td>
+</tr>
+<tr>
+<td>library cache pin&#x2F;lock</td>
+<td>Concurrency</td>
+<td>SQL 解析竞争</td>
+<td>减少硬解析、避免高并发 DDL</td>
+</tr>
+<tr>
+<td>cursor: pin S wait on X</td>
+<td>Concurrency</td>
+<td>绑定变量窥探导致的游标失效</td>
+<td>关闭窥探或使用 SPM</td>
+</tr>
+<tr>
+<td>gc buffer busy acquire</td>
+<td>Cluster</td>
+<td>RAC 节点间缓存争用</td>
+<td>优化数据分布、减少跨节点访问</td>
+</tr>
+<tr>
+<td>direct path read</td>
+<td>User I&#x2F;O</td>
+<td>并行查询、大表直接路径读</td>
+<td>调整并行度、优化 PGA</td>
+</tr>
+</tbody></table>
+<h3 id="ASH-在紧急故障中的应用"><a href="#ASH-在紧急故障中的应用" class="headerlink" title="ASH 在紧急故障中的应用"></a>ASH 在紧急故障中的应用</h3><p>在生产故障中，ASH 的实时性使其成为最有力的武器：</p>
+<p><strong>场景一：系统突然变慢</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 1. 快速看当前什么等待事件最多</span></span><br><span class="line"><span class="keyword">SELECT</span> event, <span class="built_in">COUNT</span>(<span class="operator">*</span>) cnt</span><br><span class="line"><span class="keyword">FROM</span>   v$active_session_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">5</span><span class="operator">/</span><span class="number">1440</span>  <span class="comment">-- 最近5分钟</span></span><br><span class="line"><span class="keyword">AND</span>    session_type <span class="operator">=</span> <span class="string">&#x27;FOREGROUND&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> event</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> cnt <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">5</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 2. 看这个等待事件关联的SQL</span></span><br><span class="line"><span class="keyword">SELECT</span> sql_id, <span class="built_in">COUNT</span>(<span class="operator">*</span>) cnt</span><br><span class="line"><span class="keyword">FROM</span>   v$active_session_history</span><br><span class="line"><span class="keyword">WHERE</span>  sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">5</span><span class="operator">/</span><span class="number">1440</span></span><br><span class="line"><span class="keyword">AND</span>    event <span class="operator">=</span> <span class="string">&#x27;&amp;event_name&#x27;</span>  <span class="comment">-- 替换为上面发现的事件</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> sql_id</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> cnt <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">5</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>场景二：找到谁在阻塞谁</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看完整的阻塞链</span></span><br><span class="line"><span class="keyword">SELECT</span> LPAD(<span class="string">&#x27; &#x27;</span>, <span class="number">2</span> <span class="operator">*</span> (LEVEL <span class="operator">-</span> <span class="number">1</span>)) <span class="operator">||</span> sid <span class="keyword">AS</span> blocking_tree,</span><br><span class="line">       sid, serial#, sql_id, event, blocking_session</span><br><span class="line"><span class="keyword">FROM</span> (</span><br><span class="line">  <span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span></span><br><span class="line">         session_id <span class="keyword">AS</span> sid,</span><br><span class="line">         session_serial# <span class="keyword">AS</span> serial#,</span><br><span class="line">         sql_id,</span><br><span class="line">         event,</span><br><span class="line">         blocking_session</span><br><span class="line">  <span class="keyword">FROM</span>   v$active_session_history</span><br><span class="line">  <span class="keyword">WHERE</span>  sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">2</span><span class="operator">/</span><span class="number">1440</span></span><br><span class="line">  <span class="keyword">AND</span>    (blocking_session <span class="keyword">IS</span> <span class="keyword">NOT NULL</span></span><br><span class="line">         <span class="keyword">OR</span> session_id <span class="keyword">IN</span> (<span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> blocking_session</span><br><span class="line">                           <span class="keyword">FROM</span> v$active_session_history</span><br><span class="line">                           <span class="keyword">WHERE</span> sample_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">2</span><span class="operator">/</span><span class="number">1440</span></span><br><span class="line">                           <span class="keyword">AND</span> blocking_session <span class="keyword">IS</span> <span class="keyword">NOT NULL</span>))</span><br><span class="line">)</span><br><span class="line"><span class="keyword">CONNECT</span> <span class="keyword">BY</span> PRIOR sid <span class="operator">=</span> blocking_session</span><br><span class="line"><span class="keyword">START</span> <span class="keyword">WITH</span> blocking_session <span class="keyword">IS</span> <span class="keyword">NULL</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="性能基线管理最佳实践"><a href="#性能基线管理最佳实践" class="headerlink" title="性能基线管理最佳实践"></a>性能基线管理最佳实践</h3><ol>
+<li><strong>创建工作日基线</strong>：标记正常工作日的工作时间段快照</li>
+<li><strong>创建周末基线</strong>：对比工作日与周末的负载差异</li>
+<li><strong>创建月末基线</strong>：业务月末结账期间的特殊负载模式</li>
+<li><strong>设置自适应阈值</strong>：基于基线数据设置告警阈值，而非固定值</li>
+<li><strong>定期保留关键基线</strong>：基线快照不要随 AWR 保留策略自动清除</li>
+<li><strong>版本升级前创建基线</strong>：升级前保存基线，升级后对比验证</li>
+</ol>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看当前 AWR 保留策略</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> dba_hist_wr_control;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 调整保留时间为30天，快照间隔为30分钟</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_WORKLOAD_REPOSITORY.MODIFY_SNAPSHOT_SETTINGS(</span><br><span class="line">    retention <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">30</span> <span class="operator">*</span> <span class="number">24</span> <span class="operator">*</span> <span class="number">60</span>,   <span class="comment">-- 30天（单位：分钟）</span></span><br><span class="line">    <span class="type">interval</span>  <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">30</span>               <span class="comment">-- 30分钟</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<p><strong>总结</strong>：AWR&#x2F;ASH&#x2F;ADDM 是 Oracle DBA 的诊断三板斧。AWR 负责”看全景”，ASH 负责”看细节”，ADDM 负责”给建议”。掌握了这套方法论，面对性能问题时就不会手忙脚乱——先用 ADDM 看方向，再用 AWR 看趋势，最后用 ASH 精准定位，形成完整的数据驱动诊断闭环。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/AWR/" rel="tag"># AWR</a>
+              <a href="/tags/ASH/" rel="tag"># ASH</a>
+              <a href="/tags/ADDM/" rel="tag"># ADDM</a>
+              <a href="/tags/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" rel="tag"># 性能调优</a>
+              <a href="/tags/%E8%AF%8A%E6%96%AD/" rel="tag"># 诊断</a>
+              <a href="/tags/%E7%AD%89%E5%BE%85%E4%BA%8B%E4%BB%B6/" rel="tag"># 等待事件</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/02/28/oracle/goldengate-vs-dataguard/" rel="prev" title="GoldenGate vs Data Guard：容灾技术选型与架构对比">
+                  <i class="fa fa-angle-left"></i> GoldenGate vs Data Guard：容灾技术选型与架构对比
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/08/oracle/sql-execution-plan-analysis-mastery/" rel="next" title="SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化">
+                  SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

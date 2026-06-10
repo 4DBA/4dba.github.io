@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/02/10/oracle/active-data-guard-implementation/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/02/10/oracle/active-data-guard-implementation/","path":"2026/02/10/oracle/active-data-guard-implementation/","title":"Active Data Guard 实战：物理备库搭建、Real-time Apply 与读写分离"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Active Data Guard 实战：物理备库搭建、Real-time Apply 与读写分离 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E4%BC%A0%E7%BB%9F-Data-Guard-%E7%9A%84%E8%B5%84%E6%BA%90%E6%B5%AA%E8%B4%B9"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 传统 Data Guard 的资源浪费</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-ADG-%E7%9A%84%E4%BB%B7%E5%80%BC"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 ADG 的价值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-%E7%94%9F%E4%BA%A7%E4%B8%AD%E7%9A%84%E5%85%B8%E5%9E%8B%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">1.3.</span> <span class="nav-text">1.3 生产中的典型应用场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Data-Guard-%E6%9E%B6%E6%9E%84"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 Data Guard 架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-ADG-%E7%9A%84%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 ADG 的核心特性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-DG-Broker"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 DG Broker</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Redo-Transport-Services"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 Redo Transport Services</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E7%89%A9%E7%90%86%E5%A4%87%E5%BA%93%E6%90%AD%E5%BB%BA%EF%BC%8819c%EF%BC%89"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 物理备库搭建（19c）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-DG-Broker-%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 DG Broker 配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-ADG-%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E9%85%8D%E7%BD%AE"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 ADG 读写分离配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-Switchover-%E6%93%8D%E4%BD%9C"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 Switchover 操作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E6%95%B0%E6%8D%AE%E5%BA%93%E8%A7%92%E8%89%B2%E4%B8%8E%E7%8A%B6%E6%80%81"><span class="nav-number">4.1.</span> <span class="nav-text">4.1 数据库角色与状态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-Apply-Lag-%E4%B8%8E-Transport-Lag"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 Apply Lag 与 Transport Lag</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-DG-Broker-%E9%AA%8C%E8%AF%81"><span class="nav-number">4.3.</span> <span class="nav-text">4.3 DG Broker 验证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-4-Real-time-Apply-%E9%AA%8C%E8%AF%81"><span class="nav-number">4.4.</span> <span class="nav-text">4.4 Real-time Apply 验证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-ADG-%E7%9A%84%E6%80%A7%E8%83%BD%E5%BD%B1%E5%93%8D%E4%B8%8E%E8%B0%83%E4%BC%98"><span class="nav-number">5.1.</span> <span class="nav-text">5.1 ADG 的性能影响与调优</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-%E5%A4%87%E5%BA%93%E7%9A%84%E7%BD%91%E7%BB%9C%E5%B8%A6%E5%AE%BD%E8%A6%81%E6%B1%82"><span class="nav-number">5.2.</span> <span class="nav-text">5.2 备库的网络带宽要求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E4%B8%8E%E5%A4%84%E7%90%86"><span class="nav-number">5.3.</span> <span class="nav-text">5.3 常见故障与处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-4-ADG-%E7%9A%84%E6%8E%88%E6%9D%83%E8%A6%81%E6%B1%82"><span class="nav-number">5.4.</span> <span class="nav-text">5.4 ADG 的授权要求</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/02/10/oracle/active-data-guard-implementation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Active Data Guard 实战：物理备库搭建、Real-time Apply 与读写分离 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Active Data Guard 实战：物理备库搭建、Real-time Apply 与读写分离
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-02-10 10:00:00" itemprop="dateCreated datePublished" datetime="2026-02-10T10:00:00+00:00">2026-02-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在生产环境中，许多企业部署了 Data Guard 物理备库用于容灾，但备库长期处于 mount 状态，只接收 redo 不提供任何业务服务，造成了严重的硬件资源浪费。Oracle Active Data Guard（ADG）打破了这一限制，允许物理备库在 apply redo 的同时提供只读查询服务，实现真正的读写分离。本文基于 Oracle 19c 环境，完整记录从物理备库搭建、DG Broker 配置到 ADG 读写分离落地的全流程。</p>
+<span id="more"></span>
+
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><h3 id="1-1-传统-Data-Guard-的资源浪费"><a href="#1-1-传统-Data-Guard-的资源浪费" class="headerlink" title="1.1 传统 Data Guard 的资源浪费"></a>1.1 传统 Data Guard 的资源浪费</h3><p>在没有 ADG 选件的场景下，物理备库只能处于以下两种状态之一：</p>
+<ul>
+<li><strong>Mount 状态</strong>：接收 redo 并 apply，但无法对外提供任何查询服务</li>
+<li><strong>Read-Only 状态</strong>：可以查询，但停止 redo apply，数据不再与 Primary 同步</li>
+</ul>
+<p>这意味着备库服务器的 CPU、内存、存储资源大部分时间处于空闲状态，而企业还要为这些硬件资源支付高昂的采购和维护成本。DBA 面临的尴尬局面是：花了双倍的硬件预算，只得到了一份容灾保障。</p>
+<h3 id="1-2-ADG-的价值"><a href="#1-2-ADG-的价值" class="headerlink" title="1.2 ADG 的价值"></a>1.2 ADG 的价值</h3><p>Active Data Guard 解决了上述矛盾。启用 ADG 后，物理备库可以同时做到：</p>
+<ul>
+<li><strong>持续 apply redo</strong>：保持与 Primary 的数据同步</li>
+<li><strong>提供只读查询</strong>：应用可以连接到 ADG 执行 SELECT 语句</li>
+<li><strong>支持报表和分析</strong>：将消耗资源的报表查询从 Primary 卸载到 ADG</li>
+<li><strong>支持备份卸载</strong>：RMAN 可以直接从 ADG 备份，不影响 Primary 性能</li>
+</ul>
+<h3 id="1-3-生产中的典型应用场景"><a href="#1-3-生产中的典型应用场景" class="headerlink" title="1.3 生产中的典型应用场景"></a>1.3 生产中的典型应用场景</h3><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>读写分离</td>
+<td>OLTP 写操作走 Primary，报表&#x2F;查询走 ADG</td>
+</tr>
+<tr>
+<td>报表卸载</td>
+<td>将 BI 报表、大查询从 Primary 迁移到 ADG</td>
+</tr>
+<tr>
+<td>备份卸载</td>
+<td>RMAN 增量备份在 ADG 上执行，Primary 零备份压力</td>
+</tr>
+<tr>
+<td>容灾+读服务</td>
+<td>一套备库同时满足容灾和读扩展需求</td>
+</tr>
+<tr>
+<td>数据验证</td>
+<td>ADG 可用于验证数据一致性、测试恢复</td>
+</tr>
+</tbody></table>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-Data-Guard-架构"><a href="#2-1-Data-Guard-架构" class="headerlink" title="2.1 Data Guard 架构"></a>2.1 Data Guard 架构</h3><p>Data Guard 的核心是 Primary 与 Standby 之间的 redo 数据流：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Primary Database</span><br><span class="line">    │</span><br><span class="line">    ├── LGWR ──→ Redo Transport ──→ Standby Redo Log</span><br><span class="line">    │                                    │</span><br><span class="line">    └── ARCH ──→ Archive Log ──────────→ Remote Archive</span><br><span class="line">                                          │</span><br><span class="line">                                    Standby Apply</span><br><span class="line">                                    (Media Recovery)</span><br></pre></td></tr></table></figure>
+
+<p><strong>物理备库 vs 逻辑备库：</strong></p>
+<ul>
+<li><strong>物理备库（Physical Standby）</strong>：基于 block-level 的 redo apply，数据文件与 Primary 完全一致。这是 ADG 的基础，也是最常用的备库类型。</li>
+<li><strong>逻辑备库（Logical Standby）</strong>：将 redo 转换为 SQL 在备库执行，备库可以独立写入，但数据一致性保障更复杂。</li>
+</ul>
+<p><strong>三种保护模式：</strong></p>
+<table>
+<thead>
+<tr>
+<th>保护模式</th>
+<th>数据丢失风险</th>
+<th>Primary 事务提交</th>
+<th>同步方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Maximum Performance</td>
+<td>可能丢失少量数据</td>
+<td>不等待 redo 到达备库</td>
+<td>ASYNC</td>
+</tr>
+<tr>
+<td>Maximum Availability</td>
+<td>零数据丢失（正常情况）</td>
+<td>等待 redo 到达备库</td>
+<td>SYNC</td>
+</tr>
+<tr>
+<td>Maximum Protection</td>
+<td>零数据丢失（强制保证）</td>
+<td>等待 redo apply</td>
+<td>SYNC</td>
+</tr>
+</tbody></table>
+<p>大多数生产环境选择 <strong>Maximum Performance</strong> 模式，在性能和数据保护之间取得平衡。对数据零丢失有严格要求的核心系统选择 <strong>Maximum Availability</strong>。</p>
+<h3 id="2-2-ADG-的核心特性"><a href="#2-2-ADG-的核心特性" class="headerlink" title="2.2 ADG 的核心特性"></a>2.2 ADG 的核心特性</h3><p><strong>Real-time Apply</strong></p>
+<p>这是 ADG 最关键的特性。启用 Real-time Apply 后，备库直接从 Standby Redo Log（SRL）apply redo，而不是等待归档日志生成后再 apply。这大大降低了数据延迟：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">-- 启用 Real-time Apply</span><br><span class="line">ALTER DATABASE RECOVER MANAGED STANDBY DATABASE </span><br><span class="line">  USING CURRENT LOGFILE DISCONNECT FROM SESSION;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Redo Apply 与 Query 的并行机制</strong></p>
+<p>ADG 利用多进程架构实现 apply 与 query 的并行：</p>
+<ul>
+<li><strong>MRPn（Managed Recovery Process）</strong>：负责 redo apply</li>
+<li><strong>RFS（Remote File Server）</strong>：接收 redo 数据</li>
+<li><strong>查询进程</strong>：独立的 server process 处理只读查询</li>
+</ul>
+<p>当查询需要读取的 block 正在被 apply 修改时，ADG 会从 Primary 获取该 block 的一致性副本（通过 ADG block shipping），确保查询结果的读一致性。</p>
+<p><strong>Block Change Tracking（BCT）</strong></p>
+<p>ADG 备库支持 Block Change Tracking，可以大幅加速增量备份：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 ADG 备库上启用 BCT</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE ENABLE BLOCK CHANGE TRACKING </span><br><span class="line">  <span class="keyword">USING</span> FILE <span class="string">&#x27;/u01/app/oracle/bct/adg_bct.f&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>启用 BCT 后，RMAN 增量备份只需扫描标记为”已变更”的 block，而不是全库扫描，备份时间可缩短数倍。</p>
+<p><strong>DML 重定向（12c+）</strong></p>
+<p>从 Oracle 12c 开始，ADG 支持将 DML 操作自动重定向到 Primary 执行：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 启用 DML 重定向</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> ADG_REDIRECT_DML<span class="operator">=</span><span class="literal">TRUE</span>;</span><br></pre></td></tr></table></figure>
+
+<p>这允许应用在 ADG 上执行 INSERT&#x2F;UPDATE&#x2F;DELETE，Oracle 自动将这些操作转发到 Primary。适用于少量写入场景，不建议大量使用。</p>
+<h3 id="2-3-DG-Broker"><a href="#2-3-DG-Broker" class="headerlink" title="2.3 DG Broker"></a>2.3 DG Broker</h3><p><strong>DMON 进程与 Broker 架构</strong></p>
+<p>Data Guard Broker（DG Broker）是 Oracle 提供的 Data Guard 管理框架，核心组件是 DMON（Data Guard Monitor）进程：</p>
+<ul>
+<li>DMON 进程在每个数据库实例上运行</li>
+<li>负责配置管理、状态监控、角色切换协调</li>
+<li>提供统一的命令行接口（dgmgrl）和 EM&#x2F;Cloud Control 集成</li>
+</ul>
+<p><strong>Broker 的配置管理与状态监控</strong></p>
+<p>Broker 将所有 Data Guard 配置信息存储在本地配置文件中（由 <code>DG_BROKER_CONFIG_FILE1</code> 和 <code>DG_BROKER_CONFIG_FILE2</code> 参数指定），提供统一的视图：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">DGMGRL&gt; SHOW CONFIGURATION;</span><br><span class="line">DGMGRL&gt; SHOW DATABASE &#x27;PRODDB&#x27;;</span><br><span class="line">DGMGRL&gt; SHOW DATABASE &#x27;PRODDB_STBY&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Fast-Start Failover（FSFO）</strong></p>
+<p>FSFO 是 Broker 提供的自动故障转移功能，核心原理：</p>
+<ol>
+<li>Observer 进程持续监控 Primary 的可用性</li>
+<li>当 Primary 不可达超过阈值（默认 30 秒），Observer 触发 Failover</li>
+<li>备库自动切换为 Primary 角色</li>
+<li>应用通过 TAF 或 FAN 重连到新 Primary</li>
+</ol>
+<p>FSFO 的关键配置包括 Observer 站点、Failover 阈值、目标备库选择等。</p>
+<h3 id="2-4-Redo-Transport-Services"><a href="#2-4-Redo-Transport-Services" class="headerlink" title="2.4 Redo Transport Services"></a>2.4 Redo Transport Services</h3><p><strong>LGWR SYNC vs ASYNC</strong></p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>机制</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>LGWR SYNC</td>
+<td>LGWR 进程同步写入备库 SRL</td>
+<td>Maximum Availability &#x2F; Protection</td>
+</tr>
+<tr>
+<td>LGWR ASYNC</td>
+<td>LGWR 进程异步写入备库 SRL</td>
+<td>Maximum Performance（推荐）</td>
+</tr>
+<tr>
+<td>ARCH</td>
+<td>归档时传输</td>
+<td>旧版兼容，延迟最大</td>
+</tr>
+</tbody></table>
+<p><strong>ARCH 传输 vs LGWR 传输</strong></p>
+<ul>
+<li><strong>ARCH 传输</strong>：日志切换时才传输归档日志，延迟至少一个日志切换周期</li>
+<li><strong>LGWR 传输</strong>：实时传输 redo 数据，延迟可降至秒级</li>
+</ul>
+<p>现代环境普遍使用 <strong>LGWR ASYNC</strong> 模式，兼顾性能和低延迟。</p>
+<p><strong>Gap Resolution 机制</strong></p>
+<p>当备库出现 redo gap（通常是网络中断导致）时，Oracle 会自动检测并解决：</p>
+<ol>
+<li>备库通过 FAL（Fetch Archive Log）Server 请求缺失的归档</li>
+<li>Primary 的 FAL Server 发送缺失的归档日志</li>
+<li>备库 apply 后恢复正常同步</li>
+</ol>
+<p>也可以手动解决 gap：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在备库上查询 gap</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$ARCHIVE_GAP;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 手动注册缺失的归档日志</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE REGISTER PHYSICAL LOGFILE <span class="string">&#x27;/path/to/missing_archive.arc&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><p>以下操作基于 Oracle 19c 环境，Primary 数据库 SID 为 <code>PRODDB</code>，备库 SID 为 <code>PRODDB_STBY</code>。</p>
+<h3 id="3-1-物理备库搭建（19c）"><a href="#3-1-物理备库搭建（19c）" class="headerlink" title="3.1 物理备库搭建（19c）"></a>3.1 物理备库搭建（19c）</h3><p><strong>Step 1：Primary 端前置配置</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 开启 force logging，确保所有操作都生成 redo</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE FORCE LOGGING;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 开启归档模式（如果是 NOARCHIVELOG）</span></span><br><span class="line">SHUTDOWN IMMEDIATE;</span><br><span class="line">STARTUP MOUNT;</span><br><span class="line"><span class="keyword">ALTER</span> DATABASE ARCHIVELOG;</span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">OPEN</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 添加 Standby Redo Log（比 Online Redo Log 多一组）</span></span><br><span class="line"><span class="comment">-- 假设 Online Redo Log 为 4 组，每组 200MB</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">ADD</span> STANDBY LOGFILE THREAD <span class="number">1</span> <span class="keyword">GROUP</span> <span class="number">11</span> </span><br><span class="line">  (<span class="string">&#x27;/u01/app/oracle/oradata/PRODDB/sredo11.log&#x27;</span>) SIZE <span class="number">200</span>M;</span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">ADD</span> STANDBY LOGFILE THREAD <span class="number">1</span> <span class="keyword">GROUP</span> <span class="number">12</span> </span><br><span class="line">  (<span class="string">&#x27;/u01/app/oracle/oradata/PRODDB/sredo12.log&#x27;</span>) SIZE <span class="number">200</span>M;</span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">ADD</span> STANDBY LOGFILE THREAD <span class="number">1</span> <span class="keyword">GROUP</span> <span class="number">13</span> </span><br><span class="line">  (<span class="string">&#x27;/u01/app/oracle/oradata/PRODDB/sredo13.log&#x27;</span>) SIZE <span class="number">200</span>M;</span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">ADD</span> STANDBY LOGFILE THREAD <span class="number">1</span> <span class="keyword">GROUP</span> <span class="number">14</span> </span><br><span class="line">  (<span class="string">&#x27;/u01/app/oracle/oradata/PRODDB/sredo14.log&#x27;</span>) SIZE <span class="number">200</span>M;</span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">ADD</span> STANDBY LOGFILE THREAD <span class="number">1</span> <span class="keyword">GROUP</span> <span class="number">15</span> </span><br><span class="line">  (<span class="string">&#x27;/u01/app/oracle/oradata/PRODDB/sredo15.log&#x27;</span>) SIZE <span class="number">200</span>M;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 确认 Standby Redo Log 创建成功</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">GROUP</span>#, THREAD#, SEQUENCE#, STATUS, BYTES<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> SIZE_MB</span><br><span class="line"><span class="keyword">FROM</span> V$STANDBY_LOG;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 2：Primary 端初始化参数配置</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 设置 DB_UNIQUE_NAME</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DB_UNIQUE_NAME<span class="operator">=</span><span class="string">&#x27;PRODDB&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 设置归档目标（指向备库）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> LOG_ARCHIVE_CONFIG<span class="operator">=</span><span class="string">&#x27;DG_CONFIG=(PRODDB,PRODDB_STBY)&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span><span class="keyword">BOTH</span>;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> LOG_ARCHIVE_DEST_2<span class="operator">=</span><span class="string">&#x27;SERVICE=PRODDB_STBY ASYNC </span></span><br><span class="line"><span class="string">  VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=PRODDB_STBY&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span><span class="keyword">BOTH</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- FAL 配置</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> FAL_SERVER<span class="operator">=</span><span class="string">&#x27;PRODDB_STBY&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span><span class="keyword">BOTH</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Standby File Management</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> STANDBY_FILE_MANAGEMENT<span class="operator">=</span>AUTO <span class="keyword">SCOPE</span><span class="operator">=</span><span class="keyword">BOTH</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 日志文件名转换（Primary -&gt; Standby 路径映射）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DB_FILE_NAME_CONVERT<span class="operator">=</span><span class="string">&#x27;/PRODDB_STBY/&#x27;</span>,<span class="string">&#x27;/PRODDB/&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> LOG_FILE_NAME_CONVERT<span class="operator">=</span><span class="string">&#x27;/PRODDB_STBY/&#x27;</span>,<span class="string">&#x27;/PRODDB/&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 3：TNS 配置</strong></p>
+<p>在 Primary 和 Standby 的 <code>$TNS_ADMIN/tnsnames.ora</code> 中配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">PRODDB =</span><br><span class="line">  (DESCRIPTION =</span><br><span class="line">    (ADDRESS = (PROTOCOL = TCP)(HOST = primary-svr)(PORT = 1521))</span><br><span class="line">    (CONNECT_DATA =</span><br><span class="line">      (SERVER = DEDICATED)</span><br><span class="line">      (SERVICE_NAME = PRODDB)</span><br><span class="line">    )</span><br><span class="line">  )</span><br><span class="line"></span><br><span class="line">PRODDB_STBY =</span><br><span class="line">  (DESCRIPTION =</span><br><span class="line">    (ADDRESS = (PROTOCOL = TCP)(HOST = standby-svr)(PORT = 1521))</span><br><span class="line">    (CONNECT_DATA =</span><br><span class="line">      (SERVER = DEDICATED)</span><br><span class="line">      (SERVICE_NAME = PRODDB_STBY)</span><br><span class="line">    )</span><br><span class="line">  )</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 4：密码文件与参数文件传递</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从 Primary 复制密码文件到 Standby</span></span><br><span class="line">scp <span class="variable">$ORACLE_HOME</span>/dbs/orapwPRODDB standby-svr:<span class="variable">$ORACLE_HOME</span>/dbs/orapwPRODDB_STBY</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建备库参数文件 initPRODDB_STBY.ora</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /tmp/initPRODDB_STBY.ora &lt;&lt; <span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">db_name=PRODDB</span><br><span class="line">db_unique_name=PRODDB_STBY</span><br><span class="line">enable_pluggable_database=<span class="literal">true</span></span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line"><span class="comment"># 传递到备库</span></span><br><span class="line">scp /tmp/initPRODDB_STBY.ora standby-svr:<span class="variable">$ORACLE_HOME</span>/dbs/</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 5：创建必要目录</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 Standby 服务器上执行</span></span><br><span class="line"><span class="built_in">mkdir</span> -p /u01/app/oracle/oradata/PRODDB_STBY</span><br><span class="line"><span class="built_in">mkdir</span> -p /u01/app/oracle/fast_recovery_area/PRODDB_STBY</span><br><span class="line"><span class="built_in">mkdir</span> -p /u01/app/oracle/admin/PRODDB_STBY/adump</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 6：RMAN Duplicate 创建备库</strong></p>
+<p>在 Primary 服务器上执行（连接到 Primary 和 Standby 实例）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">rman target sys/password@PRODDB auxiliary sys/password@PRODDB_STBY</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在 RMAN 中执行</span></span><br><span class="line">RUN &#123;</span><br><span class="line">  ALLOCATE CHANNEL ch1 DEVICE TYPE DISK;</span><br><span class="line">  ALLOCATE AUXILIARY CHANNEL ach1 DEVICE TYPE DISK;</span><br><span class="line">  </span><br><span class="line">  DUPLICATE TARGET DATABASE</span><br><span class="line">    FOR STANDBY</span><br><span class="line">    FROM ACTIVE DATABASE</span><br><span class="line">    DORECOVER</span><br><span class="line">    SPFILE</span><br><span class="line">      SET DB_UNIQUE_NAME=<span class="string">&#x27;PRODDB_STBY&#x27;</span></span><br><span class="line">      SET LOG_ARCHIVE_DEST_2=<span class="string">&#x27;SERVICE=PRODDB ASYNC </span></span><br><span class="line"><span class="string">        VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=PRODDB&#x27;</span></span><br><span class="line">      SET FAL_SERVER=<span class="string">&#x27;PRODDB&#x27;</span></span><br><span class="line">    NOFILENAMECHECK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>关键参数说明：</strong></p>
+<ul>
+<li><code>FROM ACTIVE DATABASE</code>：直接从运行中的 Primary 在线复制，无需备份集</li>
+<li><code>DORECOVER</code>：复制完成后自动应用归档日志进行恢复</li>
+<li><code>SPFILE</code>：自动从 Primary 传递 SPFILE 并覆盖指定参数</li>
+<li><code>NOFILENAMECHECK</code>：当 Primary 和 Standby 使用相同路径时需要此参数</li>
+</ul>
+</blockquote>
+<p><strong>Step 7：启动备库并启用 Real-time Apply</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 Standby 上执行</span></span><br><span class="line"><span class="comment">-- 备库已由 RMAN duplicate 启动到 mount 状态</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用 Real-time Apply</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE RECOVER MANAGED STANDBY DATABASE </span><br><span class="line">  <span class="keyword">USING</span> <span class="keyword">CURRENT</span> LOGFILE <span class="keyword">DISCONNECT</span> <span class="keyword">FROM</span> SESSION;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证 apply 状态</span></span><br><span class="line"><span class="keyword">SELECT</span> PROCESS, STATUS, THREAD#, SEQUENCE#, BLOCK#</span><br><span class="line"><span class="keyword">FROM</span> V$MANAGED_STANDBY</span><br><span class="line"><span class="keyword">WHERE</span> PROCESS <span class="keyword">IN</span> (<span class="string">&#x27;MRP0&#x27;</span>,<span class="string">&#x27;RFS&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 打开到 ADG 模式</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">OPEN</span>;</span><br></pre></td></tr></table></figure>
+
+<p>至此，物理备库搭建完成并已启用 Real-time Apply。备库现在处于 ADG 状态，可以接受只读查询。</p>
+<h3 id="3-2-DG-Broker-配置"><a href="#3-2-DG-Broker-配置" class="headerlink" title="3.2 DG Broker 配置"></a>3.2 DG Broker 配置</h3><p><strong>Step 1：启用 Broker</strong></p>
+<p>在 Primary 和 Standby 上分别执行：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 启用 Broker</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DG_BROKER_START<span class="operator">=</span><span class="literal">TRUE</span> <span class="keyword">SCOPE</span><span class="operator">=</span><span class="keyword">BOTH</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 确认 DMON 进程启动</span></span><br><span class="line"><span class="keyword">SELECT</span> PROCESS, STATUS <span class="keyword">FROM</span> V$MANAGED_STANDBY <span class="keyword">WHERE</span> PROCESS<span class="operator">=</span><span class="string">&#x27;DMON&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 2：创建 Broker 配置</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 连接到 dgmgrl（在 Primary 上执行）</span></span><br><span class="line">dgmgrl sys/password@PRODDB</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 dgmgrl 中执行</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 创建配置</span></span><br><span class="line"><span class="keyword">CREATE</span> CONFIGURATION <span class="string">&#x27;DG_CONFIG&#x27;</span> <span class="keyword">AS</span></span><br><span class="line">  <span class="keyword">PRIMARY</span> DATABASE <span class="keyword">IS</span> <span class="string">&#x27;PRODDB&#x27;</span></span><br><span class="line">  <span class="keyword">CONNECT</span> IDENTIFIER <span class="keyword">IS</span> <span class="string">&#x27;PRODDB&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 添加备库</span></span><br><span class="line"><span class="keyword">ADD</span> DATABASE <span class="string">&#x27;PRODDB_STBY&#x27;</span> <span class="keyword">AS</span></span><br><span class="line">  <span class="keyword">CONNECT</span> IDENTIFIER <span class="keyword">IS</span> <span class="string">&#x27;PRODDB_STBY&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用配置</span></span><br><span class="line">ENABLE CONFIGURATION;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证配置状态</span></span><br><span class="line"><span class="keyword">SHOW</span> CONFIGURATION;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看详细数据库状态</span></span><br><span class="line"><span class="keyword">SHOW</span> DATABASE <span class="string">&#x27;PRODDB&#x27;</span>;</span><br><span class="line"><span class="keyword">SHOW</span> DATABASE <span class="string">&#x27;PRODDB_STBY&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 3：配置保护模式（可选）</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 设置为 Maximum Performance（默认）</span></span><br><span class="line"><span class="comment">-- 如需 Maximum Availability：</span></span><br><span class="line">EDIT CONFIGURATION <span class="keyword">SET</span> PROTECTION MODE <span class="keyword">AS</span> MaxAvailability;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 如需启用 Fast-Start Failover</span></span><br><span class="line">ENABLE FAST_START FAILOVER;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启动 Observer（在独立的 Observer 服务器上执行）</span></span><br><span class="line">dgmgrl sys<span class="operator">/</span>password<span class="variable">@PRODDB</span> &quot;START OBSERVER;&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 4：验证 Broker 状态</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 dgmgrl 中</span></span><br><span class="line"><span class="keyword">SHOW</span> CONFIGURATION;</span><br><span class="line"><span class="comment">-- 预期输出：</span></span><br><span class="line"><span class="comment">-- Configuration - DG_CONFIG</span></span><br><span class="line"><span class="comment">--   Protection Mode: MaxPerformance</span></span><br><span class="line"><span class="comment">--   Members:</span></span><br><span class="line"><span class="comment">--   PRODDB      - Primary database</span></span><br><span class="line"><span class="comment">--   PRODDB_STBY - Physical standby database</span></span><br><span class="line"><span class="comment">-- Fast-Start Failover: Disabled</span></span><br><span class="line"><span class="comment">-- Configuration Status: SUCCESS</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">SHOW</span> DATABASE <span class="string">&#x27;PRODDB_STBY&#x27;</span>;</span><br><span class="line"><span class="comment">-- 查看 ApplyLag、TransportLag、State 等信息</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-ADG-读写分离配置"><a href="#3-3-ADG-读写分离配置" class="headerlink" title="3.3 ADG 读写分离配置"></a>3.3 ADG 读写分离配置</h3><p><strong>方式一：Service 级别的读写分离</strong></p>
+<p>在 ADG 备库上创建专用的只读 Service：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 Primary 上创建 Service（通过 DBMS_SERVICE）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_SERVICE.CREATE_SERVICE(</span><br><span class="line">    service_name <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;PRODDB_RO&#x27;</span>,</span><br><span class="line">    network_name <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;PRODDB_RO&#x27;</span>,</span><br><span class="line">    failover_method <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;BASIC&#x27;</span>,</span><br><span class="line">    failover_type <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SELECT&#x27;</span>,</span><br><span class="line">    failover_retries <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">3</span>,</span><br><span class="line">    failover_delay <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">5</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 在 ADG 备库上启动 Service</span></span><br><span class="line"><span class="comment">-- 编辑 $ORACLE_HOME/network/admin/tnsnames.ora 添加只读 Service</span></span><br></pre></td></tr></table></figure>
+
+<p>TNS 配置（应用端）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"># 写服务 - 连接 Primary</span><br><span class="line">PRODDB_RW =</span><br><span class="line">  (DESCRIPTION =</span><br><span class="line">    (ADDRESS_LIST =</span><br><span class="line">      (ADDRESS = (PROTOCOL = TCP)(HOST = primary-svr)(PORT = 1521))</span><br><span class="line">    )</span><br><span class="line">    (CONNECT_DATA =</span><br><span class="line">      (SERVICE_NAME = PRODDB)</span><br><span class="line">    )</span><br><span class="line">  )</span><br><span class="line"></span><br><span class="line"># 读服务 - 连接 ADG 备库</span><br><span class="line">PRODDB_RO =</span><br><span class="line">  (DESCRIPTION =</span><br><span class="line">    (ADDRESS_LIST =</span><br><span class="line">      (ADDRESS = (PROTOCOL = TCP)(HOST = standby-svr)(PORT = 1521))</span><br><span class="line">    )</span><br><span class="line">    (CONNECT_DATA =</span><br><span class="line">      (SERVICE_NAME = PRODDB)</span><br><span class="line">    )</span><br><span class="line">  )</span><br><span class="line"></span><br><span class="line"># 读写分离 - 自动路由</span><br><span class="line">PRODDB_RW_SPLIT =</span><br><span class="line">  (DESCRIPTION =</span><br><span class="line">    (ADDRESS_LIST =</span><br><span class="line">      (LOAD_BALANCE = ON)</span><br><span class="line">      (ADDRESS = (PROTOCOL = TCP)(HOST = primary-svr)(PORT = 1521))</span><br><span class="line">      (ADDRESS = (PROTOCOL = TCP)(HOST = standby-svr)(PORT = 1521))</span><br><span class="line">    )</span><br><span class="line">    (CONNECT_DATA =</span><br><span class="line">      (SERVICE_NAME = PRODDB)</span><br><span class="line">    )</span><br><span class="line">  )</span><br></pre></td></tr></table></figure>
+
+<p><strong>方式二：JDBC 连接字符串配置</strong></p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 写操作 - 连接 Primary</span></span><br><span class="line"><span class="attr">jdbc</span>:<span class="string">oracle:thin:@//primary-svr:1521/PRODDB</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 读操作 - 连接 ADG</span></span><br><span class="line"><span class="attr">jdbc</span>:<span class="string">oracle:thin:@//standby-svr:1521/PRODDB</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 使用 Application Continuity 的 JDBC 连接</span></span><br><span class="line"><span class="attr">jdbc</span>:<span class="string">oracle:thin:@(DESCRIPTION=</span></span><br><span class="line">  <span class="attr">(ADDRESS_LIST</span>=<span class="string"></span></span><br><span class="line">    <span class="attr">(ADDRESS</span>=<span class="string">(PROTOCOL=TCP)(HOST=primary-svr)(PORT=1521))</span></span><br><span class="line">    <span class="attr">(ADDRESS</span>=<span class="string">(PROTOCOL=TCP)(HOST=standby-svr)(PORT=1521)))</span></span><br><span class="line">  <span class="attr">(CONNECT_DATA</span>=<span class="string">(SERVICE_NAME=PRODDB)))</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>方式三：Oracle Connection Manager 实现透明路由</strong></p>
+<p>对于需要透明读写分离的场景，可以使用 Oracle Connection Manager（CMAN）配合 <code>CLIENT_PREFERRED_SERVER</code> 参数，根据 SQL 语句类型自动路由到 Primary 或 ADG。</p>
+<h3 id="3-4-Switchover-操作"><a href="#3-4-Switchover-操作" class="headerlink" title="3.4 Switchover 操作"></a>3.4 Switchover 操作</h3><p><strong>使用 Broker 执行 Switchover（推荐）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 连接到 dgmgrl</span></span><br><span class="line">dgmgrl sys/password@PRODDB</span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行 switchover</span></span><br><span class="line">SWITCHOVER TO <span class="string">&#x27;PRODDB_STBY&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>Broker 自动完成以下操作：</p>
+<ol>
+<li>验证 Primary 和 Standby 的状态</li>
+<li>将 Primary 切换为 Standby</li>
+<li>将 Standby 切换为 Primary</li>
+<li>更新 Broker 配置</li>
+<li>重启受影响的数据库实例</li>
+</ol>
+<p><strong>手动 Switchover 步骤</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 Primary 上执行</span></span><br><span class="line"><span class="comment">-- Step 1: 验证 switchover 就绪状态</span></span><br><span class="line"><span class="keyword">SELECT</span> SWITCHOVER_STATUS <span class="keyword">FROM</span> V$DATABASE;</span><br><span class="line"><span class="comment">-- 预期输出: TO STANDBY 或 SESSIONS ACTIVE</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 2: Primary 切换为 Standby</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">COMMIT</span> <span class="keyword">TO</span> SWITCHOVER <span class="keyword">TO</span> STANDBY <span class="keyword">WITH</span> SESSION SHUTDOWN;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 3: 在 Standby 上执行</span></span><br><span class="line"><span class="comment">-- 确认角色切换</span></span><br><span class="line"><span class="keyword">SELECT</span> DATABASE_ROLE <span class="keyword">FROM</span> V$DATABASE;</span><br><span class="line"><span class="comment">-- 预期输出: PHYSICAL STANDBY</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 4: Standby 切换为 Primary</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">COMMIT</span> <span class="keyword">TO</span> SWITCHOVER <span class="keyword">TO</span> <span class="keyword">PRIMARY</span> <span class="keyword">WITH</span> SESSION SHUTDOWN;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 5: 打开新 Primary</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">OPEN</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 6: 在新 Standby 上启用 Real-time Apply</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE RECOVER MANAGED STANDBY DATABASE </span><br><span class="line">  <span class="keyword">USING</span> <span class="keyword">CURRENT</span> LOGFILE <span class="keyword">DISCONNECT</span> <span class="keyword">FROM</span> SESSION;</span><br><span class="line"><span class="keyword">ALTER</span> DATABASE <span class="keyword">OPEN</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>应用端连接切换处理</strong></p>
+<p>建议使用以下策略确保应用端平滑切换：</p>
+<ul>
+<li><strong>TAF（Transparent Application Failover）</strong>：在 TNS 中配置 <code>FAILOVER_MODE</code></li>
+<li><strong>FAN（Fast Application Notification）</strong>：结合 ONS 实现快速故障通知</li>
+<li><strong>Application Continuity（AC）</strong>：12c+ 特性，自动重放失败的事务</li>
+<li><strong>连接池重试</strong>：在应用层实现连接失败重试逻辑</li>
+</ul>
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><h3 id="4-1-数据库角色与状态"><a href="#4-1-数据库角色与状态" class="headerlink" title="4.1 数据库角色与状态"></a>4.1 数据库角色与状态</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 检查数据库角色和打开模式</span></span><br><span class="line"><span class="keyword">SELECT</span> NAME, DATABASE_ROLE, OPEN_MODE, PROTECTION_MODE</span><br><span class="line"><span class="keyword">FROM</span> V$DATABASE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 预期输出（ADG 备库）：</span></span><br><span class="line"><span class="comment">-- NAME       DATABASE_ROLE    OPEN_MODE           PROTECTION_MODE</span></span><br><span class="line"><span class="comment">-- PRODDB     PRIMARY          READ WRITE          MAXIMUM PERFORMANCE</span></span><br><span class="line"><span class="comment">-- PRODDB_STBY PHYSICAL STANDBY READ ONLY WITH APPLY MAXIMUM PERFORMANCE</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-Apply-Lag-与-Transport-Lag"><a href="#4-2-Apply-Lag-与-Transport-Lag" class="headerlink" title="4.2 Apply Lag 与 Transport Lag"></a>4.2 Apply Lag 与 Transport Lag</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看 apply 延迟和传输延迟</span></span><br><span class="line"><span class="keyword">SELECT</span> NAME, <span class="keyword">VALUE</span>, DATUM_TIME</span><br><span class="line"><span class="keyword">FROM</span> V$DATAGUARD_STATS</span><br><span class="line"><span class="keyword">WHERE</span> NAME <span class="keyword">IN</span> (<span class="string">&#x27;apply lag&#x27;</span>, <span class="string">&#x27;transport lag&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 更详细的 dest 状态</span></span><br><span class="line"><span class="keyword">SELECT</span> DEST_ID, STATUS, TYPE, DATABASE_MODE, </span><br><span class="line">       RECOVERY_MODE, APPLIED_SCN, APPLY_LAG, TRANSPORT_LAG</span><br><span class="line"><span class="keyword">FROM</span> V$ARCHIVE_DEST_STATUS</span><br><span class="line"><span class="keyword">WHERE</span> DATABASE_MODE <span class="operator">!=</span> <span class="string">&#x27;NONE&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-3-DG-Broker-验证"><a href="#4-3-DG-Broker-验证" class="headerlink" title="4.3 DG Broker 验证"></a>4.3 DG Broker 验证</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 dgmgrl 中</span></span><br><span class="line"><span class="keyword">SHOW</span> CONFIGURATION;</span><br><span class="line"><span class="keyword">SHOW</span> DATABASE <span class="string">&#x27;PRODDB_STBY&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 检查各成员的 InconsistentProperties</span></span><br><span class="line"><span class="keyword">SHOW</span> DATABASE <span class="string">&#x27;PRODDB_STBY&#x27;</span> <span class="string">&#x27;InconsistentProperties&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-4-Real-time-Apply-验证"><a href="#4-4-Real-time-Apply-验证" class="headerlink" title="4.4 Real-time Apply 验证"></a>4.4 Real-time Apply 验证</h3><p>这是最直观的验证方式——在 Primary 上建表，ADG 上立即可查：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 Primary 上执行</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> adg_test (id NUMBER, create_time <span class="type">TIMESTAMP</span> <span class="keyword">DEFAULT</span> SYSTIMESTAMP);</span><br><span class="line"><span class="keyword">INSERT INTO</span> adg_test <span class="keyword">VALUES</span> (<span class="number">1</span>, SYSTIMESTAMP);</span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 在 ADG 备库上立即查询（延迟通常在 1-3 秒内）</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> adg_test;</span><br><span class="line"><span class="comment">-- 预期输出：</span></span><br><span class="line"><span class="comment">-- ID  CREATE_TIME</span></span><br><span class="line"><span class="comment">-- 1   06-JUN-26 10.00.01.123456 AM</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 清理测试表</span></span><br><span class="line"><span class="comment">-- 在 Primary 上</span></span><br><span class="line"><span class="keyword">DROP</span> <span class="keyword">TABLE</span> adg_test PURGE;</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="5-1-ADG-的性能影响与调优"><a href="#5-1-ADG-的性能影响与调优" class="headerlink" title="5.1 ADG 的性能影响与调优"></a>5.1 ADG 的性能影响与调优</h3><p>ADG 对 Primary 的性能影响主要体现在 redo 传输环节。调优建议：</p>
+<ul>
+<li><strong>使用 LGWR ASYNC 模式</strong>：避免 SYNC 模式对 Primary 事务提交的阻塞</li>
+<li>**合理设置 <code>LOG_ARCHIVE_DEST_2</code> 的 <code>NET_TIMEOUT</code>**：建议设置为 10-30 秒</li>
+<li><strong>备库 SRL 大小与 Primary OLRL 一致</strong>：避免日志切换导致的额外开销</li>
+<li><strong>备库 apply 并行度</strong>：通过 <code>PARALLEL</code> 参数控制 MRPn 进程数量</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 设置 apply 并行度（根据 CPU 核心数调整）</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE RECOVER MANAGED STANDBY DATABASE </span><br><span class="line">  PARALLEL <span class="number">8</span> <span class="keyword">USING</span> <span class="keyword">CURRENT</span> LOGFILE <span class="keyword">DISCONNECT</span> <span class="keyword">FROM</span> SESSION;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-2-备库的网络带宽要求"><a href="#5-2-备库的网络带宽要求" class="headerlink" title="5.2 备库的网络带宽要求"></a>5.2 备库的网络带宽要求</h3><p>网络是 Data Guard 的关键基础设施。计算公式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">所需带宽 ≈ (Primary 每秒 redo 生成量 × 8) / 带宽利用率</span><br></pre></td></tr></table></figure>
+
+<p>例如，Primary 每秒产生 10MB redo，目标带宽利用率 70%：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(10 × 8) / 0.7 ≈ 114 Mbps</span><br></pre></td></tr></table></figure>
+
+<p>建议使用专用网络链路，并配置 QoS 保证 redo 传输的带宽优先级。跨机房部署时，网络延迟应控制在 10ms 以内（SYNC 模式下尤为重要）。</p>
+<h3 id="5-3-常见故障与处理"><a href="#5-3-常见故障与处理" class="headerlink" title="5.3 常见故障与处理"></a>5.3 常见故障与处理</h3><p><strong>归档 Gap</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查询 gap</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$ARCHIVE_GAP;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 手动传输并注册缺失的归档</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE REGISTER PHYSICAL LOGFILE <span class="string">&#x27;/path/to/archive.arc&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 或使用 RMAN 解决 gap</span></span><br><span class="line">RMAN<span class="operator">&gt;</span> RECOVER STANDBY DATABASE;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Apply 延迟过大</strong></p>
+<ul>
+<li>检查备库 I&#x2F;O 性能（是否存在 I&#x2F;O 瓶颈）</li>
+<li>检查网络传输延迟（V$ARCHIVE_DEST 的 STATUS 和 ERROR）</li>
+<li>增加 apply 并行度</li>
+<li>检查是否存在大量 DDL 操作导致 apply 慢</li>
+</ul>
+<p><strong>ADG 查询阻塞 Apply</strong></p>
+<p>在极端情况下，大量并发查询可能影响 apply 性能。可通过以下方式缓解：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 设置 apply 延迟超时（超过阈值自动中断查询）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> ADG_MAX_IO_RESPONSE_TIME<span class="operator">=</span><span class="number">1000</span>; <span class="comment">-- 毫秒</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="5-4-ADG-的授权要求"><a href="#5-4-ADG-的授权要求" class="headerlink" title="5.4 ADG 的授权要求"></a>5.4 ADG 的授权要求</h3><p><strong>重要提示</strong>：Active Data Guard 是 Oracle 的付费选件，需要单独购买许可。在备库上执行 <code>ALTER DATABASE OPEN</code>（READ ONLY WITH APPLY）时，Oracle 会记录 ADG 的使用。未购买 ADG 许可而使用该功能会带来合规风险。</p>
+<p>替代方案（不使用 ADG 选件）：</p>
+<ul>
+<li>将备库切换到 <code>READ ONLY</code> 状态用于查询（会停止 redo apply）</li>
+<li>使用 Snapshot Standby 创建临时的可读写快照（也会暂停 apply）</li>
+<li>使用 Oracle GoldenGate 实现更灵活的读写分离</li>
+</ul>
+<hr>
+<p>以上就是 Oracle 19c 环境下 Active Data Guard 的完整搭建与配置过程。从物理备库的 RMAN duplicate 创建，到 DG Broker 的统一管理，再到 Service 级别的读写分离配置，ADG 提供了一套成熟的解决方案，帮助企业将备库从”成本中心”转变为”价值中心”。在实际部署中，建议结合业务特点选择合适的保护模式和传输方式，并建立完善的监控告警机制（包括 apply lag、transport lag、gap 检测等），确保 ADG 始终处于健康运行状态。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Data-Guard/" rel="tag"># Data Guard</a>
+              <a href="/tags/ADG/" rel="tag"># ADG</a>
+              <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag"># 高可用</a>
+              <a href="/tags/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB/" rel="tag"># 读写分离</a>
+              <a href="/tags/DG-Broker/" rel="tag"># DG Broker</a>
+              <a href="/tags/%E5%AE%B9%E7%81%BE/" rel="tag"># 容灾</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/02/05/oracle/rac-cache-fusion-load-balancing/" rel="prev" title="RAC Cache Fusion 深度解析与负载均衡实战">
+                  <i class="fa fa-angle-left"></i> RAC Cache Fusion 深度解析与负载均衡实战
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/02/15/oracle/switchover-failover-sop-brain-split/" rel="next" title="Data Guard Switchover&#x2F;Failover SOP 与脑裂预防机制">
+                  Data Guard Switchover/Failover SOP 与脑裂预防机制 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

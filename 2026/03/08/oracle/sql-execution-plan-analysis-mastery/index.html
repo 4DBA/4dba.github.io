@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/03/08/oracle/sql-execution-plan-analysis-mastery/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/03/08/oracle/sql-execution-plan-analysis-mastery/","path":"2026/03/08/oracle/sql-execution-plan-analysis-mastery/","title":"SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-CBO-Cost-Based-Optimizer-%E5%9F%BA%E7%A1%80"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 CBO (Cost-Based Optimizer) 基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Access-Path-%E8%AE%BF%E9%97%AE%E8%B7%AF%E5%BE%84"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 Access Path (访问路径)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Join-Methods"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 Join Methods</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Join-Order"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 Join Order</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-%E5%B8%B8%E8%A7%81%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92%E9%97%AE%E9%A2%98"><span class="nav-number">2.5.</span> <span class="nav-text">2.5 常见执行计划问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92%E8%8E%B7%E5%8F%96%E6%96%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 执行计划获取方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92%E8%A7%A3%E8%AF%BB"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 执行计划解读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10053-Trace%E8%A7%A3%E8%AF%BB"><span class="nav-number">3.3.</span> <span class="nav-text">10053 Trace解读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-SQL-Profile%E4%B8%8ESQL-Plan-Baseline"><span class="nav-number">3.4.</span> <span class="nav-text">3.3 SQL Profile与SQL Plan Baseline</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-Hint%E4%BD%BF%E7%94%A8"><span class="nav-number">3.5.</span> <span class="nav-text">3.4 Hint使用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81SQL%E4%BC%98%E5%8C%96%E5%AE%8C%E6%95%B4%E6%A1%88%E4%BE%8B"><span class="nav-number">4.</span> <span class="nav-text">四、SQL优化完整案例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%E8%83%8C%E6%99%AF"><span class="nav-number">4.1.</span> <span class="nav-text">案例背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A41%EF%BC%9A%E8%8E%B7%E5%8F%96%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92"><span class="nav-number">4.2.</span> <span class="nav-text">步骤1：获取执行计划</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A42%EF%BC%9A%E5%88%86%E6%9E%90%E5%8E%9F%E5%9B%A0"><span class="nav-number">4.3.</span> <span class="nav-text">步骤2：分析原因</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A43%EF%BC%9A%E4%BC%98%E5%8C%96%E6%96%B9%E6%A1%88"><span class="nav-number">4.4.</span> <span class="nav-text">步骤3：优化方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A44%EF%BC%9A%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.5.</span> <span class="nav-text">步骤4：结果验证</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/03/08/oracle/sql-execution-plan-analysis-mastery/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-08 10:00:00" itemprop="dateCreated datePublished" datetime="2026-03-08T10:00:00+00:00">2026-03-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在Oracle数据库性能优化领域，执行计划分析是最核心的技能。真正读懂一个执行计划，不是看它走了Index还是Table Scan，而是理解CBO为什么做出这个选择——Cost是怎么算的，Cardinality估了多少，Access Path和Join Method是否合理。本文将从原理到实战，系统地讲解执行计划分析的完整方法论。</p>
+<span id="more"></span>
+
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>慢SQL是数据库性能问题的首要原因。根据经验，80%以上的数据库性能问题最终都指向SQL语句。然而，很多DBA在分析执行计划时存在一个常见误区：只看走了什么路径（Index Scan还是Full Table Scan），却不理解CBO（Cost-Based Optimizer）做出这个选择的底层逻辑。</p>
+<!-- more -->
+
+
+<p>举个简单的例子：一个SQL走了Full Table Scan，很多DBA的第一反应是”应该加索引”。但实际上，如果表很小或者需要返回大部分数据，Full Table Scan可能就是最优选择。真正的SQL优化，需要深入理解CBO的决策逻辑——它基于什么信息，怎么计算Cost，为什么选择这个Access Path和Join Method。</p>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-CBO-Cost-Based-Optimizer-基础"><a href="#2-1-CBO-Cost-Based-Optimizer-基础" class="headerlink" title="2.1 CBO (Cost-Based Optimizer) 基础"></a>2.1 CBO (Cost-Based Optimizer) 基础</h3><p>Oracle的CBO是一个基于成本的优化器，其核心工作流程是：</p>
+<ol>
+<li><strong>解析SQL语句</strong>，生成语法树</li>
+<li><strong>查询数据字典</strong>，获取统计信息</li>
+<li><strong>枚举可能的执行计划</strong>（Access Path、Join Method、Join Order的组合）</li>
+<li><strong>计算每个计划的Cost</strong>，选择Cost最低的执行计划</li>
+</ol>
+<p><strong>选择性（Selectivity）</strong> 是指一个谓词条件能过滤掉多少比例的数据。例如 <code>status = &#39;ACTIVE&#39;</code> 如果表中有1000行，其中200行是ACTIVE状态，则Selectivity &#x3D; 200&#x2F;1000 &#x3D; 0.2（即20%）。</p>
+<p><strong>基数（Cardinality）</strong> 是Selectivity乘以表的总行数，表示满足条件的预期行数。上例中Cardinality &#x3D; 0.2 × 1000 &#x3D; 200。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Cardinality = Num_Rows × Selectivity</span><br><span class="line">Cost = IO_Cost + CPU_Cost / CPUSpeed</span><br></pre></td></tr></table></figure>
+
+<p><strong>统计信息</strong> 是CBO决策的基础。如果统计信息过期或不准确，CBO就会做出错误的Cost估算，从而选择低效的执行计划。关键的统计信息包括：</p>
+<ul>
+<li>表级别：<code>NUM_ROWS</code>、<code>BLOCKS</code>、<code>AVG_ROW_LEN</code></li>
+<li>列级别：<code>NUM_DISTINCT</code>、<code>LOW_VALUE</code>、<code>HIGH_VALUE</code>、<code>NUM_NULLS</code>、<code>HISTOGRAM</code></li>
+<li>索引级别：<code>BLEVEL</code>、<code>LEAF_BLOCKS</code>、<code>DISTINCT_KEYS</code>、<code>CLUSTERING_FACTOR</code></li>
+</ul>
+<h3 id="2-2-Access-Path-访问路径"><a href="#2-2-Access-Path-访问路径" class="headerlink" title="2.2 Access Path (访问路径)"></a>2.2 Access Path (访问路径)</h3><p>Access Path是Oracle从表中获取数据的方式。不同的Access Path有不同的Cost特征：</p>
+<p>**Full Table Scan (FTS)**：读取表的所有块。适用于返回大量数据（通常超过表的5%-10%）的场景。Cost主要取决于表的块数和多块读参数（<code>db_file_multiblock_read_count</code>）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FTS_Cost = Blocks / MBRC × mreadcost + CPU_Cost</span><br></pre></td></tr></table></figure>
+
+<p><strong>Index Unique Scan</strong>：通过唯一索引精确查找一行。Cost &#x3D; B-Tree高度 + 1次回表IO。</p>
+<p><strong>Index Range Scan</strong>：索引范围扫描，用于范围查询或非唯一索引等值查询。Cost取决于扫描的叶子块数和回表IO。</p>
+<p><strong>Index Full Scan</strong>：顺序扫描索引的所有叶子块。当需要排序结果且索引包含所需列时使用，避免额外排序。</p>
+<p>**Index Fast Full Scan (IFFS)**：多块读扫描索引的所有块（不保证顺序）。当查询列完全被索引覆盖且不需要排序时使用。</p>
+<p><strong>Index Skip Scan</strong>：当复合索引的前导列基数很低时，可以跳过前导列进行扫描。例如索引 <code>(gender, employee_id)</code>，查询 <code>employee_id = 100</code> 时，CBO可能选择Skip Scan，按gender的每个不同值分别查找。</p>
+<p>来看一个执行计划示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">---------------------------------------------------------------------------</span><br><span class="line">| Id | Operation                   | Name        | Rows | Bytes | Cost  |</span><br><span class="line">---------------------------------------------------------------------------</span><br><span class="line">|  0 | SELECT STATEMENT            |             |    1 |    50 |     4 |</span><br><span class="line">|  1 |  TABLE ACCESS BY INDEX ROWID| EMPLOYEES   |    1 |    50 |     4 |</span><br><span class="line">|* 2 |   INDEX RANGE SCAN          | IDX_EMP_DEP |   10 |       |     2 |</span><br><span class="line">---------------------------------------------------------------------------</span><br><span class="line"></span><br><span class="line">Predicate Information (identified by operation id):</span><br><span class="line">---------------------------------------------------</span><br><span class="line">   2 - access(&quot;DEPARTMENT_ID&quot;=50)</span><br></pre></td></tr></table></figure>
+
+<p>解读：</p>
+<ul>
+<li>Id&#x3D;2的Index Range Scan先在索引上找到约10行（E-Rows&#x3D;10），Cost&#x3D;2</li>
+<li>Id&#x3D;1通过ROWID回表取数据，过滤到1行（E-Rows&#x3D;1），总Cost&#x3D;4</li>
+<li>注意E-Rows是CBO估算的行数，A-Rows（实际行数）才是真实的</li>
+</ul>
+<h3 id="2-3-Join-Methods"><a href="#2-3-Join-Methods" class="headerlink" title="2.3 Join Methods"></a>2.3 Join Methods</h3><p>Oracle有三种主要的Join方法，各有适用场景：</p>
+<p>**Nested Loop Join (NLJ)**：外表驱动，对每一行在内表上做索引查找。适用于外表小、内表有高效索引的场景。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Cost = Outer_Rows × (Index_Cost + Table_Access_Cost) + Outer_Scan_Cost</span><br></pre></td></tr></table></figure>
+
+<p><strong>Hash Join</strong>：对较小的表（build table）建哈希表，然后用较大表（probe table）探测。适用于等值连接、大表连接。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Cost = Build_Table_Cost + Probe_Table_Cost + Hash_Build_Cost</span><br></pre></td></tr></table></figure>
+
+<p>**Sort Merge Join (SJ)**：先对两个表排序，再合并。适用于已排序数据或非等值连接（<code>&gt;</code>、<code>&lt;</code>、<code>BETWEEN</code>）。</p>
+<p>来看一个Hash Join的执行计划：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">--------------------------------------------------------------------------------</span><br><span class="line">| Id | Operation          | Name      | Rows  | Bytes |TempSpc| Cost (%CPU)|</span><br><span class="line">--------------------------------------------------------------------------------</span><br><span class="line">|  0 | SELECT STATEMENT   |           |  5000 |  732K |       |  1520 (1)  |</span><br><span class="line">|* 1 |  HASH JOIN         |           |  5000 |  732K |       |  1520 (1)  |</span><br><span class="line">|  2 |   TABLE ACCESS FULL| DEPT      |   100 |  2200 |       |     3 (0)  |</span><br><span class="line">|  3 |   TABLE ACCESS FULL| EMP       | 50000 |  620K |       |  1510 (1)  |</span><br><span class="line">--------------------------------------------------------------------------------</span><br><span class="line"></span><br><span class="line">Predicate Information (identified by operation id):</span><br><span class="line">---------------------------------------------------</span><br><span class="line">   1 - access(&quot;E&quot;.&quot;DEPT_ID&quot;=&quot;D&quot;.&quot;DEPT_ID&quot;)</span><br></pre></td></tr></table></figure>
+
+<p>解读：DEPT表（100行）作为Build Table建哈希表，EMP表（50000行）作为Probe Table。如果反过来选择EMP作为Build Table，需要更多内存和CPU，Cost会更高。CBO通过比较两个表的统计信息自动选择最优方案。</p>
+<h3 id="2-4-Join-Order"><a href="#2-4-Join-Order" class="headerlink" title="2.4 Join Order"></a>2.4 Join Order</h3><p>Join Order是指多表连接时各表的连接顺序。N个表有N!种可能的连接顺序，Oracle使用<strong>左深树（Left-Deep Tree）</strong> 来限制搜索空间。</p>
+<p>驱动表（Driving Table）的选择至关重要。理想情况下：</p>
+<ul>
+<li>驱动表应该是过滤后行数最少的表</li>
+<li>驱动表的结果集越小，内层循环次数越少</li>
+<li>在Nested Loop中，驱动表的选择对性能影响最大</li>
+</ul>
+<p><strong>Star Transformation</strong> 是Oracle针对星型模式（Star Schema）的优化技术。当事实表通过多个维度表进行查询时，CBO可以将连接查询转换为对事实表位图索引的Bitmap AND&#x2F;OR操作，显著减少IO。</p>
+<h3 id="2-5-常见执行计划问题"><a href="#2-5-常见执行计划问题" class="headerlink" title="2.5 常见执行计划问题"></a>2.5 常见执行计划问题</h3><p><strong>索引失效的常见原因：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 隐式类型转换：列是VARCHAR2，传入NUMBER</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> order_no <span class="operator">=</span> <span class="number">12345</span>;  <span class="comment">-- 索引失效</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> order_no <span class="operator">=</span> <span class="string">&#x27;12345&#x27;</span>; <span class="comment">-- 索引生效</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 对索引列使用函数</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> employees <span class="keyword">WHERE</span> <span class="built_in">UPPER</span>(last_name) <span class="operator">=</span> <span class="string">&#x27;SMITH&#x27;</span>; <span class="comment">-- 索引失效</span></span><br><span class="line"><span class="comment">-- 解决：创建函数索引</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX idx_emp_upper <span class="keyword">ON</span> employees(<span class="built_in">UPPER</span>(last_name));</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 前导通配符</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> products <span class="keyword">WHERE</span> name <span class="keyword">LIKE</span> <span class="string">&#x27;%phone%&#x27;</span>; <span class="comment">-- 索引失效</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Cardinality估算偏差</strong> 是执行计划问题的核心。当E-Rows与A-Rows差距巨大时，CBO可能选择错误的执行计划。常见原因包括：直方图缺失、多列谓词相关性（CBO默认假设列独立）、统计信息过期。</p>
+<p><strong>绑定变量窥视（Bind Variable Peeking）</strong>：首次硬解析时，Oracle会窥视绑定变量的真实值来估算Cardinality。但后续的软解析都使用第一次的执行计划，如果首次的值不具代表性，后续可能产生严重的性能问题。Oracle 11g引入了<strong>自适应游标共享（Adaptive Cursor Sharing）</strong> 来缓解这个问题。</p>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-执行计划获取方法"><a href="#3-1-执行计划获取方法" class="headerlink" title="3.1 执行计划获取方法"></a>3.1 执行计划获取方法</h3><p><strong>方法一：EXPLAIN PLAN FOR</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN PLAN <span class="keyword">FOR</span></span><br><span class="line"><span class="keyword">SELECT</span> e.employee_id, e.last_name, d.department_name</span><br><span class="line"><span class="keyword">FROM</span> employees e, departments d</span><br><span class="line"><span class="keyword">WHERE</span> e.department_id <span class="operator">=</span> d.department_id</span><br><span class="line"><span class="keyword">AND</span> d.department_name <span class="operator">=</span> <span class="string">&#x27;Sales&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> <span class="keyword">TABLE</span>(DBMS_XPLAN.DISPLAY(<span class="keyword">NULL</span>, <span class="keyword">NULL</span>, <span class="string">&#x27;ALL&#x27;</span>));</span><br></pre></td></tr></table></figure>
+
+<p>注意：<code>EXPLAIN PLAN FOR</code> 生成的是预估执行计划，不使用实际的绑定变量值，可能与实际执行计划不同。</p>
+<p><strong>方法二：DBMS_XPLAN.DISPLAY_CURSOR（推荐）</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 先执行SQL</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="comment">/*+ GATHER_PLAN_STATISTICS */</span> e.employee_id, e.last_name</span><br><span class="line"><span class="keyword">FROM</span> employees e</span><br><span class="line"><span class="keyword">WHERE</span> e.department_id <span class="operator">=</span> <span class="number">50</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 获取实际执行计划（含A-Rows）</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> <span class="keyword">TABLE</span>(DBMS_XPLAN.DISPLAY_CURSOR(<span class="keyword">NULL</span>, <span class="keyword">NULL</span>, <span class="string">&#x27;ALLSTATS LAST&#x27;</span>));</span><br></pre></td></tr></table></figure>
+
+<p><code>GATHER_PLAN_STATISTICS</code> Hint让Oracle收集实际执行统计信息（A-Rows、A-Time等），这是分析执行计划最准确的方法。</p>
+<p><strong>方法三：AUTOTRACE</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> AUTOTRACE TRACEONLY</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> employees <span class="keyword">WHERE</span> department_id <span class="operator">=</span> <span class="number">50</span>;</span><br><span class="line"><span class="keyword">SET</span> AUTOTRACE OFF</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-执行计划解读"><a href="#3-2-执行计划解读" class="headerlink" title="3.2 执行计划解读"></a>3.2 执行计划解读</h3><p>下面是一个详细的执行计划解读示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">--------------------------------------------------------------------------------------------------------------------</span><br><span class="line">| Id | Operation                           | Name           | E-Rows | A-Rows | A-Time   | Buffers | Reads |</span><br><span class="line">--------------------------------------------------------------------------------------------------------------------</span><br><span class="line">|  0 | SELECT STATEMENT                    |                |        |   1000 |00:00:00.1|    1520 |    15 |</span><br><span class="line">|  1 |  NESTED LOOPS                       |                |   1000 |   1000 |00:00:00.1|    1520 |    15 |</span><br><span class="line">|  2 |   NESTED LOOPS                      |                |   1000 |   1000 |00:00:00.1|     520 |     5 |</span><br><span class="line">|* 3 |    TABLE ACCESS FULL                | DEPARTMENTS    |      1 |      1 |00:00:00.1|       5 |     5 |</span><br><span class="line">|* 4 |    INDEX RANGE SCAN                 | IDX_EMP_DEPT   |   1000 |   1000 |00:00:00.1|     515 |     0 |</span><br><span class="line">|  5 |   TABLE ACCESS BY INDEX ROWID       | EMPLOYEES      |      1 |   1000 |00:00:00.1|    1000 |    10 |</span><br><span class="line">--------------------------------------------------------------------------------------------------------------------</span><br><span class="line"></span><br><span class="line">Predicate Information (identified by operation id):</span><br><span class="line">---------------------------------------------------</span><br><span class="line">   3 - filter(&quot;D&quot;.&quot;DEPARTMENT_NAME&quot;=&#x27;Sales&#x27;)</span><br><span class="line">   4 - access(&quot;E&quot;.&quot;DEPARTMENT_ID&quot;=&quot;D&quot;.&quot;DEPARTMENT_ID&quot;)</span><br></pre></td></tr></table></figure>
+
+<p>关键解读要素：</p>
+<ol>
+<li><strong>Operation与Options</strong>：操作类型和选项，如 <code>TABLE ACCESS FULL</code>、<code>INDEX RANGE SCAN</code></li>
+<li><strong>E-Rows vs A-Rows</strong>：估算行数与实际行数。Id&#x3D;3处E-Rows&#x3D;1, A-Rows&#x3D;1，估算准确；若差距大则需关注</li>
+<li><strong>Buffers</strong>：逻辑IO，是衡量SQL效率的关键指标</li>
+<li><strong>Reads</strong>：物理IO，首次执行或数据不在缓存时产生</li>
+<li><strong>Predicate Information</strong>：<code>access</code> 表示索引访问条件（高效），<code>filter</code> 表示过滤条件（需要逐行检查）</li>
+</ol>
+<h3 id="10053-Trace解读"><a href="#10053-Trace解读" class="headerlink" title="10053 Trace解读"></a>10053 Trace解读</h3><p>10053 Trace是理解CBO决策过程的终极工具。启用方法：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> SESSION <span class="keyword">SET</span> EVENTS <span class="string">&#x27;10053 trace name context forever, level 1&#x27;</span>;</span><br><span class="line">EXPLAIN PLAN <span class="keyword">FOR</span> <span class="keyword">SELECT</span> ...;  <span class="comment">-- 要分析的SQL</span></span><br><span class="line"><span class="keyword">ALTER</span> SESSION <span class="keyword">SET</span> EVENTS <span class="string">&#x27;10053 trace name context off&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>10053 Trace文件的关键部分：</p>
+<p><strong>1. 统计信息部分（Statistics）</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Table Stats::</span><br><span class="line">  Table: EMPLOYEES  Alias: E</span><br><span class="line">    #Rows: 107  #Blks: 5  AvgRowLen: 68.00  ChainCnt: 0.00</span><br><span class="line">Column (#2): DEPARTMENT_ID(NUMBER)</span><br><span class="line">    AvgLen: 4 NDV: 11 Nulls: 1 Density: 0.009346</span><br><span class="line">    Histogram: HtBal  #Bkts: 11  UncompBkts: 11  EndPtVals: 11</span><br></pre></td></tr></table></figure>
+
+<p>这里可以看到表的行数、块数、行平均长度，以及列的不同值数（NDV）、空值数、密度和直方图信息。</p>
+<p><strong>2. Selectivity计算</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ColGroup Usage:: PredCnt: 2  Matches#: 1  Density: 0.001234</span><br><span class="line">  Access Path: IndexRangeScan</span><br><span class="line">    Cost: 4.00  Resp: 4.00  Degree: 1</span><br><span class="line">      Index: IDX_EMP_DEPT</span><br><span class="line">        io_cost: 3.00  cpu_cost: 25870</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. Access Path评估</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Access Path: TableScan</span><br><span class="line">    Cost: 3.00  Resp: 3.00  Degree: 0</span><br><span class="line">Access Path: index (RangeScan)</span><br><span class="line">    Index: IDX_EMP_DEPT</span><br><span class="line">    Cost: 4.00  Resp: 4.00  Degree: 1</span><br><span class="line">Best:: AccessPath: TableScan</span><br><span class="line">       Cost: 3.00  Degree: 1  Resp: 3.00  Card: 10.00</span><br></pre></td></tr></table></figure>
+
+<p>可以看到CBO评估了TableScan（Cost&#x3D;3）和Index RangeScan（Cost&#x3D;4），最终选择了Cost更低的TableScan。</p>
+<p><strong>4. Join评估</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">NL Join</span><br><span class="line">  Outer table: DEPARTMENTS</span><br><span class="line">    Cost: 3.00  Card: 1.00  Bytes: 20</span><br><span class="line">  Inner table: EMPLOYEES</span><br><span class="line">    Access Path: IndexRangeScan IDX_EMP_DEPT</span><br><span class="line">    Cost: 2.00  Card: 10.00  Bytes: 30</span><br><span class="line">  NL Cost: 5.00</span><br><span class="line"></span><br><span class="line">HA Join</span><br><span class="line">  Outer table: DEPARTMENTS  Build Table</span><br><span class="line">    Cost: 3.00  Card: 1.00</span><br><span class="line">  Inner table: EMPLOYEES  Probe Table</span><br><span class="line">    Cost: 3.00  Card: 107.00</span><br><span class="line">  HA Cost: 6.00</span><br><span class="line"></span><br><span class="line">Best:: JoinMethod: NestedLoop</span><br><span class="line">       Cost: 5.00  Card: 10.00  Bytes: 500</span><br></pre></td></tr></table></figure>
+
+<p>CBO比较了Nested Loop（Cost&#x3D;5）和Hash Join（Cost&#x3D;6），选择了Nested Loop。</p>
+<h3 id="3-3-SQL-Profile与SQL-Plan-Baseline"><a href="#3-3-SQL-Profile与SQL-Plan-Baseline" class="headerlink" title="3.3 SQL Profile与SQL Plan Baseline"></a>3.3 SQL Profile与SQL Plan Baseline</h3><p><strong>SQL Profile</strong> 是Oracle自动调优的产物，可以为SQL注入额外的统计信息（修正Cardinality估算），而不改变SQL文本。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 使用DBMS_SQLTUNE创建SQL Profile</span></span><br><span class="line"><span class="keyword">DECLARE</span></span><br><span class="line">  l_task VARCHAR2(<span class="number">30</span>);</span><br><span class="line">  l_sql  <span class="type">CLOB</span>;</span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  l_task :<span class="operator">=</span> DBMS_SQLTUNE.CREATE_TUNING_TASK(</span><br><span class="line">    sql_text    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SELECT * FROM large_table WHERE ...&#x27;</span>,</span><br><span class="line">    user_name   <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SCOTT&#x27;</span>,</span><br><span class="line">    task_name   <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;tune_sql_01&#x27;</span></span><br><span class="line">  );</span><br><span class="line">  DBMS_SQLTUNE.EXECUTE_TUNING_TASK(task_name <span class="operator">=</span><span class="operator">&gt;</span> l_task);</span><br><span class="line">  DBMS_SQLTUNE.ACCEPT_SQL_PROFILE(</span><br><span class="line">    task_name   <span class="operator">=</span><span class="operator">&gt;</span> l_task,</span><br><span class="line">    profile_name <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;profile_sql_01&#x27;</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>SQL Plan Baseline (SPM)</strong> 是Oracle 11g引入的执行计划稳定性管理机制：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 启用SPM</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> optimizer_use_sql_plan_baseline <span class="operator">=</span> <span class="literal">TRUE</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 加载计划基线</span></span><br><span class="line"><span class="keyword">SET</span> SERVEROUTPUT <span class="keyword">ON</span></span><br><span class="line"><span class="keyword">DECLARE</span></span><br><span class="line">  l_plans PLS_INTEGER;</span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  l_plans :<span class="operator">=</span> DBMS_SPM.LOAD_PLANS_FROM_CURSOR_CACHE(</span><br><span class="line">    sql_id <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;abc123def456&#x27;</span></span><br><span class="line">  );</span><br><span class="line">  DBMS_OUTPUT.PUT_LINE(<span class="string">&#x27;Loaded &#x27;</span> <span class="operator">||</span> l_plans <span class="operator">||</span> <span class="string">&#x27; plans&#x27;</span>);</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看计划基线</span></span><br><span class="line"><span class="keyword">SELECT</span> sql_handle, plan_name, enabled, accepted, fixed</span><br><span class="line"><span class="keyword">FROM</span> dba_sql_plan_baselines</span><br><span class="line"><span class="keyword">WHERE</span> sql_text <span class="keyword">LIKE</span> <span class="string">&#x27;%large_table%&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>SPM的核心思想是：只有已验证（accepted）的执行计划才会被使用。新的执行计划需要通过演进（evolution）验证性能不差于已有计划才会被接受。</p>
+<h3 id="3-4-Hint使用"><a href="#3-4-Hint使用" class="headerlink" title="3.4 Hint使用"></a>3.4 Hint使用</h3><p><strong>常用Hint：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 强制使用索引</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="comment">/*+ INDEX(e IDX_EMP_DEPT) */</span> <span class="operator">*</span> <span class="keyword">FROM</span> employees e <span class="keyword">WHERE</span> department_id <span class="operator">=</span> <span class="number">50</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 强制使用Nested Loop</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="comment">/*+ USE_NL(e d) */</span> e.last_name, d.department_name</span><br><span class="line"><span class="keyword">FROM</span> employees e, departments d</span><br><span class="line"><span class="keyword">WHERE</span> e.department_id <span class="operator">=</span> d.department_id;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 强制使用Hash Join</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="comment">/*+ USE_HASH(e d) */</span> e.last_name, d.department_name</span><br><span class="line"><span class="keyword">FROM</span> employees e, departments d</span><br><span class="line"><span class="keyword">WHERE</span> e.department_id <span class="operator">=</span> d.department_id;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 并行执行</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="comment">/*+ PARALLEL(e 4) */</span> <span class="operator">*</span> <span class="keyword">FROM</span> employees e;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 禁用索引（强制FTS）</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="comment">/*+ FULL(e) */</span> <span class="operator">*</span> <span class="keyword">FROM</span> employees e <span class="keyword">WHERE</span> department_id <span class="operator">=</span> <span class="number">50</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Hint有时不生效的原因：</strong></p>
+<ol>
+<li><strong>Hint语法错误</strong>：Oracle对错误的Hint静默忽略，不会报错</li>
+<li><strong>对象别名问题</strong>：Hint中必须使用表别名而非表名</li>
+<li><strong>Hint冲突</strong>：多个Hint相互矛盾时，CBO可能选择忽略</li>
+<li><strong>查询转换</strong>：CBO在某些查询转换后，原Hint可能不再适用</li>
+</ol>
+<h2 id="四、SQL优化完整案例"><a href="#四、SQL优化完整案例" class="headerlink" title="四、SQL优化完整案例"></a>四、SQL优化完整案例</h2><h3 id="案例背景"><a href="#案例背景" class="headerlink" title="案例背景"></a>案例背景</h3><p>某电商系统的一个订单查询SQL执行时间超过30秒：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> o.order_id, o.order_date, c.customer_name, p.product_name, oi.quantity</span><br><span class="line"><span class="keyword">FROM</span> orders o</span><br><span class="line"><span class="keyword">JOIN</span> customers c <span class="keyword">ON</span> o.customer_id <span class="operator">=</span> c.customer_id</span><br><span class="line"><span class="keyword">JOIN</span> order_items oi <span class="keyword">ON</span> o.order_id <span class="operator">=</span> oi.order_id</span><br><span class="line"><span class="keyword">JOIN</span> products p <span class="keyword">ON</span> oi.product_id <span class="operator">=</span> p.product_id</span><br><span class="line"><span class="keyword">WHERE</span> o.order_date <span class="keyword">BETWEEN</span> TO_DATE(<span class="string">&#x27;2026-01-01&#x27;</span>,<span class="string">&#x27;YYYY-MM-DD&#x27;</span>)</span><br><span class="line">                       <span class="keyword">AND</span> TO_DATE(<span class="string">&#x27;2026-06-01&#x27;</span>,<span class="string">&#x27;YYYY-MM-DD&#x27;</span>)</span><br><span class="line"><span class="keyword">AND</span> c.region <span class="operator">=</span> <span class="string">&#x27;East&#x27;</span></span><br><span class="line"><span class="keyword">AND</span> p.category_id <span class="operator">=</span> <span class="number">10</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="步骤1：获取执行计划"><a href="#步骤1：获取执行计划" class="headerlink" title="步骤1：获取执行计划"></a>步骤1：获取执行计划</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="comment">/*+ GATHER_PLAN_STATISTICS */</span> o.order_id, o.order_date, c.customer_name</span><br><span class="line"><span class="keyword">FROM</span> orders o</span><br><span class="line"><span class="keyword">JOIN</span> customers c <span class="keyword">ON</span> o.customer_id <span class="operator">=</span> c.customer_id</span><br><span class="line"><span class="keyword">JOIN</span> order_items oi <span class="keyword">ON</span> o.order_id <span class="operator">=</span> oi.order_id</span><br><span class="line"><span class="keyword">JOIN</span> products p <span class="keyword">ON</span> oi.product_id <span class="operator">=</span> p.product_id</span><br><span class="line"><span class="keyword">WHERE</span> o.order_date <span class="keyword">BETWEEN</span> TO_DATE(<span class="string">&#x27;2026-01-01&#x27;</span>,<span class="string">&#x27;YYYY-MM-DD&#x27;</span>)</span><br><span class="line">                       <span class="keyword">AND</span> TO_DATE(<span class="string">&#x27;2026-06-01&#x27;</span>,<span class="string">&#x27;YYYY-MM-DD&#x27;</span>)</span><br><span class="line"><span class="keyword">AND</span> c.region <span class="operator">=</span> <span class="string">&#x27;East&#x27;</span></span><br><span class="line"><span class="keyword">AND</span> p.category_id <span class="operator">=</span> <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> <span class="keyword">TABLE</span>(DBMS_XPLAN.DISPLAY_CURSOR(<span class="keyword">NULL</span>, <span class="keyword">NULL</span>, <span class="string">&#x27;ALLSTATS LAST +COST&#x27;</span>));</span><br></pre></td></tr></table></figure>
+
+<p><strong>优化前执行计划：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">----------------------------------------------------------------------------------------------</span><br><span class="line">| Id | Operation             | Name        | E-Rows | A-Rows | Buffers | Reads | Cost  |</span><br><span class="line">----------------------------------------------------------------------------------------------</span><br><span class="line">|  0 | SELECT STATEMENT      |             |        |  15000 |  520000 |  3200 | 8540  |</span><br><span class="line">|* 1 |  HASH JOIN            |             |  15000 |  15000 |  520000 |  3200 | 8540  |</span><br><span class="line">|  2 |   TABLE ACCESS FULL   | PRODUCTS    |    200 |    200 |      15 |    15 |     5 |</span><br><span class="line">|* 3 |   HASH JOIN           |             |  75000 |  15000 |  520000 |  3185 | 8530  |</span><br><span class="line">|* 4 |    TABLE ACCESS FULL  | CUSTOMERS   |  10000 |  10000 |    1500 |  1500 |   420 |</span><br><span class="line">|* 5 |    HASH JOIN          |             | 150000 | 150000 |  518500 |  1685 | 7100  |</span><br><span class="line">|* 6 |     TABLE ACCESS FULL | ORDERS      | 150000 | 150000 |   18500 |  1685 |  5100 |</span><br><span class="line">|  7 |     TABLE ACCESS FULL | ORDER_ITEMS |  500000|  500000|   500000|     0 |  2000 |</span><br><span class="line">----------------------------------------------------------------------------------------------</span><br></pre></td></tr></table></figure>
+
+<p><strong>问题分析：</strong></p>
+<ul>
+<li>4个表全部走了Full Table Scan，Buffers高达52万</li>
+<li>ORDERS表150000行全表扫描（Cost&#x3D;5100）</li>
+<li>E-Rows与A-Rows在Hash Join处差异大（75000 vs 15000），说明Cardinality估算有偏差</li>
+</ul>
+<h3 id="步骤2：分析原因"><a href="#步骤2：分析原因" class="headerlink" title="步骤2：分析原因"></a>步骤2：分析原因</h3><p>查看统计信息：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> table_name, num_rows, last_analyzed</span><br><span class="line"><span class="keyword">FROM</span> user_tables</span><br><span class="line"><span class="keyword">WHERE</span> table_name <span class="keyword">IN</span> (<span class="string">&#x27;ORDERS&#x27;</span>,<span class="string">&#x27;CUSTOMERS&#x27;</span>,<span class="string">&#x27;ORDER_ITEMS&#x27;</span>,<span class="string">&#x27;PRODUCTS&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> column_name, num_distinct, num_nulls, histogram</span><br><span class="line"><span class="keyword">FROM</span> user_tab_col_statistics</span><br><span class="line"><span class="keyword">WHERE</span> table_name <span class="operator">=</span> <span class="string">&#x27;ORDERS&#x27;</span> <span class="keyword">AND</span> column_name <span class="operator">=</span> <span class="string">&#x27;ORDER_DATE&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>发现问题：</p>
+<ol>
+<li><code>ORDERS</code>表统计信息是3个月前收集的，当前数据量已增长50%</li>
+<li><code>ORDER_DATE</code>列没有直方图，CBO无法准确估算日期范围的选择性</li>
+<li><code>CUSTOMERS.REGION</code>列缺少索引</li>
+</ol>
+<h3 id="步骤3：优化方案"><a href="#步骤3：优化方案" class="headerlink" title="步骤3：优化方案"></a>步骤3：优化方案</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 1. 更新统计信息</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_STATS.GATHER_TABLE_STATS(<span class="string">&#x27;SCOTT&#x27;</span>, <span class="string">&#x27;ORDERS&#x27;</span>,</span><br><span class="line">    method_opt <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;FOR ALL COLUMNS SIZE AUTO&#x27;</span>,</span><br><span class="line">    granularity <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;AUTO&#x27;</span>,</span><br><span class="line">    estimate_percent <span class="operator">=</span><span class="operator">&gt;</span> DBMS_STATS.AUTO_SAMPLE_SIZE</span><br><span class="line">  );</span><br><span class="line">  DBMS_STATS.GATHER_TABLE_STATS(<span class="string">&#x27;SCOTT&#x27;</span>, <span class="string">&#x27;CUSTOMERS&#x27;</span>,</span><br><span class="line">    method_opt <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;FOR ALL COLUMNS SIZE AUTO&#x27;</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 2. 创建缺失的索引</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX idx_orders_date <span class="keyword">ON</span> orders(order_date);</span><br><span class="line"><span class="keyword">CREATE</span> INDEX idx_customers_region <span class="keyword">ON</span> customers(region);</span><br><span class="line"><span class="keyword">CREATE</span> INDEX idx_products_category <span class="keyword">ON</span> products(category_id);</span><br></pre></td></tr></table></figure>
+
+<h3 id="步骤4：结果验证"><a href="#步骤4：结果验证" class="headerlink" title="步骤4：结果验证"></a>步骤4：结果验证</h3><p><strong>优化后执行计划：</strong></p>
+<pre><code>-----------------------------------------------------------------------------------------------
+| Id | Operation                              | Name             | E-Rows | A-Rows | Buffers |
+-----------------------------------------------------------------------------------------------
+|  0 | SELECT STATEMENT                       |                  |        |  15000 |    8500 |
+|  1 |  NESTED LOOPS                          |                  |  15000 |  15000 |    8500 |
+|  2 |   NESTED LOOPS                         |                  |  15000 |  15000 |    7000 |
+|  3 |    HASH JOIN                           |                  |   1500 |   1500 |     520 |
+|  4 |     TABLE ACCESS BY INDEX ROWID        | CUSTOMERS        |   1000 |   1000 |      80 |
+|* 5 |      INDEX RANGE SCAN                  | IDX_CUST_REGION  |   1000 |   1000 |       5 |
+|  6 |     TABLE ACCESS BY INDEX ROWID        | ORDERS           | 150000 |  15000 |     440 |
+|* 7 |      INDEX RANGE SCAN                  | IDX_ORDERS_DATE  | 150000 |  15000 |      30 |
+|* 8 |    INDEX RANGE SCAN                    | IDX_OI_ORDER     |     10 |  15000 |    6480 |
+|  9 |   TABLE ACCESS BY INDEX ROWID          | PRODUCTS         |      1 |  15000 |    1500 |
+|*10 |    INDEX UNIQUE SCAN                   | PK_PRODUCTS      |      1 |  15000 |      10 |
+-----------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   5 - access(&quot;C&quot;.&quot;REGION&quot;=&#39;East&#39;)
+</code></pre>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/SQL%E4%BC%98%E5%8C%96/" rel="tag"># SQL优化</a>
+              <a href="/tags/%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92/" rel="tag"># 执行计划</a>
+              <a href="/tags/CBO/" rel="tag"># CBO</a>
+              <a href="/tags/Cost/" rel="tag"># Cost</a>
+              <a href="/tags/Cardinality/" rel="tag"># Cardinality</a>
+              <a href="/tags/10053/" rel="tag"># 10053</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/03/oracle/awr-ash-addm-diagnostic-framework/" rel="prev" title="AWR&#x2F;ASH&#x2F;ADDM 诊断框架：从采样到根因的完整方法论">
+                  <i class="fa fa-angle-left"></i> AWR/ASH/ADDM 诊断框架：从采样到根因的完整方法论
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/13/oracle/memory-management-amm-vs-asmm/" rel="next" title="Oracle 内存管理深度解析：AMM vs ASMM 与大内存服务器最佳实践">
+                  Oracle 内存管理深度解析：AMM vs ASMM 与大内存服务器最佳实践 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

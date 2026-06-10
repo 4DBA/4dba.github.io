@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/05/29/oracle/ords-exposing-database-rest-api/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/05/29/oracle/ords-exposing-database-rest-api/","path":"2026/05/29/oracle/ords-exposing-database-rest-api/","title":"ORDS 实战：将 Oracle 数据库转化为 RESTful API 服务"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ORDS 实战：将 Oracle 数据库转化为 RESTful API 服务 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%8C%96%E7%9A%84%E9%9C%80%E6%B1%82"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 数据库服务化的需求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-ORDS-%E7%9A%84%E4%BB%B7%E5%80%BC"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 ORDS 的价值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-%E4%B8%8E%E4%BC%A0%E7%BB%9F%E4%B8%AD%E9%97%B4%E4%BB%B6%E6%96%B9%E6%A1%88%E7%9A%84%E5%AF%B9%E6%AF%94"><span class="nav-number">1.3.</span> <span class="nav-text">1.3 与传统中间件方案的对比</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-ORDS-%E6%9E%B6%E6%9E%84"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 ORDS 架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-REST-API-%E8%AE%BE%E8%AE%A1"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 REST API 设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-AutoREST"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 AutoREST</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-ORDS-%E5%AE%89%E8%A3%85%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 ORDS 安装配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-1-%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87"><span class="nav-number">3.1.1.</span> <span class="nav-text">3.1.1 环境准备</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-2-ORDS-%E5%AE%89%E8%A3%85"><span class="nav-number">3.1.2.</span> <span class="nav-text">3.1.2 ORDS 安装</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-3-%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9E%E6%8E%A5%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.3.</span> <span class="nav-text">3.1.3 数据库连接配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-4-%E5%AE%89%E8%A3%85-ORDS-Schema"><span class="nav-number">3.1.4.</span> <span class="nav-text">3.1.4 安装 ORDS Schema</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-5-%E9%85%8D%E7%BD%AE%E7%8B%AC%E7%AB%8B%E6%A8%A1%E5%BC%8F%EF%BC%88Standalone%EF%BC%89%E6%88%96-Tomcat-%E9%83%A8%E7%BD%B2"><span class="nav-number">3.1.5.</span> <span class="nav-text">3.1.5 配置独立模式（Standalone）或 Tomcat 部署</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-6-HTTPS-%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.6.</span> <span class="nav-text">3.1.6 HTTPS 配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E5%88%9B%E5%BB%BA-REST-%E6%9C%8D%E5%8A%A1"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 创建 REST 服务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-%E6%89%8B%E5%8A%A8%E5%88%9B%E5%BB%BA-Module-Template-Handler"><span class="nav-number">3.2.1.</span> <span class="nav-text">3.2.1 手动创建 Module&#x2F;Template&#x2F;Handler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-AutoREST-%E5%90%AF%E7%94%A8"><span class="nav-number">3.2.2.</span> <span class="nav-text">3.2.2 AutoREST 启用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-3-%E5%8F%82%E6%95%B0%E5%8C%96%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.2.3.</span> <span class="nav-text">3.2.3 参数化查询</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E5%AE%89%E5%85%A8%E9%85%8D%E7%BD%AE"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 安全配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-1-OAuth2-%E8%AE%A4%E8%AF%81"><span class="nav-number">3.3.1.</span> <span class="nav-text">3.3.1 OAuth2 认证</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-2-%E8%A7%92%E8%89%B2%E6%8E%88%E6%9D%83"><span class="nav-number">3.3.2.</span> <span class="nav-text">3.3.2 角色授权</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/05/29/oracle/ords-exposing-database-rest-api/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ORDS 实战：将 Oracle 数据库转化为 RESTful API 服务 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ORDS 实战：将 Oracle 数据库转化为 RESTful API 服务
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-05-29 10:00:00" itemprop="dateCreated datePublished" datetime="2026-05-29T10:00:00+00:00">2026-05-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><h3 id="1-1-数据库服务化的需求"><a href="#1-1-数据库服务化的需求" class="headerlink" title="1.1 数据库服务化的需求"></a>1.1 数据库服务化的需求</h3><p>在现代企业架构中，数据库往往不是孤立存在的——它需要为前端应用、移动端、第三方系统以及微服务架构提供数据支撑。随着前后端分离和微服务架构的普及，将数据库中的数据以标准化的 RESTful API 形式对外暴露，已经成为企业数字化转型中的刚性需求。</p>
+<span id="more"></span>
+
+
+<p>传统做法是在数据库之上搭建一层中间件（Java Spring Boot、Node.js 等），通过 JDBC&#x2F;ODBC 连接数据库，再对外暴露 REST API。这种方案虽然可行，但在实际落地过程中存在几个明显痛点：</p>
+<ul>
+<li><strong>开发成本高</strong>：每个数据实体都需要编写 Controller、Service、DAO 层代码，一个中等规模的系统可能涉及数十甚至上百个实体类，代码量巨大</li>
+<li><strong>维护负担重</strong>：数据库 Schema 变更时，中间件代码需要同步修改，任何一个字段的增删改都可能引发连锁变更</li>
+<li><strong>延迟增加</strong>：多了一层网络跳转，增加了响应时间和故障点，每次请求都要经过应用服务器的序列化和反序列化</li>
+<li><strong>技能栈要求</strong>：DBA 团队通常不擅长 Java&#x2F;Node.js 开发，而开发团队又不熟悉数据库内部逻辑，沟通成本高昂</li>
+<li><strong>部署复杂</strong>：需要额外的应用服务器环境，增加了运维复杂度和基础设施成本</li>
+</ul>
+<h3 id="1-2-ORDS-的价值"><a href="#1-2-ORDS-的价值" class="headerlink" title="1.2 ORDS 的价值"></a>1.2 ORDS 的价值</h3><p>Oracle REST Data Services（ORDS）提供了一种优雅的替代方案：<strong>零代码将 SQL 查询、PL&#x2F;SQL 过程直接暴露为 RESTful API</strong>。DBA 只需要写 SQL 或 PL&#x2F;SQL，ORDS 自动处理 HTTP 协议处理、JSON 序列化与反序列化、连接池管理、安全认证授权等所有 Web 层逻辑。这意味着 DBA 可以专注于数据逻辑本身，而无需学习和维护复杂的 Web 开发框架。</p>
+<p>核心价值体现在：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>传统中间件方案</th>
+<th>ORDS 方案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>开发效率</td>
+<td>需编写全栈代码</td>
+<td>SQL&#x2F;PL&#x2F;SQL 即 API</td>
+</tr>
+<tr>
+<td>部署复杂度</td>
+<td>应用服务器 + 数据库</td>
+<td>ORDS + 数据库</td>
+</tr>
+<tr>
+<td>延迟</td>
+<td>多一跳（应用→数据库）</td>
+<td>直连数据库</td>
+</tr>
+<tr>
+<td>维护成本</td>
+<td>Schema 变更需改代码</td>
+<td>AutoREST 自动适配</td>
+</tr>
+<tr>
+<td>技能要求</td>
+<td>Java&#x2F;JS + SQL</td>
+<td>SQL&#x2F;PL&#x2F;SQL 即可</td>
+</tr>
+</tbody></table>
+<h3 id="1-3-与传统中间件方案的对比"><a href="#1-3-与传统中间件方案的对比" class="headerlink" title="1.3 与传统中间件方案的对比"></a>1.3 与传统中间件方案的对比</h3><p>ORDS 并非要取代所有中间件，它最适合的场景是<strong>数据密集型 CRUD 服务</strong>和<strong>数据库逻辑封装</strong>。对于简单的数据增删改查、报表查询、数据导出等场景，ORDS 能够以最低的成本实现 API 暴露。对于复杂的业务编排、多数据源聚合、异步消息处理等场景，仍然需要传统中间件配合。两者可以共存——ORDS 负责数据库直接暴露的 API，中间件负责复杂业务逻辑，各司其职。</p>
+<p>从实际项目经验来看，一个典型的微服务系统中，大约有 60%<del>70% 的 API 属于简单的数据 CRUD 操作，这些完全可以用 ORDS 来实现。剩下的 30%</del>40% 涉及复杂业务逻辑的 API，才需要传统的中间件方案。这种分工模式可以显著降低整体开发成本和系统复杂度。</p>
+<hr>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-ORDS-架构"><a href="#2-1-ORDS-架构" class="headerlink" title="2.1 ORDS 架构"></a>2.1 ORDS 架构</h3><p>ORDS 本质上是一个运行在 JVM 上的 Java Web 应用，它在 HTTP 前端和 Oracle 数据库之间充当桥梁：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">客户端 ──HTTP/HTTPS──▶ ORDS (Jetty/Tomcat/WLS) ──JDBC──▶ Oracle Database</span><br><span class="line">                        │</span><br><span class="line">                        ├── 连接池管理 (UCP/HikariCP)</span><br><span class="line">                        ├── 请求路由 (Module → Template → Handler)</span><br><span class="line">                        ├── 认证授权 (OAuth2/Basic Auth)</span><br><span class="line">                        └── 响应格式化 (JSON/XML/CSV)</span><br></pre></td></tr></table></figure>
+
+<p><strong>连接池机制</strong>：ORDS 使用 Universal Connection Pool (UCP) 管理数据库连接。每个数据库连接配置（称为 <code>database connection</code>）维护一个独立的连接池，支持连接复用、超时回收、健康检查等特性。连接池的大小可以通过配置文件灵活调整，初始连接数、最大连接数、空闲超时时间等参数都可以根据实际负载进行调优。这是 ORDS 性能的关键所在——避免了每次请求都建立新连接的开销，显著降低了数据库的连接管理压力。在高并发场景下，合理的连接池配置能够将 API 响应时间降低数倍。</p>
+<p><strong>与 APEX 的关系</strong>：ORDS 的前身就是 APEX Listener，它天然支持 Oracle APEX 应用的运行。APEX 的页面渲染、动态操作等功能都是通过 ORDS 来处理 HTTP 请求的。但 ORDS 的功能远不止于 APEX——它可以独立于 APEX 使用，纯粹作为 REST API 服务。在没有安装 APEX 的数据库上，ORDS 同样可以正常工作。实际上，很多企业使用 ORDS 的场景完全不涉及 APEX，只是利用它来暴露数据库服务。</p>
+<p><strong>部署架构灵活性</strong>：ORDS 支持多种部署方式。在开发和测试阶段，可以使用内置的 Jetty 服务器以独立模式（Standalone）运行，启动简单、无需额外依赖。在生产环境中，推荐将 ORDS 部署到 Tomcat 或 WebLogic Server 中，配合 Nginx 反向代理实现负载均衡和 SSL 卸载。此外，ORDS 还支持容器化部署，可以打包为 Docker 镜像运行在 Kubernetes 集群中。</p>
+<h3 id="2-2-REST-API-设计"><a href="#2-2-REST-API-设计" class="headerlink" title="2.2 REST API 设计"></a>2.2 REST API 设计</h3><p>ORDS 的 REST API 设计遵循层级结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Base Path (e.g., /ords/hr/)</span><br><span class="line">  └── Module (e.g., employees/)</span><br><span class="line">       └── Template (e.g., &#123;id&#125;/)</span><br><span class="line">            └── Handler (e.g., GET → SELECT ... WHERE id = :id)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>Module</strong>：逻辑分组，类似 API 的命名空间</li>
+<li><strong>Template</strong>：URL 路径模板，支持 <code>&#123;param&#125;</code> 占位符</li>
+<li><strong>Handler</strong>：绑定具体的 HTTP 方法（GET&#x2F;POST&#x2F;PUT&#x2F;DELETE）和 SQL&#x2F;PL&#x2F;SQL</li>
+</ul>
+<p><strong>参数绑定</strong>支持三种来源：</p>
+<ul>
+<li><strong>URI 模板参数</strong>：<code>&#123;id&#125;</code> → <code>:id</code>，用于标识资源的唯一性，例如 <code>/employees/&#123;empno&#125;</code> 中的 <code>empno</code></li>
+<li><strong>Query String 参数</strong>：<code>?status=ACTIVE</code> → <code>:status</code>，用于过滤、排序和分页控制</li>
+<li><strong>Request Body 参数</strong>（POST&#x2F;PUT 的 JSON body）→ <code>:field_name</code>，用于创建和更新操作的数据传递</li>
+</ul>
+<p><strong>响应格式</strong>默认为 JSON，也支持 XML 和 CSV。JSON 响应遵循 Oracle 的标准格式，包含 <code>items</code> 数组、分页元数据（<code>hasMore</code>、<code>limit</code>、<code>offset</code>、<code>count</code>）以及相关链接（<code>links</code>）等。这种标准化的响应格式使得前端开发者能够快速对接，无需额外的格式转换逻辑。对于列表查询，ORDS 自动实现分页功能，开发者只需在 Handler 中设置 <code>items_per_page</code> 参数即可。</p>
+<h3 id="2-3-AutoREST"><a href="#2-3-AutoREST" class="headerlink" title="2.3 AutoREST"></a>2.3 AutoREST</h3><p>AutoREST 是 ORDS 最强大也最具革命性的特性之一。它彻底改变了数据库暴露 API 的方式——只需一条 PL&#x2F;SQL 命令，就能将任意表或视图自动暴露为完整的 RESTful API，无需编写任何 SQL Handler 代码。</p>
+<ul>
+<li><strong>表&#x2F;视图的 AutoREST</strong>：启用后，ORDS 会自动为该表生成五个标准 REST 端点——GET 列表（支持分页、过滤、排序）、GET 单条记录（按主键查询）、POST 创建记录、PUT 更新记录、DELETE 删除记录。这些端点完全遵循 RESTful 规范，返回标准化的 JSON 响应。更强大的是，AutoREST 支持通过 Query String 参数进行灵活的过滤和排序，例如 <code>?q=&#123;&quot;salary&quot;:&#123;&quot;$gt&quot;:5000&#125;&#125;</code> 可以实现类似 MongoDB 的查询语法</li>
+<li><strong>PL&#x2F;SQL 过程暴露</strong>：除了表和视图，ORDS 还可以将存储过程、函数直接映射为 POST 端点。参数自动从 JSON Request Body 中提取，输出参数自动包含在 JSON 响应中。这使得复杂的数据库逻辑也能以 API 的形式对外提供服务</li>
+<li><strong>安全控制</strong>：AutoREST 默认不暴露任何对象，必须显式授权才能访问。支持 Schema 级别、对象级别、甚至列级别的精细权限控制。可以通过 OAuth2 客户端角色来管理访问权限，确保只有经过授权的应用才能访问特定的数据资源。这种”默认拒绝”的安全模型，使得 AutoREST 在生产环境中使用也非常安全</li>
+</ul>
+<hr>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-ORDS-安装配置"><a href="#3-1-ORDS-安装配置" class="headerlink" title="3.1 ORDS 安装配置"></a>3.1 ORDS 安装配置</h3><h4 id="3-1-1-环境准备"><a href="#3-1-1-环境准备" class="headerlink" title="3.1.1 环境准备"></a>3.1.1 环境准备</h4><p>ORDS 23.x 要求 JDK 17+ 和 Oracle Database 19c+。以下基于 ORDS 23.4 + Oracle 19c 环境。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装 JDK 17</span></span><br><span class="line"><span class="built_in">sudo</span> yum install -y java-17-openjdk java-17-openjdk-devel</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证 Java 版本</span></span><br><span class="line">java -version</span><br><span class="line"><span class="comment"># openjdk version &quot;17.0.x&quot; ...</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建 ORDS 安装目录</span></span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">mkdir</span> -p /opt/oracle/ords</span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">chown</span> oracle:oinstall /opt/oracle/ords</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-1-2-ORDS-安装"><a href="#3-1-2-ORDS-安装" class="headerlink" title="3.1.2 ORDS 安装"></a>3.1.2 ORDS 安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载 ORDS（从 OTN 或 edelivery）</span></span><br><span class="line"><span class="built_in">cd</span> /opt/oracle/ords</span><br><span class="line">unzip ords-23.4.0.24.1153.zip -d /opt/oracle/ords/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建配置目录</span></span><br><span class="line"><span class="built_in">mkdir</span> -p /opt/oracle/ords/config/ords</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-1-3-数据库连接配置"><a href="#3-1-3-数据库连接配置" class="headerlink" title="3.1.3 数据库连接配置"></a>3.1.3 数据库连接配置</h4><p>创建 <code>databases/default/connection.xml</code> 配置文件（或使用安装命令交互式配置）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 交互式安装配置</span></span><br><span class="line"><span class="built_in">cd</span> /opt/oracle/ords</span><br><span class="line">java -jar ords.war install advanced</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装过程中需要指定：</span></span><br><span class="line"><span class="comment"># - 数据库连接类型：Basic (SID) 或 Service Name</span></span><br><span class="line"><span class="comment"># - 主机名、端口（默认1521）</span></span><br><span class="line"><span class="comment"># - 数据库 SID 或 Service Name</span></span><br><span class="line"><span class="comment"># - ORDS 公共用户密码</span></span><br><span class="line"><span class="comment"># - 管理员连接信息</span></span><br></pre></td></tr></table></figure>
+
+<p>也可以使用命令行非交互式配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 配置数据库连接</span></span><br><span class="line">java -jar ords.war set-properties &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">db.hostname=dbserver.example.com</span></span><br><span class="line"><span class="string">db.port=1521</span></span><br><span class="line"><span class="string">db.servicename=ORCLPDB1</span></span><br><span class="line"><span class="string">db.username=ORDS_PUBLIC_USER</span></span><br><span class="line"><span class="string">db.password=&lt;secure_password&gt;</span></span><br><span class="line"><span class="string">plsql.gateway.add=true</span></span><br><span class="line"><span class="string">rest.services.apex.add=true</span></span><br><span class="line"><span class="string">schema.tablespace.default=SYSAUX</span></span><br><span class="line"><span class="string">schema.tablespace.temp=TEMP</span></span><br><span class="line"><span class="string">standalone.mode=false</span></span><br><span class="line"><span class="string">EOF</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-1-4-安装-ORDS-Schema"><a href="#3-1-4-安装-ORDS-Schema" class="headerlink" title="3.1.4 安装 ORDS Schema"></a>3.1.4 安装 ORDS Schema</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 以 SYSDBA 身份在数据库中安装 ORDS 元数据</span></span><br><span class="line"><span class="comment"># 这会创建 ORDS 相关的 schema 和对象</span></span><br><span class="line">java -jar ords.war install simple \</span><br><span class="line">  --database ORCLPDB1 \</span><br><span class="line">  --host dbserver.example.com \</span><br><span class="line">  --port 1521 \</span><br><span class="line">  --passwordFile /opt/oracle/ords/admin_password.txt</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-1-5-配置独立模式（Standalone）或-Tomcat-部署"><a href="#3-1-5-配置独立模式（Standalone）或-Tomcat-部署" class="headerlink" title="3.1.5 配置独立模式（Standalone）或 Tomcat 部署"></a>3.1.5 配置独立模式（Standalone）或 Tomcat 部署</h4><p><strong>独立模式</strong>（适合开发&#x2F;测试）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 启动 ORDS 独立模式</span></span><br><span class="line">java -jar ords.war standalone \</span><br><span class="line">  --port 8080 \</span><br><span class="line">  --host 0.0.0.0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生产环境建议使用 systemd 管理</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/ords.service &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">[Unit]</span><br><span class="line">Description=Oracle REST Data Services</span><br><span class="line">After=network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">User=oracle</span><br><span class="line">WorkingDirectory=/opt/oracle/ords</span><br><span class="line">ExecStart=/usr/bin/java -Dconfig.url=/opt/oracle/ords/config -jar /opt/oracle/ords/ords.war standalone --port 8080</span><br><span class="line">Restart=always</span><br><span class="line">RestartSec=10</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line"><span class="built_in">sudo</span> systemctl daemon-reload</span><br><span class="line"><span class="built_in">sudo</span> systemctl <span class="built_in">enable</span> ords</span><br><span class="line"><span class="built_in">sudo</span> systemctl start ords</span><br></pre></td></tr></table></figure>
+
+<p><strong>Tomcat 部署</strong>（适合生产）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将 ORDS 部署到 Tomcat</span></span><br><span class="line"><span class="built_in">cp</span> /opt/oracle/ords/ords.war <span class="variable">$CATALINA_HOME</span>/webapps/ords.war</span><br><span class="line"><span class="comment"># 重启 Tomcat</span></span><br><span class="line"><span class="variable">$CATALINA_HOME</span>/bin/shutdown.sh</span><br><span class="line"><span class="variable">$CATALINA_HOME</span>/bin/startup.sh</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-1-6-HTTPS-配置"><a href="#3-1-6-HTTPS-配置" class="headerlink" title="3.1.6 HTTPS 配置"></a>3.1.6 HTTPS 配置</h4><p>生产环境必须启用 HTTPS。推荐通过 Nginx 反向代理实现：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">443</span> ssl http2;</span><br><span class="line">    <span class="attribute">server_name</span> api.example.com;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">ssl_certificate</span>     /etc/ssl/certs/api.example.com.crt;</span><br><span class="line">    <span class="attribute">ssl_certificate_key</span> /etc/ssl/private/api.example.com.key;</span><br><span class="line">    <span class="attribute">ssl_protocols</span>       TLSv1.<span class="number">2</span> TLSv1.<span class="number">3</span>;</span><br><span class="line">    <span class="attribute">ssl_ciphers</span>         HIGH:!aNULL:!MD5;</span><br><span class="line"></span><br><span class="line">    <span class="section">location</span> /ords/ &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://127.0.0.1:8080/ords/;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> Host <span class="variable">$host</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Real-IP <span class="variable">$remote_addr</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-For <span class="variable">$proxy_add_x_forwarded_for</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-Proto <span class="variable">$scheme</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-创建-REST-服务"><a href="#3-2-创建-REST-服务" class="headerlink" title="3.2 创建 REST 服务"></a>3.2 创建 REST 服务</h3><h4 id="3-2-1-手动创建-Module-Template-Handler"><a href="#3-2-1-手动创建-Module-Template-Handler" class="headerlink" title="3.2.1 手动创建 Module&#x2F;Template&#x2F;Handler"></a>3.2.1 手动创建 Module&#x2F;Template&#x2F;Handler</h4><p>通过 SQL Developer 或直接在数据库中执行 PL&#x2F;SQL 来创建 REST 服务：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 1. 启用 ORDS schema（以 HR 用户为例）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.ENABLE_SCHEMA(</span><br><span class="line">        p_enabled <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">TRUE</span>,</span><br><span class="line">        p_schema  <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;HR&#x27;</span>,</span><br><span class="line">        p_url_mapping_type <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;BASE_PATH&#x27;</span>,</span><br><span class="line">        p_url_mapping_pattern <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;hr&#x27;</span>,</span><br><span class="line">        p_auto_rest_auth <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">FALSE</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 2. 创建 Module</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.DEFINE_MODULE(</span><br><span class="line">        p_module_name    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;employees.api&#x27;</span>,</span><br><span class="line">        p_base_path      <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;/emp/&#x27;</span>,</span><br><span class="line">        p_items_per_page <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">25</span>,</span><br><span class="line">        p_status         <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;PUBLISHED&#x27;</span>,</span><br><span class="line">        p_comments       <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;员工信息 REST API&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 3. 创建 Template（URL 路径模板）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.DEFINE_TEMPLATE(</span><br><span class="line">        p_module_name    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;employees.api&#x27;</span>,</span><br><span class="line">        p_pattern        <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;:empno&#x27;</span>,</span><br><span class="line">        p_priority       <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">0</span>,</span><br><span class="line">        p_etag_type      <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;HASH&#x27;</span>,</span><br><span class="line">        p_comments       <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;按员工编号查询&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 4. 创建 Handler（GET 方法 - 查询单个员工）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.DEFINE_HANDLER(</span><br><span class="line">        p_module_name    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;employees.api&#x27;</span>,</span><br><span class="line">        p_pattern        <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;:empno&#x27;</span>,</span><br><span class="line">        p_method         <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;GET&#x27;</span>,</span><br><span class="line">        p_source_type    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;json/query&#x27;</span>,</span><br><span class="line">        p_items_per_page <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">0</span>,</span><br><span class="line">        p_mimes_allowed  <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;&#x27;</span>,</span><br><span class="line">        p_comments       <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;&#x27;</span>,</span><br><span class="line">        p_source         <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SELECT e.employee_id, e.first_name, e.last_name,</span></span><br><span class="line"><span class="string">                                    e.email, e.salary, d.department_name</span></span><br><span class="line"><span class="string">                             FROM employees e</span></span><br><span class="line"><span class="string">                             JOIN departments d ON e.department_id = d.department_id</span></span><br><span class="line"><span class="string">                             WHERE e.employee_id = :empno&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 5. 创建 Handler（GET 方法 - 查询员工列表）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.DEFINE_TEMPLATE(</span><br><span class="line">        p_module_name <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;employees.api&#x27;</span>,</span><br><span class="line">        p_pattern     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;list&#x27;</span>,</span><br><span class="line">        p_comments    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;员工列表查询&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.DEFINE_HANDLER(</span><br><span class="line">        p_module_name    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;employees.api&#x27;</span>,</span><br><span class="line">        p_pattern        <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;list&#x27;</span>,</span><br><span class="line">        p_method         <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;GET&#x27;</span>,</span><br><span class="line">        p_source_type    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;json/query&#x27;</span>,</span><br><span class="line">        p_items_per_page <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">25</span>,</span><br><span class="line">        p_source         <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SELECT e.employee_id, e.first_name, e.last_name,</span></span><br><span class="line"><span class="string">                                    e.salary, d.department_name</span></span><br><span class="line"><span class="string">                             FROM employees e</span></span><br><span class="line"><span class="string">                             JOIN departments d ON e.department_id = d.department_id</span></span><br><span class="line"><span class="string">                             ORDER BY e.employee_id&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<p>创建完成后，可以通过以下 URL 访问：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GET https://api.example.com/ords/hr/emp/list</span><br><span class="line">GET https://api.example.com/ords/hr/emp/100</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-2-2-AutoREST-启用"><a href="#3-2-2-AutoREST-启用" class="headerlink" title="3.2.2 AutoREST 启用"></a>3.2.2 AutoREST 启用</h4><p>AutoREST 可以在 Schema 级别一键启用：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 启用 Schema 的 REST 服务</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.ENABLE_SCHEMA(</span><br><span class="line">        p_enabled <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">TRUE</span>,</span><br><span class="line">        p_schema  <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;HR&#x27;</span>,</span><br><span class="line">        p_url_mapping_type <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;BASE_PATH&#x27;</span>,</span><br><span class="line">        p_url_mapping_pattern <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;hr&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用表的 AutoREST（以 EMPLOYEES 表为例）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.ENABLE_OBJECT(</span><br><span class="line">        p_enabled      <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">TRUE</span>,</span><br><span class="line">        p_schema       <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;HR&#x27;</span>,</span><br><span class="line">        p_object       <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;EMPLOYEES&#x27;</span>,</span><br><span class="line">        p_object_type   <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;TABLE&#x27;</span>,</span><br><span class="line">        p_object_alias  <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;employees&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用视图的 AutoREST</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.ENABLE_OBJECT(</span><br><span class="line">        p_enabled      <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">TRUE</span>,</span><br><span class="line">        p_schema       <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;HR&#x27;</span>,</span><br><span class="line">        p_object       <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;EMP_DETAILS_VIEW&#x27;</span>,</span><br><span class="line">        p_object_type   <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;VIEW&#x27;</span>,</span><br><span class="line">        p_object_alias  <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;emp_details&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<p>启用后，以下端点自动可用：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">GET    /ords/hr/employees/          # 列表（支持分页）</span><br><span class="line">GET    /ords/hr/employees/:id       # 单条记录</span><br><span class="line">POST   /ords/hr/employees/          # 创建记录</span><br><span class="line">PUT    /ords/hr/employees/:id       # 更新记录</span><br><span class="line">DELETE /ords/hr/employees/:id       # 删除记录</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-2-3-参数化查询"><a href="#3-2-3-参数化查询" class="headerlink" title="3.2.3 参数化查询"></a>3.2.3 参数化查询</h4><p>在 Handler 中支持多种参数绑定方式：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 带分页和过滤的查询</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    ORDS.DEFINE_HANDLER(</span><br><span class="line">        p_module_name <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;employees.api&#x27;</span>,</span><br><span class="line">        p_pattern     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;search&#x27;</span>,</span><br><span class="line">        p_method      <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;GET&#x27;</span>,</span><br><span class="line">        p_source_type <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;json/query&#x27;</span>,</span><br><span class="line">        p_source      <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SELECT employee_id, first_name, last_name, salary</span></span><br><span class="line"><span class="string">                          FROM employees</span></span><br><span class="line"><span class="string">                          WHERE (:min_salary IS NULL OR salary &gt;= :min_salary)</span></span><br><span class="line"><span class="string">                            AND (:dept_id IS NULL OR department_id = :dept_id)</span></span><br><span class="line"><span class="string">                          ORDER BY salary DESC&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<p>调用示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查询薪资大于 5000 且部门 ID 为 50 的员工</span></span><br><span class="line">curl -X GET <span class="string">&quot;https://api.example.com/ords/hr/emp/search?min_salary=5000&amp;dept_id=50&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-安全配置"><a href="#3-3-安全配置" class="headerlink" title="3.3 安全配置"></a>3.3 安全配置</h3><h4 id="3-3-1-OAuth2-认证"><a href="#3-3-1-OAuth2-认证" class="headerlink" title="3.3.1 OAuth2 认证"></a>3.3.1 OAuth2 认证</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建 OAuth2 客户端</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    OAUTH.CREATE_CLIENT(</span><br><span class="line">        p_name            <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;Employee App&#x27;</span>,</span><br><span class="line">        p_grant_type      <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;client_credentials&#x27;</span>,</span><br><span class="line">        p_owner           <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;HR Department&#x27;</span>,</span><br><span class="line">        p_description     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;员工管理系统 API 客户端&#x27;</span>,</span><br><span class="line">        p_support_email    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;dba@example.com&#x27;</span>,</span><br><span class="line">        p_privilege_names  <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 授予客户端角色</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">    OAUTH.GRANT_CLIENT_ROLE(</span><br><span class="line">        p_client_name <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;Employee App&#x27;</span>,</span><br><span class="line">        p_role_name   <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;oracle.dbtools.autorest.any.schema&#x27;</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 获取 Client ID 和 Secret</span></span><br><span class="line"><span class="comment">-- 查询: SELECT * FROM OAUTH_APPROVALS;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 获取 Access Token</span></span><br><span class="line">curl -X POST <span class="string">&quot;https://api.example.com/ords/hr/oauth/token&quot;</span> \</span><br><span class="line">  -H <span class="string">&quot;Content-Type: application/x-www-form-urlencoded&quot;</span> \</span><br><span class="line">  -d <span class="string">&quot;grant_type=client_credentials&quot;</span> \</span><br><span class="line">  -d <span class="string">&quot;client_id=&lt;client_id&gt;&quot;</span> \</span><br><span class="line">  -d <span class="string">&quot;client_secret=&lt;client_secret&gt;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用 Token 调用 API</span></span><br><span class="line">curl -X GET <span class="string">&quot;https://api.example.com/ords/hr/employees/&quot;</span> \</span><br><span class="line">  -H <span class="string">&quot;Authorization: Bearer ***</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-3-2-角色授权"><a href="#3-3-2-角色授权" class="headerlink" title="3.3.2 角色授权"></a>3.3.2 角色授权</h4><pre><code class="sql">-- 创建自定义角色
+BEGIN
+    ORDS.CREATE_ROLE(p_role_name =&gt; &#39;hr_api_reader&#39;);
+    COMMIT;
+END;
+/
+
+-- 将角色授予 OAuth2 客户端
+BEGIN
+    OAUTH.GRANT_CLIENT_ROLE(
+        p_client_name =&gt; &#39;Employee App&#39;,
+        p_role_name   =&gt; &#39;hr_api_reader&#39;
+    );
+    COMMIT;
+END;
+/
+
+-- 在 Module 级别要求角色
+BEGIN
+    ORDS.DEFINE_PRIVILEGE(
+        p_privilege_name =&gt; &#39;hr.read.employees&#39;,
+        p_roles          =&gt; &#39;hr_api_reader&#39;,
+        p_patterns       =&gt; &#39;/emp/*&#39;,
+</code></pre>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/JSON/" rel="tag"># JSON</a>
+              <a href="/tags/ORDS/" rel="tag"># ORDS</a>
+              <a href="/tags/REST-API/" rel="tag"># REST API</a>
+              <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag"># 微服务</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9C%8D%E5%8A%A1%E5%8C%96/" rel="tag"># 数据库服务化</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/05/22/oracle/zabbix-prometheus-oracle-monitoring/" rel="prev" title="Zabbix&#x2F;Prometheus Oracle 监控定制：自定义监控项与可视化">
+                  <i class="fa fa-angle-left"></i> Zabbix/Prometheus Oracle 监控定制：自定义监控项与可视化
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/06/03/oracle/oracle-23ai-ai-vector-search-json/" rel="next" title="Oracle 23ai 新特性尝鲜：AI Vector Search 与 JSON Relational Duality">
+                  Oracle 23ai 新特性尝鲜：AI Vector Search 与 JSON Relational Duality <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

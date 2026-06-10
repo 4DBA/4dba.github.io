@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/03/28/oracle/decoding-ora-00600-ora-07445/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/03/28/oracle/decoding-ora-00600-ora-07445/","path":"2026/03/28/oracle/decoding-ora-00600-ora-07445/","title":"解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%A7%A3%E7%A0%81-ORA-00600-%E4%B8%8E-ORA-07445%EF%BC%9ATrace-%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90%E4%B8%8E-MOS-%E7%9F%A5%E8%AF%86%E5%BA%93%E5%AE%9A%E4%BD%8D"><span class="nav-number">1.</span> <span class="nav-text">解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.1.</span> <span class="nav-text">一、问题背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E5%86%85%E9%83%A8%E9%94%99%E8%AF%AF%E7%9A%84%E6%9C%AC%E8%B4%A8"><span class="nav-number">1.1.1.</span> <span class="nav-text">1.1 内部错误的本质</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-%E9%81%87%E5%88%B0%E5%86%85%E9%83%A8%E9%94%99%E8%AF%AF%E6%97%B6%E7%9A%84%E5%B8%B8%E8%A7%81%E8%AF%AF%E6%93%8D%E4%BD%9C"><span class="nav-number">1.1.2.</span> <span class="nav-text">1.2 遇到内部错误时的常见误操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-%E7%B3%BB%E7%BB%9F%E5%8C%96%E8%AF%8A%E6%96%AD%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="nav-number">1.1.3.</span> <span class="nav-text">1.3 系统化诊断的重要性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">1.2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-ORA-00600-%E5%88%86%E6%9E%90"><span class="nav-number">1.2.1.</span> <span class="nav-text">2.1 ORA-00600 分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E6%A0%BC%E5%BC%8F"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">错误格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%8F%82%E6%95%B0%E5%8F%8A%E5%90%AB%E4%B9%89"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">常见的第一个参数及含义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Trace-%E6%96%87%E4%BB%B6%E7%94%9F%E6%88%90"><span class="nav-number">1.2.1.3.</span> <span class="nav-text">Trace 文件生成</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-ORA-07445-%E5%88%86%E6%9E%90"><span class="nav-number">1.2.2.</span> <span class="nav-text">2.2 ORA-07445 分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8E%E4%BF%A1%E5%8F%B7%E9%87%8F%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">与信号量的关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E4%BF%A1%E5%8F%B7"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">常见信号</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Core-Dump-%E5%88%86%E6%9E%90"><span class="nav-number">1.2.2.3.</span> <span class="nav-text">Core Dump 分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Trace-%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="nav-number">1.2.3.</span> <span class="nav-text">2.3 Trace 文件结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Header-%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">Header 信息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Call-Stack%EF%BC%88%E8%B0%83%E7%94%A8%E6%A0%88%EF%BC%89"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">Call Stack（调用栈）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Process-State-%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.3.3.</span> <span class="nav-text">Process State 信息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Cursor-%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.3.4.</span> <span class="nav-text">Cursor 信息</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-MOS-%E7%9F%A5%E8%AF%86%E5%BA%93%E4%BD%BF%E7%94%A8"><span class="nav-number">1.2.4.</span> <span class="nav-text">2.4 MOS 知识库使用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%90%9C%E7%B4%A2%E6%8A%80%E5%B7%A7"><span class="nav-number">1.2.4.1.</span> <span class="nav-text">搜索技巧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ORA-00600-Lookup-Tool"><span class="nav-number">1.2.4.2.</span> <span class="nav-text">ORA-00600 Lookup Tool</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A1%A5%E4%B8%81%E4%B8%8B%E8%BD%BD%E4%B8%8E%E5%86%B2%E7%AA%81%E6%A3%80%E6%9F%A5"><span class="nav-number">1.2.4.3.</span> <span class="nav-text">补丁下载与冲突检查</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">1.3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-Trace-%E6%96%87%E4%BB%B6%E5%AE%9A%E4%BD%8D"><span class="nav-number">1.3.1.</span> <span class="nav-text">3.1 Trace 文件定位</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Alert-Log-%E4%B8%AD%E7%9A%84%E9%94%99%E8%AF%AF%E4%BF%A1%E6%81%AF%E8%A7%A3%E8%AF%BB"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">Alert Log 中的错误信息解读</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ADR-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%EF%BC%8811g-%E5%8F%8A%E4%BB%A5%E5%90%8E%EF%BC%89"><span class="nav-number">1.3.1.2.</span> <span class="nav-text">ADR 目录结构（11g 及以后）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#adrci-%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8"><span class="nav-number">1.3.1.3.</span> <span class="nav-text">adrci 工具使用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Trace-%E6%96%87%E4%BB%B6%E5%88%86%E6%9E%90%E5%AE%9E%E6%88%98"><span class="nav-number">1.3.2.</span> <span class="nav-text">3.2 Trace 文件分析实战</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B-1%EF%BC%9AORA-00600-kcbzib1-%E5%88%86%E6%9E%90%E8%BF%87%E7%A8%8B"><span class="nav-number">1.3.2.1.</span> <span class="nav-text">案例 1：ORA-00600 [kcbzib1] 分析过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B-2%EF%BC%9AORA-07445-qerghFetch-%E5%88%86%E6%9E%90%E8%BF%87%E7%A8%8B"><span class="nav-number">1.3.2.2.</span> <span class="nav-text">案例 2：ORA-07445 [qerghFetch] 分析过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%8E-Trace-%E6%96%87%E4%BB%B6%E5%AE%9A%E4%BD%8D%E5%88%B0-MOS-%E6%96%87%E6%A1%A3%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B"><span class="nav-number">1.3.2.3.</span> <span class="nav-text">从 Trace 文件定位到 MOS 文档的完整流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E4%B8%B4%E6%97%B6%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">1.3.3.</span> <span class="nav-text">3.3 临时解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Event-%E4%BA%8B%E4%BB%B6%E5%90%AF%E7%94%A8"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">Event 事件启用</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/03/28/oracle/decoding-ora-00600-ora-07445/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-28 10:00:00" itemprop="dateCreated datePublished" datetime="2026-03-28T10:00:00+00:00">2026-03-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="解码-ORA-00600-与-ORA-07445：Trace-文件分析与-MOS-知识库定位"><a href="#解码-ORA-00600-与-ORA-07445：Trace-文件分析与-MOS-知识库定位" class="headerlink" title="解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位"></a>解码 ORA-00600 与 ORA-07445：Trace 文件分析与 MOS 知识库定位</h1><p>作为一名 Oracle DBA，你一定对这两个错误码不陌生——<strong>ORA-00600</strong> 和 <strong>ORA-07445</strong>。它们是 Oracle 数据库中最令人头疼的两类内部错误，代表着数据库引擎内部的异常状态。不同于普通的用户错误，内部错误往往意味着代码层面的 Bug、内存损坏或数据结构异常，处理不当可能导致数据丢失甚至数据库崩溃。</p>
+<p>本文将系统性地介绍如何诊断和处理这两类错误，从理论分析到实战操作，帮助你建立一套标准化的诊断流程。</p>
+<hr>
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><h3 id="1-1-内部错误的本质"><a href="#1-1-内部错误的本质" class="headerlink" title="1.1 内部错误的本质"></a>1.1 内部错误的本质</h3><p>ORA-00600 和 ORA-07445 是 Oracle 数据库的两大内部错误类：</p>
+<span id="more"></span>
+
+
+<ul>
+<li><strong>ORA-00600</strong>：Oracle 内部逻辑错误，通常由代码 Bug、内存损坏或数据不一致触发</li>
+<li><strong>ORA-07445</strong>：操作系统信号导致的进程异常，通常是段错误（SIGSEGV）或浮点异常（SIGFPE）</li>
+</ul>
+<p>这两类错误的共同特点是：<strong>它们不是用户操作错误，而是数据库引擎内部的异常</strong>。</p>
+<h3 id="1-2-遇到内部错误时的常见误操作"><a href="#1-2-遇到内部错误时的常见误操作" class="headerlink" title="1.2 遇到内部错误时的常见误操作"></a>1.2 遇到内部错误时的常见误操作</h3><p>在实际工作中，我见过太多 DBA 在遇到内部错误时的错误应对：</p>
+<ul>
+<li><strong>盲目重启数据库</strong>：不分析 trace 文件就重启，导致关键诊断信息丢失</li>
+<li><strong>随意修改参数</strong>：在不理解问题根源的情况下修改隐含参数</li>
+<li><strong>忽略警告信息</strong>：认为”重启就好了”，不追踪问题根因</li>
+<li><strong>过度依赖搜索引擎</strong>：在网上搜索到的解决方案可能不适用于当前版本</li>
+</ul>
+<h3 id="1-3-系统化诊断的重要性"><a href="#1-3-系统化诊断的重要性" class="headerlink" title="1.3 系统化诊断的重要性"></a>1.3 系统化诊断的重要性</h3><p>正确的诊断流程应该是：</p>
+<ol>
+<li><strong>保留现场</strong>：收集所有相关的 trace 文件和 alert log</li>
+<li><strong>分析 Trace</strong>：理解错误的上下文和触发条件</li>
+<li><strong>查询 MOS</strong>：在 Oracle 知识库中查找已知问题</li>
+<li><strong>验证方案</strong>：测试补丁或 workaround 的有效性</li>
+<li><strong>监控复现</strong>：确认问题是否彻底解决</li>
+</ol>
+<hr>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-ORA-00600-分析"><a href="#2-1-ORA-00600-分析" class="headerlink" title="2.1 ORA-00600 分析"></a>2.1 ORA-00600 分析</h3><h4 id="错误格式"><a href="#错误格式" class="headerlink" title="错误格式"></a>错误格式</h4><p>ORA-00600 的标准格式为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ORA-00600: internal error code, arguments: [string], [number], [number], [number], [number], [number], [number], [number]</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li><strong>第一个参数</strong>：标识具体的内部错误类型（最关键）</li>
+<li><strong>后续参数</strong>：提供错误的上下文信息（如内存地址、对象 ID 等）</li>
+</ul>
+<h4 id="常见的第一个参数及含义"><a href="#常见的第一个参数及含义" class="headerlink" title="常见的第一个参数及含义"></a>常见的第一个参数及含义</h4><table>
+<thead>
+<tr>
+<th>第一个参数</th>
+<th>含义</th>
+<th>常见原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>kcbzib1</code></td>
+<td>Buffer Cache 相关</td>
+<td>数据块损坏、并发访问问题</td>
+</tr>
+<tr>
+<td><code>kdsgrp1</code></td>
+<td>数据块读取</td>
+<td>行链接、块损坏</td>
+</tr>
+<tr>
+<td><code>kkpo1</code></td>
+<td>SQL 解析</td>
+<td>优化器 Bug</td>
+</tr>
+<tr>
+<td><code>qerghFetch</code></td>
+<td>查询执行</td>
+<td>并行查询 Bug</td>
+</tr>
+<tr>
+<td><code>kcbgtcr</code></td>
+<td>Global Cache</td>
+<td>RAC 环境下的缓存一致性问题</td>
+</tr>
+<tr>
+<td><code>kcrfcommit</code></td>
+<td>Redo 相关</td>
+<td>日志文件损坏或并发提交问题</td>
+</tr>
+</tbody></table>
+<h4 id="Trace-文件生成"><a href="#Trace-文件生成" class="headerlink" title="Trace 文件生成"></a>Trace 文件生成</h4><p>当 ORA-00600 发生时，Oracle 会自动生成 trace 文件，包含：</p>
+<ul>
+<li>错误发生的详细上下文</li>
+<li>进程的调用栈（Call Stack）</li>
+<li>相关的 SQL 语句</li>
+<li>内存转储信息</li>
+</ul>
+<h3 id="2-2-ORA-07445-分析"><a href="#2-2-ORA-07445-分析" class="headerlink" title="2.2 ORA-07445 分析"></a>2.2 ORA-07445 分析</h3><h4 id="与信号量的关系"><a href="#与信号量的关系" class="headerlink" title="与信号量的关系"></a>与信号量的关系</h4><p>ORA-07445 的完整格式为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ORA-07445: exception encountered: core dump [function_name] [signal_number] [signal_name] [code] [address]</span><br></pre></td></tr></table></figure>
+
+<p>关键信息：</p>
+<ul>
+<li><strong>function_name</strong>：发生异常的 Oracle 内部函数</li>
+<li><strong>signal_number</strong>：操作系统信号编号</li>
+<li><strong>signal_name</strong>：信号名称</li>
+<li><strong>address</strong>：发生异常的内存地址</li>
+</ul>
+<h4 id="常见信号"><a href="#常见信号" class="headerlink" title="常见信号"></a>常见信号</h4><table>
+<thead>
+<tr>
+<th>信号</th>
+<th>编号</th>
+<th>含义</th>
+<th>常见原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SIGSEGV</td>
+<td>11</td>
+<td>段错误</td>
+<td>访问无效内存地址</td>
+</tr>
+<tr>
+<td>SIGFPE</td>
+<td>8</td>
+<td>浮点异常</td>
+<td>除以零、溢出</td>
+</tr>
+<tr>
+<td>SIGABRT</td>
+<td>6</td>
+<td>进程中止</td>
+<td>断言失败</td>
+</tr>
+<tr>
+<td>SIGBUS</td>
+<td>7</td>
+<td>总线错误</td>
+<td>内存对齐问题</td>
+</tr>
+</tbody></table>
+<h4 id="Core-Dump-分析"><a href="#Core-Dump-分析" class="headerlink" title="Core Dump 分析"></a>Core Dump 分析</h4><p>当 ORA-07445 发生时，通常会生成 core dump 文件。分析 core dump 需要：</p>
+<ol>
+<li><strong>确保安装了 Debug 符号包</strong></li>
+<li><strong>使用 GDB 或 dbx 分析</strong></li>
+<li><strong>查看调用栈定位问题函数</strong></li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Linux 环境分析 core dump</span></span><br><span class="line">gdb <span class="variable">$ORACLE_HOME</span>/bin/oracle core.12345</span><br><span class="line">(gdb) bt</span><br><span class="line">(gdb) info registers</span><br><span class="line">(gdb) <span class="built_in">print</span> *variable_name</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-Trace-文件结构"><a href="#2-3-Trace-文件结构" class="headerlink" title="2.3 Trace 文件结构"></a>2.3 Trace 文件结构</h3><p>一个完整的 Oracle trace 文件通常包含以下部分：</p>
+<h4 id="Header-信息"><a href="#Header-信息" class="headerlink" title="Header 信息"></a>Header 信息</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Trace file /u01/app/oracle/diag/rdbms/orcl/orcl/trace/orcl_ora_12345.trc</span><br><span class="line">Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production</span><br><span class="line">Version 19.18.0.0.0</span><br><span class="line">ORACLE_HOME: /u01/app/oracle/product/19.0.0/dbhome_1</span><br><span class="line">System name: Linux</span><br><span class="line">Node name: dbserver</span><br><span class="line">Release: 5.15.0-60-generic</span><br><span class="line">Version: #66-Ubuntu SMP</span><br><span class="line">Machine: x86_64</span><br><span class="line">Instance name: orcl</span><br><span class="line">Redo thread mounted by this instance: 1</span><br><span class="line">Oracle process number: 45</span><br><span class="line">Unix process pid: 12345, image: oracle@dbserver</span><br></pre></td></tr></table></figure>
+
+<h4 id="Call-Stack（调用栈）"><a href="#Call-Stack（调用栈）" class="headerlink" title="Call Stack（调用栈）"></a>Call Stack（调用栈）</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">----- Call Stack Trace -----</span><br><span class="line">ksedst1()+936         &lt;- Oracle 错误处理</span><br><span class="line">ksedst()+56</span><br><span class="line">dbkedDefDump()+2740</span><br><span class="line">ksedmp()+416</span><br><span class="line">ksfdmp()+68</span><br><span class="line">dbgexPhaseII()+1864</span><br><span class="line">dbgexProcessError()+2660</span><br><span class="line">dbgeExecuteForError()+68</span><br><span class="line">dbgePostErrorKGE()+2160</span><br><span class="line">dbkePostKGE_kgsf()+72</span><br><span class="line">kgeadse()+380</span><br><span class="line">kgerinv_internal()+48</span><br><span class="line">kgerinv()+40</span><br><span class="line">kgeasnamierr()+152</span><br><span class="line">kcbzib1()+1234        &lt;- 错误发生的具体函数</span><br></pre></td></tr></table></figure>
+
+<p><strong>解读要点</strong>：</p>
+<ul>
+<li>从下往上阅读调用栈</li>
+<li>最底部的函数是错误发生的位置</li>
+<li>中间的函数是错误传播路径</li>
+<li>顶部的函数是错误处理逻辑</li>
+</ul>
+<h4 id="Process-State-信息"><a href="#Process-State-信息" class="headerlink" title="Process State 信息"></a>Process State 信息</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">PROCESS STATE</span><br><span class="line">-------------</span><br><span class="line">Process Global Information:</span><br><span class="line">  Process Name: ORACLE PID=45</span><br><span class="line">  PGA Area: 0x7f1234567890</span><br><span class="line">  Call Stack:</span><br><span class="line">    ...</span><br><span class="line">  </span><br><span class="line">  Session Information:</span><br><span class="line">    SID: 234</span><br><span class="line">    Serial#: 56789</span><br><span class="line">    Username: SCOTT</span><br><span class="line">    Machine: appserver</span><br><span class="line">    Program: sqlplus@appserver</span><br><span class="line">    Module: SQL*Plus</span><br><span class="line">    Action: </span><br></pre></td></tr></table></figure>
+
+<h4 id="Cursor-信息"><a href="#Cursor-信息" class="headerlink" title="Cursor 信息"></a>Cursor 信息</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Current SQL Statement:</span><br><span class="line">SELECT /*+ PARALLEL(4) */ * FROM large_table WHERE status = &#x27;ACTIVE&#x27;</span><br><span class="line"></span><br><span class="line">Cursor Dump:</span><br><span class="line">  Cursor# 1(0x7f1234567890) state=FETCHING </span><br><span class="line">  SELECT /*+ PARALLEL(4) */ * FROM large_table WHERE status = &#x27;ACTIVE&#x27;</span><br><span class="line">  child# 0x7f1234567890 con_id=0</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-4-MOS-知识库使用"><a href="#2-4-MOS-知识库使用" class="headerlink" title="2.4 MOS 知识库使用"></a>2.4 MOS 知识库使用</h3><h4 id="搜索技巧"><a href="#搜索技巧" class="headerlink" title="搜索技巧"></a>搜索技巧</h4><p><strong>1. Doc ID 搜索</strong><br>直接输入文档编号，如 <code>1234567.1</code></p>
+<p><strong>2. Bug 号搜索</strong><br>使用格式 <code>Bug 12345678</code> 或 <code>bug:12345678</code></p>
+<p><strong>3. 关键词组合搜索</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;ORA-00600&quot; &quot;kcbzib1&quot; 19c</span><br><span class="line">&quot;ORA-07445&quot; &quot;SIGSEGV&quot; &quot;qerghFetch&quot; patch</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 版本过滤</strong><br>在搜索结果中使用版本过滤器，确保找到适用于当前版本的信息</p>
+<h4 id="ORA-00600-Lookup-Tool"><a href="#ORA-00600-Lookup-Tool" class="headerlink" title="ORA-00600 Lookup Tool"></a>ORA-00600 Lookup Tool</h4><p>Oracle 提供了专门的 ORA-00600 查询工具：</p>
+<ol>
+<li>登录 MOS（My Oracle Support）</li>
+<li>进入 <strong>ORA-600&#x2F;ORA-7445&#x2F;ORA-700 Error Lookup Tool</strong></li>
+<li>输入错误参数（如 <code>kcbzib1</code>）</li>
+<li>获取相关的 Bug 信息和补丁建议</li>
+</ol>
+<h4 id="补丁下载与冲突检查"><a href="#补丁下载与冲突检查" class="headerlink" title="补丁下载与冲突检查"></a>补丁下载与冲突检查</h4><p>找到相关补丁后：</p>
+<ol>
+<li><strong>下载补丁</strong>：从 MOS 下载对应平台的补丁</li>
+<li><strong>检查冲突</strong>：使用 OPatch 工具检查补丁冲突<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">opatch prereq CheckConflictAgainstOHWithDetail -phBaseDir /path/to/patch</span><br></pre></td></tr></table></figure></li>
+<li><strong>应用补丁</strong>：按照 README 文档的步骤应用补丁</li>
+</ol>
+<hr>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-Trace-文件定位"><a href="#3-1-Trace-文件定位" class="headerlink" title="3.1 Trace 文件定位"></a>3.1 Trace 文件定位</h3><h4 id="Alert-Log-中的错误信息解读"><a href="#Alert-Log-中的错误信息解读" class="headerlink" title="Alert Log 中的错误信息解读"></a>Alert Log 中的错误信息解读</h4><p>当内部错误发生时，alert log 中会出现类似以下信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">2026-06-05T14:23:45.123456+08:00</span><br><span class="line">Errors in file /u01/app/oracle/diag/rdbms/orcl/orcl/trace/orcl_ora_12345.trc:</span><br><span class="line">ORA-00600: internal error code, arguments: [kcbzib1], [1], [2], [3], [4], [5], [6], [7]</span><br><span class="line">2026-06-05T14:23:45.234567+08:00</span><br><span class="line">Incident details in: /u01/app/oracle/diag/rdbms/orcl/orcl/incident/incdir_12345/orcl_ora_12345_i12345.trc</span><br></pre></td></tr></table></figure>
+
+<p><strong>关键信息</strong>：</p>
+<ul>
+<li>错误发生的精确时间</li>
+<li>Trace 文件路径</li>
+<li>Incident ID（用于 ADRCI 查询）</li>
+</ul>
+<h4 id="ADR-目录结构（11g-及以后）"><a href="#ADR-目录结构（11g-及以后）" class="headerlink" title="ADR 目录结构（11g 及以后）"></a>ADR 目录结构（11g 及以后）</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ORACLE_BASE/diag/rdbms/&lt;db_name&gt;/&lt;instance_name&gt;/</span><br><span class="line">├── alert/           # alert log (XML格式)</span><br><span class="line">├── cdump/           # Core dump 文件</span><br><span class="line">├── incident/        # Incident trace 文件</span><br><span class="line">├── incpkg/          # Incident 包</span><br><span class="line">├── ir/              # Incident report</span><br><span class="line">├── lck/             # 锁文件</span><br><span class="line">├── metadata/        # 元数据</span><br><span class="line">├── stage/           # Stage 文件</span><br><span class="line">├── sweep/           # Sweep 文件</span><br><span class="line">└── trace/           # 普通 trace 文件</span><br></pre></td></tr></table></figure>
+
+<h4 id="adrci-工具使用"><a href="#adrci-工具使用" class="headerlink" title="adrci 工具使用"></a>adrci 工具使用</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 启动 adrci</span></span><br><span class="line">adrci</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置 homepath</span></span><br><span class="line">ADRCI&gt; <span class="built_in">set</span> homepath diag/rdbms/orcl/orcl</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 incidents</span></span><br><span class="line">ADRCI&gt; show incident</span><br><span class="line"></span><br><span class="line"><span class="comment"># 打包 incident 用于 SR</span></span><br><span class="line">ADRCI&gt; ips pack incident 12345 /tmp/incident_12345.zip</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 trace 文件</span></span><br><span class="line">ADRCI&gt; show trace /u01/app/oracle/diag/rdbms/orcl/orcl/trace/orcl_ora_12345.trc</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-Trace-文件分析实战"><a href="#3-2-Trace-文件分析实战" class="headerlink" title="3.2 Trace 文件分析实战"></a>3.2 Trace 文件分析实战</h3><h4 id="案例-1：ORA-00600-kcbzib1-分析过程"><a href="#案例-1：ORA-00600-kcbzib1-分析过程" class="headerlink" title="案例 1：ORA-00600 [kcbzib1] 分析过程"></a>案例 1：ORA-00600 [kcbzib1] 分析过程</h4><p><strong>场景</strong>：生产数据库突然报错</p>
+<p><strong>Alert Log 信息</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">2026-06-05T14:23:45+08:00</span><br><span class="line">Errors in file /u01/app/oracle/diag/rdbms/prod/prod/trace/prod_ora_5678.trc:</span><br><span class="line">ORA-00600: internal error code, arguments: [kcbzib1], [1], [0x7F1234567890], [0x7F1234567890], [0], [1], [0], [0]</span><br></pre></td></tr></table></figure>
+
+<p><strong>Trace 文件关键内容</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">*** 2026-06-05T14:23:45.123456+08:00</span><br><span class="line">*** SESSION ID:(234.56789) 2026-06-05T14:23:45.123456+08:00</span><br><span class="line">*** CLIENT ID:() 2026-06-05T14:23:45.123456+08:00</span><br><span class="line">*** SERVICE NAME:(SYS$USERS) 2026-06-05T14:23:45.123456+08:00</span><br><span class="line">*** MODULE NAME:(SQL*Plus) 2026-06-05T14:23:45.123456+08:00</span><br><span class="line">*** ACTION NAME:() 2026-06-05T14:23:45.123456+08:00</span><br><span class="line"></span><br><span class="line">----- Current SQL Statement for this session -----</span><br><span class="line">SELECT * FROM ORDERS WHERE ORDER_DATE &gt; SYSDATE - 30</span><br><span class="line"></span><br><span class="line">----- Call Stack Trace -----</span><br><span class="line">ksedst1()+936</span><br><span class="line">ksedst()+56</span><br><span class="line">dbkedDefDump()+2740</span><br><span class="line">ksedmp()+416</span><br><span class="line">ksfdmp()+68</span><br><span class="line">dbgexPhaseII()+1864</span><br><span class="line">dbgexProcessError()+2660</span><br><span class="line">dbgeExecuteForError()+68</span><br><span class="line">dbgePostErrorKGE()+2160</span><br><span class="line">dbkePostKGE_kgsf()+72</span><br><span class="line">kgeadse()+380</span><br><span class="line">kgerinv_internal()+48</span><br><span class="line">kgerinv()+40</span><br><span class="line">kgeasnamierr()+152</span><br><span class="line">kcbzib1()+1234        &lt;- 错误发生函数</span><br><span class="line">kcbgtcr()+5678</span><br><span class="line">qertbFetch()+2345</span><br><span class="line">qerghFetch()+1234</span><br><span class="line">rwsfcd()+567</span><br><span class="line">qerhjFetch()+2345</span><br><span class="line">opifch2()+1234</span><br><span class="line">kpoal8()+5678</span><br><span class="line">opiodr()+1234</span><br><span class="line">ttcpip()+5678</span><br><span class="line">opitsk()+1234</span><br><span class="line">opiino()+5678</span><br><span class="line">opiodr()+1234</span><br><span class="line">opidrv()+1234</span><br><span class="line">sou2o()+123</span><br><span class="line">opimai_real()+567</span><br><span class="line">ssthrdmain()+567</span><br><span class="line">main()+234</span><br><span class="line">libc_start_main()+243</span><br><span class="line">_start()+46</span><br></pre></td></tr></table></figure>
+
+<p><strong>分析步骤</strong>：</p>
+<ol>
+<li><strong>识别错误函数</strong>：<code>kcbzib1</code> 是 Buffer Cache 相关函数</li>
+<li><strong>查看 SQL 语句</strong>：问题 SQL 是一个简单的查询</li>
+<li><strong>检查调用栈</strong>：从 <code>kcbzib1</code> 向上看，涉及 <code>kcbgtcr</code>（Global Cache）和 <code>qertbFetch</code>（表获取）</li>
+<li><strong>查询 MOS</strong>：搜索 “ORA-00600 kcbzib1 19c”</li>
+</ol>
+<p><strong>MOS 搜索结果</strong>：</p>
+<ul>
+<li>Doc ID 1234567.1：描述了 19c 中的类似问题</li>
+<li>Bug 34567890：已在 RU 19.18 中修复</li>
+<li>临时解决方案：设置 <code>_serial_direct_read</code> &#x3D; <code>FALSE</code></li>
+</ul>
+<p><strong>临时解决方案验证</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 设置隐含参数</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> &quot;_serial_direct_read&quot; <span class="operator">=</span> <span class="literal">FALSE</span> <span class="keyword">SCOPE</span><span class="operator">=</span><span class="keyword">BOTH</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证参数生效</span></span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> _serial_direct_read;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 监控是否复现</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$DIAG_INFO <span class="keyword">WHERE</span> NAME <span class="operator">=</span> <span class="string">&#x27;Active Incident Count&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="案例-2：ORA-07445-qerghFetch-分析过程"><a href="#案例-2：ORA-07445-qerghFetch-分析过程" class="headerlink" title="案例 2：ORA-07445 [qerghFetch] 分析过程"></a>案例 2：ORA-07445 [qerghFetch] 分析过程</h4><p><strong>场景</strong>：并行查询导致进程崩溃</p>
+<p><strong>Alert Log 信息</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">2026-06-05T15:34:56+08:00</span><br><span class="line">Exception [type: SIGSEGV, Address not mapped to object] [ADDR:0x7F1234567890] [PC:0x7F1234567890, qerghFetch()+2345]</span><br><span class="line">Errors in file /u01/app/oracle/diag/rdbms/prod/prod/trace/prod_p001_9999.trc (incident=23456):</span><br><span class="line">ORA-07445: exception encountered: core dump [qerghFetch()+2345] [SIGSEGV] [ADDR:0x7F1234567890] [PC:0x7F1234567890] [Address not mapped to object] []</span><br></pre></td></tr></table></figure>
+
+<p><strong>Trace 文件关键内容</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">*** 2026-06-05T15:34:56.789012+08:00</span><br><span class="line">*** SESSION ID:(456.12345) 2026-06-05T15:34:56.789012+08:00</span><br><span class="line"></span><br><span class="line">----- Current SQL Statement for this session -----</span><br><span class="line">SELECT /*+ PARALLEL(8) */ </span><br><span class="line">  department_id, SUM(salary), COUNT(*)</span><br><span class="line">FROM employees </span><br><span class="line">GROUP BY department_id</span><br><span class="line"></span><br><span class="line">----- Call Stack Trace -----</span><br><span class="line">qerghFetch()+2345</span><br><span class="line">qerhjFetch()+5678</span><br><span class="line">rwsfcd()+1234</span><br><span class="line">opifch2()+5678</span><br><span class="line">kpoal8()+1234</span><br><span class="line">opiodr()+5678</span><br><span class="line">ttcpip()+1234</span><br><span class="line">opitsk()+5678</span><br><span class="line">opiino()+1234</span><br><span class="line">opiodr()+5678</span><br><span class="line">opidrv()+5678</span><br><span class="line">sou2o()+567</span><br><span class="line">opimai_real()+1234</span><br><span class="line">ssthrdmain()+1234</span><br><span class="line">main()+567</span><br><span class="line">libc_start_main()+243</span><br><span class="line">_start()+46</span><br><span class="line"></span><br><span class="line">----- Process State Dump -----</span><br><span class="line">Process: P001 (Parallel Query Slave)</span><br><span class="line">PGA Heap Dump:</span><br><span class="line">  Total PGA: 1234MB</span><br><span class="line">  Used PGA: 1200MB  &lt;- 异常高的 PGA 使用</span><br></pre></td></tr></table></figure>
+
+<p><strong>分析步骤</strong>：</p>
+<ol>
+<li><strong>识别信号</strong>：SIGSEGV 表示段错误，访问了无效内存地址</li>
+<li><strong>查看进程类型</strong>：P001 是并行查询从进程</li>
+<li><strong>分析 PGA 使用</strong>：PGA 使用异常高，可能导致内存耗尽</li>
+<li><strong>检查 SQL</strong>：使用了 <code>PARALLEL(8)</code> 提示</li>
+</ol>
+<p><strong>MOS 搜索</strong>：</p>
+<ul>
+<li>搜索 “ORA-07445 qerghFetch parallel SIGSEGV”</li>
+<li>找到 Doc ID 2345678.1</li>
+<li>问题是 19c 并行查询的已知 Bug</li>
+</ul>
+<p><strong>解决方案</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 方案1：降低并行度</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> parallel_max_servers <span class="operator">=</span> <span class="number">8</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 方案2：禁用特定功能</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> &quot;_px_use_large_pool&quot; <span class="operator">=</span> <span class="literal">TRUE</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 方案3：应用补丁</span></span><br><span class="line"><span class="comment">-- Bug 45678901 - Fixed in 19.19 RU</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="从-Trace-文件定位到-MOS-文档的完整流程"><a href="#从-Trace-文件定位到-MOS-文档的完整流程" class="headerlink" title="从 Trace 文件定位到 MOS 文档的完整流程"></a>从 Trace 文件定位到 MOS 文档的完整流程</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">步骤1: 收集信息</span><br><span class="line">├── Alert log 中的错误参数</span><br><span class="line">├── Trace 文件中的 Call Stack</span><br><span class="line">└── 问题 SQL 和执行计划</span><br><span class="line"></span><br><span class="line">步骤2: 初步搜索</span><br><span class="line">├── ORA-00600 Lookup Tool</span><br><span class="line">├── MOS 搜索 &quot;ORA-00600 [参数1]&quot;</span><br><span class="line">└── 按版本过滤结果</span><br><span class="line"></span><br><span class="line">步骤3: 深入分析</span><br><span class="line">├── 阅读 Bug 描述</span><br><span class="line">├── 检查影响版本</span><br><span class="line">├── 确认是否匹配当前环境</span><br><span class="line">└── 查看 Workaround 和 Patch</span><br><span class="line"></span><br><span class="line">步骤4: 验证方案</span><br><span class="line">├── 测试环境验证</span><br><span class="line">├── 应用补丁或 Workaround</span><br><span class="line">└── 监控问题是否复现</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-临时解决方案"><a href="#3-3-临时解决方案" class="headerlink" title="3.3 临时解决方案"></a>3.3 临时解决方案</h3><h4 id="Event-事件启用"><a href="#Event-事件启用" class="headerlink" title="Event 事件启用"></a>Event 事件启用</h4><p>某些内部错误可以通过启用特定的 Event 来收集更多信息：</p>
+<pre><code class="sql">-- 启用 Event 10046 进行 SQL Trace
+ALTER SESSION SET EVENTS &#39;10046 trace name context forever, level 12&#39;;
+
+-- 启用 Event 600 进行详细诊断
+ALTER SESSION SET EVENTS &#39;600 trace name errorstack level 3&#39;;
+</code></pre>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" rel="tag"># 故障排查</a>
+              <a href="/tags/ORA-00600/" rel="tag"># ORA-00600</a>
+              <a href="/tags/ORA-07445/" rel="tag"># ORA-07445</a>
+              <a href="/tags/Trace/" rel="tag"># Trace</a>
+              <a href="/tags/MOS/" rel="tag"># MOS</a>
+              <a href="/tags/%E5%86%85%E9%83%A8%E9%94%99%E8%AF%AF/" rel="tag"># 内部错误</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/23/oracle/latch-mutex-concurrency-tuning/" rel="prev" title="Latch, Mutex 与并发争用调优：Library Cache Lock&#x2F;Pin 深度解析">
+                  <i class="fa fa-angle-left"></i> Latch, Mutex 与并发争用调优：Library Cache Lock/Pin 深度解析
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/04/02/oracle/locks-blocking-session-resolution/" rel="next" title="TX&#x2F;TM 锁机制详解与阻塞会话快速定位">
+                  TX/TM 锁机制详解与阻塞会话快速定位 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

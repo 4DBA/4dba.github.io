@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/02/15/oracle/switchover-failover-sop-brain-split/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/02/15/oracle/switchover-failover-sop-brain-split/","path":"2026/02/15/oracle/switchover-failover-sop-brain-split/","title":"Data Guard Switchover/Failover SOP 与脑裂预防机制"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Data Guard Switchover/Failover SOP 与脑裂预防机制 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E6%A0%87%E5%87%86%E5%8C%96%E7%9A%84%E8%A7%92%E8%89%B2%E5%88%87%E6%8D%A2SOP"><span class="nav-number">1.1.</span> <span class="nav-text">为什么需要标准化的角色切换SOP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%87%E6%8D%A2%E5%A4%B1%E8%B4%A5%E7%9A%84%E7%94%9F%E4%BA%A7%E4%BA%8B%E6%95%85%E6%A1%88%E4%BE%8B"><span class="nav-number">1.2.</span> <span class="nav-text">切换失败的生产事故案例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%84%91%E8%A3%82-Split-Brain-%E5%AF%B9%E6%95%B0%E6%8D%AE%E4%B8%80%E8%87%B4%E6%80%A7%E7%9A%84%E8%87%B4%E5%91%BD%E5%BD%B1%E5%93%8D"><span class="nav-number">1.3.</span> <span class="nav-text">脑裂(Split Brain)对数据一致性的致命影响</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Switchover-vs-Failover"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 Switchover vs Failover</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E8%84%91%E8%A3%82-Split-Brain-%E4%BA%A7%E7%94%9F%E7%9A%84%E6%A0%B9%E5%9B%A0"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 脑裂(Split Brain)产生的根因</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E8%84%91%E8%A3%82%E9%A2%84%E9%98%B2%E6%9C%BA%E5%88%B6"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 脑裂预防机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#FSFO-%E7%9A%84-Observer-%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.3.1.</span> <span class="nav-text">FSFO 的 Observer 进程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%89%E7%A7%8D%E4%BF%9D%E6%8A%A4%E6%A8%A1%E5%BC%8F%E5%AF%B9%E8%84%91%E8%A3%82%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="nav-number">2.3.2.</span> <span class="nav-text">三种保护模式对脑裂的影响</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E5%86%97%E4%BD%99%E4%B8%8E%E5%BF%83%E8%B7%B3%E6%A3%80%E6%B5%8B"><span class="nav-number">2.3.3.</span> <span class="nav-text">网络冗余与心跳检测</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-Switchover-SOP%EF%BC%88%E6%A0%87%E5%87%86%E5%8C%96%E6%93%8D%E4%BD%9C%E6%89%8B%E5%86%8C%EF%BC%89"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 Switchover SOP（标准化操作手册）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%87%E6%8D%A2%E5%89%8D%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="nav-number">3.1.1.</span> <span class="nav-text">切换前检查清单</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Broker-%E6%89%A7%E8%A1%8C-Switchover-%E5%91%BD%E4%BB%A4"><span class="nav-number">3.1.2.</span> <span class="nav-text">Broker 执行 Switchover 命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8-Switchover-%E8%AF%A6%E7%BB%86%E6%AD%A5%E9%AA%A4"><span class="nav-number">3.1.3.</span> <span class="nav-text">手动 Switchover 详细步骤</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%87%E6%8D%A2%E5%90%8E%E9%AA%8C%E8%AF%81%E6%AD%A5%E9%AA%A4"><span class="nav-number">3.1.4.</span> <span class="nav-text">切换后验证步骤</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%9E%E5%88%87%E6%AD%A5%E9%AA%A4"><span class="nav-number">3.1.5.</span> <span class="nav-text">回切步骤</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Failover-SOP"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 Failover SOP</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%A4%E6%96%AD%E6%98%AF%E5%90%A6%E9%9C%80%E8%A6%81-Failover"><span class="nav-number">3.2.1.</span> <span class="nav-text">判断是否需要 Failover</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8-Failover-%E6%AD%A5%E9%AA%A4"><span class="nav-number">3.2.2.</span> <span class="nav-text">手动 Failover 步骤</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Broker-Failover-%E6%93%8D%E4%BD%9C"><span class="nav-number">3.2.3.</span> <span class="nav-text">Broker Failover 操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Failover-%E5%90%8E%E9%87%8D%E5%BB%BA%E6%97%A7-Primary"><span class="nav-number">3.2.4.</span> <span class="nav-text">Failover 后重建旧 Primary</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-FSFO-%E9%85%8D%E7%BD%AE%E4%B8%8E%E6%BC%94%E7%BB%83"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 FSFO 配置与演练</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Observer-%E8%BF%9B%E7%A8%8B%E9%85%8D%E7%BD%AE"><span class="nav-number">3.3.1.</span> <span class="nav-text">Observer 进程配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FSFO-%E5%90%AF%E7%94%A8%E4%B8%8E%E6%B5%8B%E8%AF%95"><span class="nav-number">3.3.2.</span> <span class="nav-text">FSFO 启用与测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A8%A1%E6%8B%9F%E6%95%85%E9%9A%9C%E8%87%AA%E5%8A%A8%E5%88%87%E6%8D%A2"><span class="nav-number">3.3.3.</span> <span class="nav-text">模拟故障自动切换</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-%E8%84%91%E8%A3%82%E5%A4%84%E7%90%86"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 脑裂处理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A3%80%E6%B5%8B%E8%84%91%E8%A3%82%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">3.4.1.</span> <span class="nav-text">检测脑裂的方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%84%91%E8%A3%82%E5%8F%91%E7%94%9F%E5%90%8E%E7%9A%84%E6%95%B0%E6%8D%AE%E4%B8%80%E8%87%B4%E6%80%A7%E6%A3%80%E6%9F%A5"><span class="nav-number">3.4.2.</span> <span class="nav-text">脑裂发生后的数据一致性检查</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/02/15/oracle/switchover-failover-sop-brain-split/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Data Guard Switchover&#x2F;Failover SOP 与脑裂预防机制 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Data Guard Switchover/Failover SOP 与脑裂预防机制
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-02-15 10:00:00" itemprop="dateCreated datePublished" datetime="2026-02-15T10:00:00+00:00">2026-02-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><h3 id="为什么需要标准化的角色切换SOP"><a href="#为什么需要标准化的角色切换SOP" class="headerlink" title="为什么需要标准化的角色切换SOP"></a>为什么需要标准化的角色切换SOP</h3><p>在生产环境中，Oracle Data Guard 的角色切换（Switchover&#x2F;Failover）是一项高风险操作。没有标准化的操作手册，DBA 在面对紧急故障时容易犯下不可挽回的错误——跳过检查步骤、遗漏数据一致性验证、在错误的时机执行命令，任何一个小失误都可能导致数小时甚至数天的业务中断。</p>
+<span id="more"></span>
+
+
+<p>标准化的 SOP（Standard Operating Procedure）能够确保：</p>
+<ul>
+<li><strong>操作可重复</strong>：任何具备资质的 DBA 都能按照手册完成切换</li>
+<li><strong>风险可控</strong>：每一步操作都有明确的前置条件和验证标准</li>
+<li><strong>回退可执行</strong>：出现异常时能快速恢复到安全状态</li>
+<li><strong>审计可追溯</strong>：每一次操作都有记录，满足合规要求</li>
+</ul>
+<h3 id="切换失败的生产事故案例"><a href="#切换失败的生产事故案例" class="headerlink" title="切换失败的生产事故案例"></a>切换失败的生产事故案例</h3><p>以下是一个真实场景的还原：</p>
+<p>某金融客户在机房迁移期间执行 Switchover，由于未提前检查 Standby 的归档日志是否连续应用，切换完成后发现新 Primary 缺少 30 分钟的交易数据。更糟糕的是，运维团队在发现问题后尝试回切，却因新旧 Primary 的角色状态混乱导致两个数据库都进入了不可用状态——这就是典型的<strong>脑裂（Split Brain）</strong>场景。</p>
+<p>最终代价：业务中断 4 小时，数据丢失约 15 分钟，事后复盘耗时一周。</p>
+<h3 id="脑裂-Split-Brain-对数据一致性的致命影响"><a href="#脑裂-Split-Brain-对数据一致性的致命影响" class="headerlink" title="脑裂(Split Brain)对数据一致性的致命影响"></a>脑裂(Split Brain)对数据一致性的致命影响</h3><p>脑裂是 Data Guard 架构中最危险的状态——Primary 和 Standby 同时以 Primary 角色运行，各自接受写入，导致两份数据库出现数据分叉。一旦脑裂发生：</p>
+<ul>
+<li>两份数据库的数据开始分叉，无法简单合并</li>
+<li>应用可能连接到错误的数据库，写入不一致的数据</li>
+<li>修复过程需要停机比对，业务影响巨大</li>
+<li>严重时可能需要从备份恢复，RPO 暴增</li>
+</ul>
+<p>因此，理解脑裂的产生机制并建立完善的预防体系，是每一位 DBA 的必修课。</p>
+<hr>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-Switchover-vs-Failover"><a href="#2-1-Switchover-vs-Failover" class="headerlink" title="2.1 Switchover vs Failover"></a>2.1 Switchover vs Failover</h3><p><strong>Switchover（计划性切换）</strong></p>
+<p>Switchover 是一种有序的角色转换过程。Primary 变为 Standby，Standby 变为 Primary，整个过程<strong>零数据丢失</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">切换前:  Primary (PROD) ---&gt; Standby (DR)</span><br><span class="line">切换后:  Standby (PROD) &lt;--- Primary (DR)</span><br></pre></td></tr></table></figure>
+
+<p><strong>适用场景</strong>：</p>
+<ul>
+<li>计划性维护（硬件升级、操作系统补丁、存储迁移）</li>
+<li>定期容灾演练</li>
+<li>数据中心迁移</li>
+<li>负载均衡需求（读写分离架构调整）</li>
+</ul>
+<p><strong>Failover（紧急切换）</strong></p>
+<p>Failover 是在 Primary 不可用时的应急操作。Standby 被激活为新的 Primary，原有 Primary 被废弃或降级。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">切换前:  Primary (PROD) [故障]   Standby (DR)</span><br><span class="line">切换后:  废弃/恢复     &lt;---   Primary (DR)</span><br></pre></td></tr></table></figure>
+
+<p><strong>适用场景</strong>：</p>
+<ul>
+<li>Primary 数据库所在机房火灾、地震等灾难</li>
+<li>存储阵列故障，短时间内无法恢复</li>
+<li>数据库严重损坏，无法修复</li>
+<li>网络完全中断，Primary 不可达</li>
+</ul>
+<p><strong>关键区别</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>Switchover</th>
+<th>Failover</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发条件</td>
+<td>计划性</td>
+<td>紧急&#x2F;非计划性</td>
+</tr>
+<tr>
+<td>数据丢失</td>
+<td>无</td>
+<td>可能（取决于保护模式）</td>
+</tr>
+<tr>
+<td>可逆性</td>
+<td>完全可逆</td>
+<td>需重建旧Primary</td>
+</tr>
+<tr>
+<td>归档日志间隙</td>
+<td>无</td>
+<td>可能存在</td>
+</tr>
+<tr>
+<td>操作复杂度</td>
+<td>低</td>
+<td>高</td>
+</tr>
+</tbody></table>
+<h3 id="2-2-脑裂-Split-Brain-产生的根因"><a href="#2-2-脑裂-Split-Brain-产生的根因" class="headerlink" title="2.2 脑裂(Split Brain)产生的根因"></a>2.2 脑裂(Split Brain)产生的根因</h3><p>脑裂的本质是分布式系统中的一致性问题——两个节点同时认为自己是 Primary 并接受写入。</p>
+<p><strong>场景一：网络分区（Network Partition）</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">正常状态:</span><br><span class="line">Client --&gt; Primary &lt;==== 心跳/Redo传输 ====&gt; Standby</span><br><span class="line"></span><br><span class="line">网络分区:</span><br><span class="line">Client --&gt; Primary &lt;----X----&gt; Standby</span><br><span class="line">                         ↑</span><br><span class="line">                    网络中断</span><br><span class="line"></span><br><span class="line">问题: Standby 如何判断 Primary 是真的挂了，还是仅仅网络不通？</span><br></pre></td></tr></table></figure>
+
+<p>当 Primary 与 Standby 之间的网络中断时，Standby 可能无法确定 Primary 的状态。如果此时贸然将 Standby 提升为 Primary，而原 Primary 其实仍在运行并接受写入，脑裂就产生了。</p>
+<p><strong>场景二：角色转换过程中的时序问题</strong></p>
+<p>在 Switchover 过程中，如果操作执行到一半（旧 Primary 已经 shutdown，新 Primary 已经 open），但网络故障导致旧 Primary 重新启动后以 Primary 角色恢复运行，也会出现脑裂。</p>
+<p><strong>场景三：Fast-Start Failover 的仲裁失败</strong></p>
+<p>FSFO 依赖 Observer 进行故障仲裁。如果 Observer 所在网络分区导致无法同时访问两个数据库，Observer 可能做出错误的切换决策。</p>
+<h3 id="2-3-脑裂预防机制"><a href="#2-3-脑裂预防机制" class="headerlink" title="2.3 脑裂预防机制"></a>2.3 脑裂预防机制</h3><h4 id="FSFO-的-Observer-进程"><a href="#FSFO-的-Observer-进程" class="headerlink" title="FSFO 的 Observer 进程"></a>FSFO 的 Observer 进程</h4><p>Observer 是 Fast-Start Failover 的核心仲裁组件。它是一个独立进程，运行在第三方节点上（既不是 Primary 也不是 Standby），持续监控两个数据库的状态。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Primary &lt;--- Observer ---&gt; Standby</span><br><span class="line">              |</span><br><span class="line">              v</span><br><span class="line">         第三方主机</span><br></pre></td></tr></table></figure>
+
+<p>Observer 的仲裁逻辑：</p>
+<ul>
+<li>定期向 Primary 发送心跳（默认每秒一次）</li>
+<li>如果 Primary 失联超过 <code>FastStartFailoverLagLimit</code>，Observer 触发 Failover</li>
+<li>Observer 同时连接两个数据库，避免单点误判</li>
+</ul>
+<h4 id="三种保护模式对脑裂的影响"><a href="#三种保护模式对脑裂的影响" class="headerlink" title="三种保护模式对脑裂的影响"></a>三种保护模式对脑裂的影响</h4><table>
+<thead>
+<tr>
+<th>保护模式</th>
+<th>数据保护</th>
+<th>性能影响</th>
+<th>脑裂风险</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Maximum Protection</td>
+<td>零丢失</td>
+<td>最大</td>
+<td>最低</td>
+</tr>
+<tr>
+<td>Maximum Availability</td>
+<td>尽量零丢失</td>
+<td>中等</td>
+<td>中等</td>
+</tr>
+<tr>
+<td>Maximum Performance</td>
+<td>可能丢数据</td>
+<td>最小</td>
+<td>最高</td>
+</tr>
+</tbody></table>
+<p><strong>Maximum Protection</strong> 模式下，如果 Standby 不可用，Primary 会自动关闭（SHUTDOWN ABORT），从根本上杜绝了两个数据库同时运行的可能性。但代价是可能造成业务中断。</p>
+<p><strong>Maximum Performance</strong> 模式下，Primary 不等待 Standby 确认，即使 Standby 离线 Primary 也能正常运行，这在性能上最优，但脑裂风险最高。</p>
+<p>推荐方案：在生产环境中使用 <strong>Maximum Availability</strong> 模式，在可用性和安全性之间取得平衡。</p>
+<h4 id="网络冗余与心跳检测"><a href="#网络冗余与心跳检测" class="headerlink" title="网络冗余与心跳检测"></a>网络冗余与心跳检测</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">推荐的网络架构:</span><br><span class="line"></span><br><span class="line">Standby Host</span><br><span class="line">    |-- NIC1 --&gt; 网络A (业务网络) --&gt; Primary Host</span><br><span class="line">    |-- NIC2 --&gt; 网络B (专用心跳) --&gt; Primary Host</span><br><span class="line">    |-- NIC3 --&gt; 网络C (管理网络) --&gt; Primary Host</span><br></pre></td></tr></table></figure>
+
+<p>关键措施：</p>
+<ul>
+<li>使用独立的专用网络传输 Redo 日志</li>
+<li>配置多条网络路径，避免单点故障</li>
+<li>使用 Oracle Net 的多重地址配置（<code>FAILOVER=ON</code>）</li>
+<li>配置 OS 级别的心跳检测（如 Oracle Clusterware、Pacemaker）</li>
+</ul>
+<hr>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-Switchover-SOP（标准化操作手册）"><a href="#3-1-Switchover-SOP（标准化操作手册）" class="headerlink" title="3.1 Switchover SOP（标准化操作手册）"></a>3.1 Switchover SOP（标准化操作手册）</h3><h4 id="切换前检查清单"><a href="#切换前检查清单" class="headerlink" title="切换前检查清单"></a>切换前检查清单</h4><p><strong>必须在切换前逐项确认，任何一项不满足则停止操作：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">=== Switchover 切换前检查清单 ===</span><br><span class="line"></span><br><span class="line">□ 1. 确认当前角色</span><br><span class="line">   SELECT database_role, open_mode, switchover_status FROM v$database;</span><br><span class="line">   -- Primary: switchover_status 必须为 TO STANDBY 或 SESSIONS ACTIVE</span><br><span class="line">   -- Standby: 必须为 NOT ALLOWED 或 SESSIONS ACTIVE</span><br><span class="line"></span><br><span class="line">□ 2. 检查归档日志是否连续应用</span><br><span class="line">   -- 在 Standby 上执行:</span><br><span class="line">   SELECT thread#, max(sequence#) FROM v$archived_log WHERE applied=&#x27;YES&#x27; GROUP BY thread#;</span><br><span class="line">   -- 在 Primary 上执行:</span><br><span class="line">   SELECT thread#, max(sequence#) FROM v$archived_log GROUP BY thread#;</span><br><span class="line">   -- 两边的 sequence# 必须一致</span><br><span class="line"></span><br><span class="line">□ 3. 检查是否有 GAPS</span><br><span class="line">   SELECT * FROM v$archive_gap;</span><br><span class="line">   -- 结果必须为空</span><br><span class="line"></span><br><span class="line">□ 4. 检查 Standby 的 Redo Apply 是否在运行</span><br><span class="line">   SELECT process, status FROM v$managed_standby WHERE process LIKE &#x27;MRP%&#x27;;</span><br><span class="line">   -- MRP0 必须存在且状态为 APPLYING_LOG</span><br><span class="line"></span><br><span class="line">□ 5. 检查临时文件是否一致</span><br><span class="line">   -- 确保 Standby 的临时表空间文件存在且可访问</span><br><span class="line"></span><br><span class="line">□ 6. 检查所有实例（RAC 环境）</span><br><span class="line">   -- 所有实例都必须在线，或者只有一个实例在线</span><br><span class="line">   -- 确认没有活跃的长事务</span><br><span class="line">   SELECT * FROM v$transaction WHERE status != &#x27;INACTIVE&#x27;;</span><br><span class="line"></span><br><span class="line">□ 7. 停止应用连接</span><br><span class="line">   -- 通知应用团队停止写入</span><br><span class="line">   -- 或者在 Primary 上执行:</span><br><span class="line">   ALTER SYSTEM QUIESCE RESTRICTED;  -- 可选，需谨慎</span><br><span class="line"></span><br><span class="line">□ 8. 创建恢复保证点（可选但推荐）</span><br><span class="line">   -- 在 Primary 上:</span><br><span class="line">   CREATE RESTORE POINT switchover_guarantee GUARANTEE FLASHBACK DATABASE;</span><br><span class="line"></span><br><span class="line">□ 9. 确认网络连通性</span><br><span class="line">   -- Primary 到 Standby 的 TNS 连接正常</span><br><span class="line">   -- Standby 到 Primary 的 TNS 连接正常</span><br></pre></td></tr></table></figure>
+
+<h4 id="Broker-执行-Switchover-命令"><a href="#Broker-执行-Switchover-命令" class="headerlink" title="Broker 执行 Switchover 命令"></a>Broker 执行 Switchover 命令</h4><p>使用 Data Guard Broker 是最推荐的方式，它会自动处理大部分步骤：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 连接到 DGMGRL</span></span><br><span class="line">$ dgmgrl sys<span class="operator">/</span>password<span class="variable">@primary_db</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看当前配置状态</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">SHOW</span> CONFIGURATION;</span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">SHOW</span> DATABASE VERBOSE <span class="string">&#x27;primary_db&#x27;</span>;</span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">SHOW</span> DATABASE VERBOSE <span class="string">&#x27;standby_db&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 执行 Switchover（Broker 自动处理所有步骤）</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> SWITCHOVER <span class="keyword">TO</span> <span class="string">&#x27;standby_db&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证切换结果</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">SHOW</span> CONFIGURATION;</span><br></pre></td></tr></table></figure>
+
+<p>Broker Switchover 的内部步骤：</p>
+<ol>
+<li>将 Primary 数据库转换为 Standby 角色</li>
+<li>将 Standby 数据库转换为 Primary 角色</li>
+<li>自动重启两个数据库</li>
+<li>重新启用 Redo 传输和应用</li>
+</ol>
+<h4 id="手动-Switchover-详细步骤"><a href="#手动-Switchover-详细步骤" class="headerlink" title="手动 Switchover 详细步骤"></a>手动 Switchover 详细步骤</h4><p>当 Broker 不可用时，需要手动执行：</p>
+<p><strong>Step 1: 在 Primary 上准备切换</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 检查切换状态</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> switchover_status <span class="keyword">FROM</span> v$database;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 如果状态为 TO STANDBY，直接执行:</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE <span class="keyword">COMMIT</span> <span class="keyword">TO</span> SWITCHOVER <span class="keyword">TO</span> STANDBY <span class="keyword">WITH</span> SESSION SHUTDOWN;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 如果状态为 SESSIONS ACTIVE，需要先杀掉会话或使用:</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE <span class="keyword">COMMIT</span> <span class="keyword">TO</span> SWITCHOVER <span class="keyword">TO</span> STANDBY <span class="keyword">WITH</span> SESSION SHUTDOWN;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 2: 在 Standby 上准备切换</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 Standby 上取消 Redo Apply</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE RECOVER MANAGED STANDBY DATABASE CANCEL;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 检查状态</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> switchover_status <span class="keyword">FROM</span> v$database;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 将 Standby 转换为 Primary</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE <span class="keyword">COMMIT</span> <span class="keyword">TO</span> SWITCHOVER <span class="keyword">TO</span> <span class="keyword">PRIMARY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 如果是 Physical Standby 且曾以只读方式打开过:</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE <span class="keyword">COMMIT</span> <span class="keyword">TO</span> SWITCHOVER <span class="keyword">TO</span> <span class="keyword">PRIMARY</span> <span class="keyword">WITH</span> SESSION SHUTDOWN;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 3: 打开新 Primary</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在新的 Primary（原 Standby）上:</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE <span class="keyword">OPEN</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 4: 在新 Standby 上启动 Redo Apply</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在新的 Standby（原 Primary）上:</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> STARTUP MOUNT;</span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE RECOVER MANAGED STANDBY DATABASE <span class="keyword">DISCONNECT</span> <span class="keyword">FROM</span> SESSION;</span><br></pre></td></tr></table></figure>
+
+<h4 id="切换后验证步骤"><a href="#切换后验证步骤" class="headerlink" title="切换后验证步骤"></a>切换后验证步骤</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">=</span><span class="operator">=</span><span class="operator">=</span> 切换后验证清单 <span class="operator">=</span><span class="operator">=</span><span class="operator">=</span></span><br><span class="line"></span><br><span class="line">□ <span class="number">1.</span> 确认角色</span><br><span class="line">   <span class="keyword">SELECT</span> database_role, open_mode <span class="keyword">FROM</span> v$database;</span><br><span class="line">   <span class="comment">-- 新 Primary: PRIMARY / READ WRITE</span></span><br><span class="line">   <span class="comment">-- 新 Standby: PHYSICAL STANDBY / MOUNTED 或 READ ONLY WITH APPLY</span></span><br><span class="line"></span><br><span class="line">□ <span class="number">2.</span> 确认 Redo 传输正常</span><br><span class="line">   <span class="comment">-- 在新 Primary 上:</span></span><br><span class="line">   <span class="keyword">SELECT</span> dest_id, status, error <span class="keyword">FROM</span> v$archive_dest <span class="keyword">WHERE</span> dest_id<span class="operator">=</span><span class="number">2</span>;</span><br><span class="line">   <span class="comment">-- status 必须为 VALID</span></span><br><span class="line"></span><br><span class="line">□ <span class="number">3.</span> 确认归档日志序列号连续</span><br><span class="line">   <span class="comment">-- 新 Primary 最新归档序列号</span></span><br><span class="line">   <span class="comment">-- 新 Standby 已应用到的序列号</span></span><br><span class="line"></span><br><span class="line">□ <span class="number">4.</span> 验证数据一致性</span><br><span class="line">   <span class="comment">-- 抽样检查关键表的数据条数</span></span><br><span class="line">   <span class="keyword">SELECT</span> <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">FROM</span> critical_table;</span><br><span class="line"></span><br><span class="line">□ <span class="number">5.</span> 验证应用连接</span><br><span class="line">   <span class="comment">-- 应用团队确认连接正常</span></span><br><span class="line">   <span class="comment">-- 执行简单的读写测试</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="回切步骤"><a href="#回切步骤" class="headerlink" title="回切步骤"></a>回切步骤</h4><p>如需回切到原 Primary，只需再次执行 Switchover：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在新 Primary（原 Standby）上:</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> SWITCHOVER <span class="keyword">TO</span> <span class="string">&#x27;original_primary_db&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-Failover-SOP"><a href="#3-2-Failover-SOP" class="headerlink" title="3.2 Failover SOP"></a>3.2 Failover SOP</h3><h4 id="判断是否需要-Failover"><a href="#判断是否需要-Failover" class="headerlink" title="判断是否需要 Failover"></a>判断是否需要 Failover</h4><p>Failover 是最后手段，在执行前必须确认以下条件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">=== Failover 决策树 ===</span><br><span class="line"></span><br><span class="line">1. Primary 数据库是否真的不可用？</span><br><span class="line">   ├── 仅网络不通？ → 不要 Failover，检查网络</span><br><span class="line">   ├── 仅数据库实例挂了？ → 尝试 STARTUP</span><br><span class="line">   ├── 存储故障？ → 评估恢复时间</span><br><span class="line">   └── 机房级灾难？ → 确认 Failover</span><br><span class="line"></span><br><span class="line">2. 预计恢复时间 (RTO) 是否超出容忍范围？</span><br><span class="line">   ├── &lt; RTO → 等待恢复</span><br><span class="line">   └── &gt; RTO → 执行 Failover</span><br><span class="line"></span><br><span class="line">3. 是否有数据丢失？</span><br><span class="line">   └── Maximum Protection 模式 → 零丢失，放心 Failover</span><br><span class="line">   └── Maximum Performance 模式 → 评估丢失量</span><br></pre></td></tr></table></figure>
+
+<h4 id="手动-Failover-步骤"><a href="#手动-Failover-步骤" class="headerlink" title="手动 Failover 步骤"></a>手动 Failover 步骤</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- Step 1: 在 Standby 上检查归档日志应用情况</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> thread#, <span class="built_in">max</span>(sequence#) <span class="keyword">FROM</span> v$archived_log <span class="keyword">WHERE</span> applied<span class="operator">=</span><span class="string">&#x27;YES&#x27;</span> <span class="keyword">GROUP</span> <span class="keyword">BY</span> thread#;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 2: 尝试应用所有可用的归档日志</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE RECOVER MANAGED STANDBY DATABASE CANCEL;</span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE RECOVER MANAGED STANDBY DATABASE FINISH;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 3: 如果有数据丢失风险（返回 ORA-19909），确认继续</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE RECOVER MANAGED STANDBY DATABASE FINISH FORCE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 4: 将 Standby 转换为 Primary</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE <span class="keyword">COMMIT</span> <span class="keyword">TO</span> SWITCHOVER <span class="keyword">TO</span> <span class="keyword">PRIMARY</span>;</span><br><span class="line"><span class="comment">-- 或者（如果 switchover_status 不允许）:</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE ACTIVATE STANDBY DATABASE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 5: 打开数据库</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE <span class="keyword">OPEN</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 注意: ACTIVATE STANDBY DATABASE 是不可逆操作！</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Broker-Failover-操作"><a href="#Broker-Failover-操作" class="headerlink" title="Broker Failover 操作"></a>Broker Failover 操作</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ dgmgrl sys<span class="operator">/</span>password<span class="variable">@standby_db</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 执行 Failover</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> FAILOVER <span class="keyword">TO</span> <span class="string">&#x27;standby_db&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">SHOW</span> CONFIGURATION;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Failover-后重建旧-Primary"><a href="#Failover-后重建旧-Primary" class="headerlink" title="Failover 后重建旧 Primary"></a>Failover 后重建旧 Primary</h4><p>Failover 后，旧 Primary 不能直接作为 Standby 使用，需要重建：</p>
+<p><strong>方法一：使用 Flashback Database</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在旧 Primary 上（如果能启动）:</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> STARTUP MOUNT;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 记录 Failover 时的 SCN</span></span><br><span class="line"><span class="comment">-- 在新 Primary 上:</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> standby_became_primary_scn <span class="keyword">FROM</span> v$database;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 在旧 Primary 上:</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> FLASHBACK DATABASE <span class="keyword">TO</span> SCN <span class="operator">&lt;</span>standby_became_primary_scn<span class="operator">&gt;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 转换为 Standby</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE <span class="keyword">CONVERT</span> <span class="keyword">TO</span> PHYSICAL STANDBY;</span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> SHUTDOWN IMMEDIATE;</span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> STARTUP MOUNT;</span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> DATABASE RECOVER MANAGED STANDBY DATABASE <span class="keyword">DISCONNECT</span> <span class="keyword">FROM</span> SESSION;</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法二：RMAN 重建</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在旧 Primary 主机上</span></span><br><span class="line">$ rman target /</span><br><span class="line"></span><br><span class="line">RMAN&gt; STARTUP MOUNT;</span><br><span class="line">RMAN&gt; RESTORE DATABASE;</span><br><span class="line">RMAN&gt; RECOVER DATABASE;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或者使用 DUPLICATE</span></span><br><span class="line">RMAN&gt; DUPLICATE TARGET DATABASE FOR STANDBY FROM ACTIVE DATABASE;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-FSFO-配置与演练"><a href="#3-3-FSFO-配置与演练" class="headerlink" title="3.3 FSFO 配置与演练"></a>3.3 FSFO 配置与演练</h3><h4 id="Observer-进程配置"><a href="#Observer-进程配置" class="headerlink" title="Observer 进程配置"></a>Observer 进程配置</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- Step 1: 在 Observer 主机上安装 Oracle Client</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 2: 配置 tnsnames.ora，确保 Observer 能连接两个数据库</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 3: 在 Broker 中设置 FSFO 参数</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> EDIT DATABASE <span class="string">&#x27;primary_db&#x27;</span> <span class="keyword">SET</span> PROPERTY FastStartFailoverTarget <span class="operator">=</span> <span class="string">&#x27;standby_db&#x27;</span>;</span><br><span class="line">DGMGRL<span class="operator">&gt;</span> EDIT DATABASE <span class="string">&#x27;standby_db&#x27;</span> <span class="keyword">SET</span> PROPERTY FastStartFailoverTarget <span class="operator">=</span> <span class="string">&#x27;primary_db&#x27;</span>;</span><br><span class="line">DGMGRL<span class="operator">&gt;</span> EDIT CONFIGURATION <span class="keyword">SET</span> PROPERTY FastStartFailoverLagLimit <span class="operator">=</span> <span class="number">30</span>;</span><br><span class="line">DGMGRL<span class="operator">&gt;</span> EDIT CONFIGURATION <span class="keyword">SET</span> PROPERTY FastStartFailoverThreshold <span class="operator">=</span> <span class="number">30</span>;</span><br><span class="line">DGMGRL<span class="operator">&gt;</span> EDIT CONFIGURATION <span class="keyword">SET</span> PROPERTY ObserverConnectIdentifier <span class="operator">=</span> <span class="string">&#x27;observer_host&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Step 4: 启动 Observer</span></span><br><span class="line">$ dgmgrl sys<span class="operator">/</span>password<span class="variable">@primary_db</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">START</span> OBSERVER;</span><br><span class="line"><span class="comment">-- Observer 将在前台持续运行</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 生产环境建议使用 nohup 或 systemd 管理 Observer 进程</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="FSFO-启用与测试"><a href="#FSFO-启用与测试" class="headerlink" title="FSFO 启用与测试"></a>FSFO 启用与测试</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 确认保护模式（FSFO 要求至少 Maximum Availability）</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> EDIT CONFIGURATION <span class="keyword">SET</span> PROTECTION MODE <span class="keyword">AS</span> MaxAvailability;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用 FSFO</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> ENABLE FAST_START FAILOVER;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证 FSFO 状态</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">SHOW</span> FAST_START FAILOVER;</span><br></pre></td></tr></table></figure>
+
+<h4 id="模拟故障自动切换"><a href="#模拟故障自动切换" class="headerlink" title="模拟故障自动切换"></a>模拟故障自动切换</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在 Primary 上模拟故障</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> SHUTDOWN ABORT;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 观察 Observer 日志，等待自动 Failover</span></span><br><span class="line"><span class="comment">-- Observer 会在 FastStartFailoverThreshold 秒后自动执行 Failover</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证自动切换结果</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">SHOW</span> CONFIGURATION;</span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">SHOW</span> DATABASE <span class="string">&#x27;new_primary_db&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-脑裂处理"><a href="#3-4-脑裂处理" class="headerlink" title="3.4 脑裂处理"></a>3.4 脑裂处理</h3><h4 id="检测脑裂的方法"><a href="#检测脑裂的方法" class="headerlink" title="检测脑裂的方法"></a>检测脑裂的方法</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 方法一: 检查两个数据库的角色</span></span><br><span class="line"><span class="comment">-- 如果两个数据库都返回 PRIMARY，说明已发生脑裂</span></span><br><span class="line"><span class="keyword">SELECT</span> database_role <span class="keyword">FROM</span> v$database;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 方法二: 检查 Broker 状态</span></span><br><span class="line">DGMGRL<span class="operator">&gt;</span> <span class="keyword">SHOW</span> CONFIGURATION;</span><br><span class="line"><span class="comment">-- 如果报错 ORA-16600 或 ORA-16724，可能是脑裂</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 方法三: 检查 Redo 传输错误</span></span><br><span class="line"><span class="keyword">SELECT</span> dest_id, status, error <span class="keyword">FROM</span> v$archive_dest <span class="keyword">WHERE</span> target<span class="operator">=</span><span class="string">&#x27;STANDBY&#x27;</span>;</span><br><span class="line"><span class="comment">-- 如果报 ORA-16009 (invalid redo transport destination)，可能是脑裂</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="脑裂发生后的数据一致性检查"><a href="#脑裂发生后的数据一致性检查" class="headerlink" title="脑裂发生后的数据一致性检查"></a>脑裂发生后的数据一致性检查</h4><pre><code class="sql">-- 在两个数据库上分别执行以下查询，对比结果:
+</code></pre>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Data-Guard/" rel="tag"># Data Guard</a>
+              <a href="/tags/Switchover/" rel="tag"># Switchover</a>
+              <a href="/tags/Failover/" rel="tag"># Failover</a>
+              <a href="/tags/%E8%84%91%E8%A3%82/" rel="tag"># 脑裂</a>
+              <a href="/tags/%E5%AE%B9%E7%81%BE%E6%BC%94%E7%BB%83/" rel="tag"># 容灾演练</a>
+              <a href="/tags/SOP/" rel="tag"># SOP</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/02/10/oracle/active-data-guard-implementation/" rel="prev" title="Active Data Guard 实战：物理备库搭建、Real-time Apply 与读写分离">
+                  <i class="fa fa-angle-left"></i> Active Data Guard 实战：物理备库搭建、Real-time Apply 与读写分离
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/02/20/oracle/rman-advanced-backup-strategies/" rel="next" title="RMAN 高级备份策略：增量备份、BCT、Catalog 与跨节点恢复">
+                  RMAN 高级备份策略：增量备份、BCT、Catalog 与跨节点恢复 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

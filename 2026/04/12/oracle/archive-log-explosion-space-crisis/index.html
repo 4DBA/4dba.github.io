@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/04/12/oracle/archive-log-explosion-space-crisis/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/04/12/oracle/archive-log-explosion-space-crisis/","path":"2026/04/12/oracle/archive-log-explosion-space-crisis/","title":"归档日志暴涨与空间危机：根因分析与应急处置方案"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>归档日志暴涨与空间危机：根因分析与应急处置方案 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E5%BD%92%E6%A1%A3%E6%97%A5%E5%BF%97%E7%9A%84%E7%94%9F%E6%88%90%E6%9C%BA%E5%88%B6"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 归档日志的生成机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E5%BD%92%E6%A1%A3%E6%9A%B4%E6%B6%A8%E7%9A%84%E6%A0%B9%E5%9B%A0%E5%88%86%E7%B1%BB"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 归档暴涨的根因分类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E7%A9%BA%E9%97%B4%E7%9B%91%E6%8E%A7%E6%8C%87%E6%A0%87"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 空间监控指标</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E7%B4%A7%E6%80%A5%E5%A4%84%E7%BD%AE%E8%84%9A%E6%9C%AC"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 紧急处置脚本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 根因定位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E9%95%BF%E6%9C%9F%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 长期解决方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-DG-%E7%8E%AF%E5%A2%83%E7%9A%84%E5%BD%92%E6%A1%A3%E7%AE%A1%E7%90%86"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 DG 环境的归档管理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BD%92%E6%A1%A3%E6%97%A5%E5%BF%97%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">5.1.</span> <span class="nav-text">归档日志管理最佳实践</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E9%97%B4%E8%A7%84%E5%88%92%E5%8E%9F%E5%88%99"><span class="nav-number">5.2.</span> <span class="nav-text">空间规划原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9B%91%E6%8E%A7%E6%96%B9%E6%A1%88"><span class="nav-number">5.3.</span> <span class="nav-text">自动化监控方案</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/04/12/oracle/archive-log-explosion-space-crisis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="归档日志暴涨与空间危机：根因分析与应急处置方案 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          归档日志暴涨与空间危机：根因分析与应急处置方案
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-04-12 10:00:00" itemprop="dateCreated datePublished" datetime="2026-04-12T10:00:00+00:00">2026-04-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>归档日志（Archive Log）暴涨是 Oracle DBA 最常遇到的紧急故障之一。在生产环境中，归档目标目录空间耗尽会直接导致数据库实例挂起（Hang），所有写操作被阻塞，业务全面瘫痪。这类故障往往发生在业务高峰期，影响面极大，要求 DBA 在最短时间内完成应急处置。</p>
+<p>常见的触发场景包括：</p>
+<ul>
+<li><strong>大量 DML 操作</strong>：批量数据导入、ETL 作业、表重建（CTAS &#x2F; ALTER TABLE MOVE）等产生海量 Redo，归档日志快速膨胀</li>
+<li><strong>Data Guard 传输中断</strong>：主库归档无法及时传输到备库，导致归档日志在本地堆积无法清理</li>
+<li><strong>RMAN 备份失败未清理</strong>：RMAN 备份任务异常终止，归档日志未被标记为已备份，保留策略无法生效</li>
+<li><strong>RMAN 保留策略不合理</strong>：保留天数或冗余副本数设置过大，归档日志长期驻留</li>
+</ul>
+<p>本文将从理论分析到实战操作，系统性地介绍归档日志暴涨问题的根因定位、应急处置和长期预防方案。</p>
+<span id="more"></span>
+
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-归档日志的生成机制"><a href="#2-1-归档日志的生成机制" class="headerlink" title="2.1 归档日志的生成机制"></a>2.1 归档日志的生成机制</h3><p>Oracle 的归档日志由 Redo Log 的切换（Switch）触发。当一个 Online Redo Log Group 写满后，LGWR 进程切换到下一个日志组，Oracle 自动触发归档进程（ARCn）将已写满的 Redo Log 复制为归档日志文件。</p>
+<p><strong>归档进程工作原理：</strong></p>
+<ol>
+<li>LGWR 将 Redo 记录写入当前 Online Redo Log Group</li>
+<li>当日志组写满或收到手动切换命令（<code>ALTER SYSTEM SWITCH LOGFILE</code>），触发日志切换</li>
+<li>ARCn 进程将已 Inactive 的日志组内容复制到归档目标目录</li>
+<li>归档完成后，该日志组可被 LGWR 重新使用</li>
+</ol>
+<p><strong>归档日志命名规则：</strong></p>
+<p>默认格式由 <code>log_archive_format</code> 参数控制，常见格式为 <code>%t_%s_%r.arc</code>：</p>
+<ul>
+<li><code>%t</code> — Thread Number（实例编号）</li>
+<li><code>%s</code> — Sequence Number（日志序列号，单调递增）</li>
+<li><code>%r</code> — Resetlogs ID（标识数据库打开形态）</li>
+</ul>
+<p>示例：<code>1_12345_1145234567.arc</code> 表示 Thread 1、Sequence 12345、Resetlogs ID 为 1145234567。</p>
+<h3 id="2-2-归档暴涨的根因分类"><a href="#2-2-归档暴涨的根因分类" class="headerlink" title="2.2 归档暴涨的根因分类"></a>2.2 归档暴涨的根因分类</h3><p>归档日志暴涨的根因可归纳为四大类：</p>
+<p><strong>业务侧原因：</strong></p>
+<ul>
+<li>大批量数据导入（SQL<em>Loader、INSERT &#x2F;</em>+ APPEND *&#x2F;）</li>
+<li>批量 ETL 作业执行大规模 UPDATE &#x2F; DELETE</li>
+<li>表重建操作（ALTER TABLE MOVE、DBMS_REDEFINITION）</li>
+<li>索引重建（ALTER INDEX REBUILD）</li>
+</ul>
+<p><strong>DG（Data Guard）侧原因：</strong></p>
+<ul>
+<li>网络故障导致归档传输中断，归档日志在主库堆积</li>
+<li>备库应用延迟过大，主库归档无法删除</li>
+<li>FAL 服务器配置错误，Gap 无法自动解决</li>
+</ul>
+<p><strong>备份侧原因：</strong></p>
+<ul>
+<li>RMAN 备份任务失败或超时，归档日志未被标记为已备份</li>
+<li>备份策略仅包含全库备份，未配置归档日志备份</li>
+<li>备份目标存储不可用（磁带库离线、对象存储异常）</li>
+</ul>
+<p><strong>配置侧原因：</strong></p>
+<ul>
+<li>RMAN 保留策略设置过大（如 REDUNDANCY 10 或 RECOVERY WINDOW 30 天）</li>
+<li>未配置归档日志自动删除策略</li>
+<li>归档目标目录与数据文件共用同一磁盘组</li>
+</ul>
+<h3 id="2-3-空间监控指标"><a href="#2-3-空间监控指标" class="headerlink" title="2.3 空间监控指标"></a>2.3 空间监控指标</h3><p><strong>FRA（Flash Recovery Area）空间管理：</strong></p>
+<p>FRA 是 Oracle 推荐的统一备份恢复区域，存放归档日志、RMAN 备份、闪回日志等。通过 <code>db_recovery_file_dest</code> 和 <code>db_recovery_file_dest_size</code> 参数配置。</p>
+<p>当 FRA 空间不足时，Oracle 表现如下：</p>
+<ul>
+<li>数据库暂停所有写操作，等待空间释放</li>
+<li>Alert Log 中出现 <code>ORA-19809: limit exceeded for recovery files</code></li>
+<li>ARCn 进程停止归档，Redo Log 无法切换</li>
+</ul>
+<p><strong>关键监控视图：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看 FRA 空间使用情况</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$FLASH_RECOVERY_AREA_USAGE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看归档日志生成速率（按小时）</span></span><br><span class="line"><span class="keyword">SELECT</span> TRUNC(first_time, <span class="string">&#x27;HH&#x27;</span>) <span class="keyword">AS</span> <span class="keyword">hour</span>,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> switch_count,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(blocks <span class="operator">*</span> block_size) <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span>, <span class="number">2</span>) <span class="keyword">AS</span> size_mb</span><br><span class="line"><span class="keyword">FROM</span> v$archived_log</span><br><span class="line"><span class="keyword">WHERE</span> first_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> TRUNC(first_time, <span class="string">&#x27;HH&#x27;</span>)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">hour</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看归档目标目录使用情况（操作系统层面）</span></span><br><span class="line"><span class="comment">-- df -h /u01/app/oracle/archivelog/</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-紧急处置脚本"><a href="#3-1-紧急处置脚本" class="headerlink" title="3.1 紧急处置脚本"></a>3.1 紧急处置脚本</h3><p>当归档空间告警触发时，需要在最短时间内释放空间。以下是标准化的应急处置流程：</p>
+<p><strong>Step 1：查看归档生成速率和空间现状</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 以 SYSDBA 身份连接</span></span><br><span class="line"><span class="comment">-- 查看归档日志总量和最近生成速率</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> total_logs,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(blocks <span class="operator">*</span> block_size) <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span>, <span class="number">2</span>) <span class="keyword">AS</span> total_gb,</span><br><span class="line">       <span class="built_in">MIN</span>(first_time) <span class="keyword">AS</span> earliest,</span><br><span class="line">       <span class="built_in">MAX</span>(first_time) <span class="keyword">AS</span> latest</span><br><span class="line"><span class="keyword">FROM</span> v$archived_log</span><br><span class="line"><span class="keyword">WHERE</span> deleted <span class="operator">=</span> <span class="string">&#x27;NO&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看最近 24 小时每小时归档量</span></span><br><span class="line"><span class="keyword">SELECT</span> TRUNC(first_time, <span class="string">&#x27;HH&#x27;</span>) <span class="keyword">AS</span> <span class="keyword">hour</span>,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> log_count,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(blocks <span class="operator">*</span> block_size) <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span>, <span class="number">2</span>) <span class="keyword">AS</span> size_mb</span><br><span class="line"><span class="keyword">FROM</span> v$archived_log</span><br><span class="line"><span class="keyword">WHERE</span> first_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span></span><br><span class="line">  <span class="keyword">AND</span> deleted <span class="operator">=</span> <span class="string">&#x27;NO&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> TRUNC(first_time, <span class="string">&#x27;HH&#x27;</span>)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">hour</span> <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看 FRA 使用率</span></span><br><span class="line"><span class="keyword">SELECT</span> name,</span><br><span class="line">       ROUND(space_limit <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span>, <span class="number">2</span>) <span class="keyword">AS</span> limit_gb,</span><br><span class="line">       ROUND(space_used <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span>, <span class="number">2</span>) <span class="keyword">AS</span> used_gb,</span><br><span class="line">       ROUND((space_used <span class="operator">/</span> space_limit) <span class="operator">*</span> <span class="number">100</span>, <span class="number">2</span>) <span class="keyword">AS</span> pct_used</span><br><span class="line"><span class="keyword">FROM</span> v$recovery_file_dest;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 2：RMAN 清理过期归档和已备份归档</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 连接 RMAN</span></span><br><span class="line">rman target /</span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行以下清理命令</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">-- 删除所有已备份的归档日志</span><br><span class="line">DELETE ARCHIVELOG ALL BACKED UP 1 TIMES TO DEVICE TYPE DISK;</span><br><span class="line"></span><br><span class="line">-- 删除 24 小时前的归档日志（根据实际情况调整时间）</span><br><span class="line">DELETE NOPROMPT ARCHIVELOG ALL COMPLETED BEFORE &#x27;SYSDATE-1&#x27;;</span><br><span class="line"></span><br><span class="line">-- 删除 2 天前且已备份的归档日志</span><br><span class="line">DELETE NOPROMPT ARCHIVELOG ALL COMPLETED BEFORE &#x27;SYSDATE-2&#x27;</span><br><span class="line">  BACKED UP 1 TIMES TO DEVICE TYPE DISK;</span><br><span class="line"></span><br><span class="line">-- 交叉检查并删除过期归档</span><br><span class="line">CROSSCHECK ARCHIVELOG ALL;</span><br><span class="line">DELETE NOPROMPT EXPIRED ARCHIVELOG ALL;</span><br><span class="line"></span><br><span class="line">-- 验证清理结果</span><br><span class="line">LIST ARCHIVELOG ALL;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 3：操作系统层面手动清理（紧急情况下使用）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment"># 紧急清理脚本 - 删除 48 小时前的归档日志</span></span><br><span class="line"><span class="comment"># 注意：使用前确认这些归档已被备份或不再需要</span></span><br><span class="line"></span><br><span class="line">ARCHIVE_DIR=<span class="string">&quot;/u01/app/oracle/archivelog&quot;</span></span><br><span class="line">HOURS=48</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;=== 紧急归档清理 - 删除 <span class="variable">$&#123;HOURS&#125;</span> 小时前的文件 ===&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;清理前空间：&quot;</span></span><br><span class="line"><span class="built_in">df</span> -h <span class="variable">$&#123;ARCHIVE_DIR&#125;</span></span><br><span class="line"></span><br><span class="line">find <span class="variable">$&#123;ARCHIVE_DIR&#125;</span> -name <span class="string">&quot;*.arc&quot;</span> -o -name <span class="string">&quot;*.dbf&quot;</span> | \</span><br><span class="line">  <span class="keyword">while</span> <span class="built_in">read</span> f; <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">if</span> [ <span class="string">&quot;<span class="subst">$(find <span class="string">&quot;<span class="variable">$f</span>&quot;</span> -mmin +$((HOURS*60)</span>))&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">      <span class="built_in">echo</span> <span class="string">&quot;删除: <span class="variable">$f</span>&quot;</span></span><br><span class="line">      <span class="built_in">rm</span> -f <span class="string">&quot;<span class="variable">$f</span>&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">  <span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;清理后空间：&quot;</span></span><br><span class="line"><span class="built_in">df</span> -h <span class="variable">$&#123;ARCHIVE_DIR&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 4：手动切换归档目标（临时应急）</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 临时添加新的归档目标目录（释放原目录压力）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> log_archive_dest_3<span class="operator">=</span><span class="string">&#x27;LOCATION=/u01/app/oracle/archivelog2&#x27;</span> <span class="keyword">SCOPE</span><span class="operator">=</span><span class="keyword">BOTH</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 如使用 FRA，可临时增大 FRA 大小</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> db_recovery_file_dest_size<span class="operator">=</span><span class="number">200</span>G <span class="keyword">SCOPE</span><span class="operator">=</span><span class="keyword">BOTH</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-根因定位"><a href="#3-2-根因定位" class="headerlink" title="3.2 根因定位"></a>3.2 根因定位</h3><p>应急处置完成后，需要定位根因以防止问题复发。</p>
+<p><strong>查找大量 DML 的 SQL：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查找产生 Redo 最多的 SQL（需要 AWR 或 ASH 数据）</span></span><br><span class="line"><span class="keyword">SELECT</span> sql_id,</span><br><span class="line">       sql_text,</span><br><span class="line">       executions,</span><br><span class="line">       buffer_gets,</span><br><span class="line">       disk_reads,</span><br><span class="line">       ROUND(elapsed_time <span class="operator">/</span> <span class="number">1000000</span>, <span class="number">2</span>) <span class="keyword">AS</span> elapsed_sec</span><br><span class="line"><span class="keyword">FROM</span> v$<span class="keyword">sql</span></span><br><span class="line"><span class="keyword">WHERE</span> parsing_schema_name <span class="keyword">NOT</span> <span class="keyword">IN</span> (<span class="string">&#x27;SYS&#x27;</span>, <span class="string">&#x27;SYSTEM&#x27;</span>)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> buffer_gets <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看当前活跃会话中产生 Redo 最多的会话</span></span><br><span class="line"><span class="keyword">SELECT</span> s.sid, s.serial#, s.username, s.program,</span><br><span class="line">       t.used_ublk <span class="keyword">AS</span> undo_blocks,</span><br><span class="line">       t.used_urec <span class="keyword">AS</span> undo_records</span><br><span class="line"><span class="keyword">FROM</span> v$session s</span><br><span class="line"><span class="keyword">JOIN</span> v$transaction t <span class="keyword">ON</span> s.taddr <span class="operator">=</span> t.addr</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> t.used_ublk <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>检查 DG 传输状态：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看归档目标状态</span></span><br><span class="line"><span class="keyword">SELECT</span> dest_id, dest_name, status, error,</span><br><span class="line">       archived_seq#, applied_seq#</span><br><span class="line"><span class="keyword">FROM</span> v$archive_dest_status</span><br><span class="line"><span class="keyword">WHERE</span> status <span class="operator">!=</span> <span class="string">&#x27;INACTIVE&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看归档 Gap</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> v$archive_gap;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看备库应用延迟</span></span><br><span class="line"><span class="keyword">SELECT</span> name, <span class="keyword">value</span></span><br><span class="line"><span class="keyword">FROM</span> v$dataguard_stats</span><br><span class="line"><span class="keyword">WHERE</span> name <span class="keyword">IN</span> (<span class="string">&#x27;transport lag&#x27;</span>, <span class="string">&#x27;apply lag&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<p><strong>检查 RMAN 备份状态：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看归档日志备份状态</span></span><br><span class="line"><span class="keyword">SELECT</span> sequence#,</span><br><span class="line">       first_time,</span><br><span class="line">       next_time,</span><br><span class="line">       backup_count,</span><br><span class="line">       deleted</span><br><span class="line"><span class="keyword">FROM</span> v$archived_log</span><br><span class="line"><span class="keyword">WHERE</span> backup_count <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">  <span class="keyword">AND</span> deleted <span class="operator">=</span> <span class="string">&#x27;NO&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> first_time <span class="operator">&lt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> sequence#</span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-长期解决方案"><a href="#3-3-长期解决方案" class="headerlink" title="3.3 长期解决方案"></a>3.3 长期解决方案</h3><p><strong>RMAN 保留策略配置：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">-- 设置基于恢复窗口的保留策略（保留 7 天可恢复能力）</span><br><span class="line">CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 7 DAYS;</span><br><span class="line"></span><br><span class="line">-- 或基于冗余度的保留策略</span><br><span class="line">CONFIGURE RETENTION POLICY TO REDUNDANCY 2;</span><br><span class="line"></span><br><span class="line">-- 配置归档日志删除策略</span><br><span class="line">-- 在 RMAN 备份归档后自动删除</span><br><span class="line">CONFIGURE ARCHIVELOG DELETION POLICY TO BACKED UP 1 TIMES TO DISK;</span><br><span class="line"></span><br><span class="line">-- DG 环境：归档传输到所有备库后可删除</span><br><span class="line">CONFIGURE ARCHIVELOG DELETION POLICY TO APPLIED ON ALL STANDBY;</span><br></pre></td></tr></table></figure>
+
+<p><strong>FRA 大小规划原则：</strong></p>
+<p>FRA 大小应根据以下因素综合评估：</p>
+<ul>
+<li>全库备份大小</li>
+<li>归档日志日均生成量</li>
+<li>保留周期要求</li>
+<li>闪回日志需求（如启用 Flashback Database）</li>
+</ul>
+<p>推荐公式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FRA Size = 全库备份大小 + (日均归档量 × 保留天数) + 闪回空间 + 20% 冗余</span><br></pre></td></tr></table></figure>
+
+<p><strong>自动清理脚本：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment"># Oracle 归档日志自动清理脚本</span></span><br><span class="line"><span class="comment"># 建议通过 cron 每 2-4 小时执行一次</span></span><br><span class="line"><span class="comment"># crontab: 0 */2 * * * /home/oracle/scripts/archive_cleanup.sh</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">export</span> ORACLE_SID=ORCL</span><br><span class="line"><span class="built_in">export</span> ORACLE_HOME=/u01/app/oracle/product/19c/dbhome_1</span><br><span class="line"><span class="built_in">export</span> PATH=<span class="variable">$ORACLE_HOME</span>/bin:<span class="variable">$PATH</span></span><br><span class="line"></span><br><span class="line">LOG_DIR=<span class="string">&quot;/home/oracle/logs&quot;</span></span><br><span class="line">LOG_FILE=<span class="string">&quot;<span class="variable">$&#123;LOG_DIR&#125;</span>/archive_cleanup_<span class="subst">$(date +%Y%m%d)</span>.log&quot;</span></span><br><span class="line">KEEP_DAYS=2</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">log</span></span>() &#123;</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;[<span class="subst">$(date &#x27;+%Y-%m-%d %H:%M:%S&#x27;)</span>] <span class="variable">$1</span>&quot;</span> &gt;&gt; <span class="variable">$&#123;LOG_FILE&#125;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">log</span> <span class="string">&quot;===== 归档清理任务开始 =====&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查归档空间使用率</span></span><br><span class="line">USAGE_PCT=$(sqlplus -s / as sysdba &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">SET HEADING OFF FEEDBACK OFF PAGES 0</span><br><span class="line">SELECT ROUND((space_used / space_limit) * <span class="number">100</span>, <span class="number">2</span>)</span><br><span class="line">FROM v<span class="variable">$recovery_file_dest</span>;</span><br><span class="line">EXIT;</span><br><span class="line">EOF</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">USAGE_PCT=$(echo <span class="variable">$&#123;USAGE_PCT&#125;</span> | tr -d &#x27; &#x27;)</span><br><span class="line">log &quot;当前 FRA 使用率: <span class="variable">$&#123;USAGE_PCT&#125;</span>%&quot;</span><br><span class="line"></span><br><span class="line"># 使用率超过 <span class="number">70</span>% 时执行清理</span><br><span class="line">THRESHOLD=<span class="number">70</span></span><br><span class="line">if (( $(echo &quot;<span class="variable">$&#123;USAGE_PCT&#125;</span> &gt; <span class="variable">$&#123;THRESHOLD&#125;</span>&quot; | bc -l) )); <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">log</span> <span class="string">&quot;使用率超过 <span class="variable">$&#123;THRESHOLD&#125;</span>%，开始清理...&quot;</span></span><br><span class="line"></span><br><span class="line">    rman target / &lt;&lt;<span class="string">RMAN_EOF &gt;&gt; $&#123;LOG_FILE&#125; 2&gt;&amp;1</span></span><br><span class="line"><span class="string">RUN &#123;</span></span><br><span class="line"><span class="string">    DELETE NOPROMPT ARCHIVELOG ALL COMPLETED BEFORE &#x27;SYSDATE-$&#123;KEEP_DAYS&#125;&#x27;;</span></span><br><span class="line"><span class="string">    CROSSCHECK ARCHIVELOG ALL;</span></span><br><span class="line"><span class="string">    DELETE NOPROMPT EXPIRED ARCHIVELOG ALL;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">RMAN_EOF</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 清理后再次检查</span></span><br><span class="line">    NEW_PCT=$(sqlplus -s / as sysdba &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">SET HEADING OFF FEEDBACK OFF PAGES 0</span><br><span class="line">SELECT ROUND((space_used / space_limit) * <span class="number">100</span>, <span class="number">2</span>)</span><br><span class="line">FROM v<span class="variable">$recovery_file_dest</span>;</span><br><span class="line">EXIT;</span><br><span class="line">EOF</span><br><span class="line">    )</span><br><span class="line">    NEW_PCT=$(echo <span class="variable">$&#123;NEW_PCT&#125;</span> | tr -d &#x27; &#x27;)</span><br><span class="line">    log &quot;清理后 FRA 使用率: <span class="variable">$&#123;NEW_PCT&#125;</span>%&quot;</span><br><span class="line">else</span><br><span class="line">    log &quot;使用率正常，无需清理&quot;</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line">log &quot;===== 归档清理任务结束 =====&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>监控告警配置脚本：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment"># 归档空间监控告警脚本</span></span><br><span class="line"><span class="comment"># crontab: */15 * * * * /home/oracle/scripts/archive_monitor.sh</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">export</span> ORACLE_SID=ORCL</span><br><span class="line"><span class="built_in">export</span> ORACLE_HOME=/u01/app/oracle/product/19c/dbhome_1</span><br><span class="line"><span class="built_in">export</span> PATH=<span class="variable">$ORACLE_HOME</span>/bin:<span class="variable">$PATH</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 阈值配置</span></span><br><span class="line">WARN_THRESHOLD=70</span><br><span class="line">CRIT_THRESHOLD=85</span><br><span class="line">ALERT_EMAIL=<span class="string">&quot;dba-team@company.com&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取 FRA 使用率</span></span><br><span class="line">RESULT=$(sqlplus -s / as sysdba &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">SET HEADING OFF FEEDBACK OFF PAGES 0 TRIMSPOOL ON</span><br><span class="line">SELECT ROUND((space_used / space_limit) * <span class="number">100</span>, <span class="number">2</span>) || &#x27;|&#x27; ||</span><br><span class="line">       ROUND(space_used / <span class="number">1024</span> / <span class="number">1024</span> / <span class="number">1024</span>, <span class="number">2</span>) || &#x27;|&#x27; ||</span><br><span class="line">       ROUND(space_limit / <span class="number">1024</span> / <span class="number">1024</span> / <span class="number">1024</span>, <span class="number">2</span>)</span><br><span class="line">FROM v<span class="variable">$recovery_file_dest</span>;</span><br><span class="line">EXIT;</span><br><span class="line">EOF</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">PCT_USED=$(echo <span class="variable">$&#123;RESULT&#125;</span> | cut -d&#x27;|&#x27; -f1 | tr -d &#x27; &#x27;)</span><br><span class="line">USED_GB=$(echo <span class="variable">$&#123;RESULT&#125;</span> | cut -d&#x27;|&#x27; -f2 | tr -d &#x27; &#x27;)</span><br><span class="line">TOTAL_GB=$(echo <span class="variable">$&#123;RESULT&#125;</span> | cut -d&#x27;|&#x27; -f3 | tr -d &#x27; &#x27;)</span><br><span class="line"></span><br><span class="line">if (( $(echo &quot;<span class="variable">$&#123;PCT_USED&#125;</span> &gt;= <span class="variable">$&#123;CRIT_THRESHOLD&#125;</span>&quot; | bc -l) )); <span class="keyword">then</span></span><br><span class="line">    SUBJECT=<span class="string">&quot;[CRITICAL] Oracle FRA 空间严重不足 - <span class="variable">$&#123;PCT_USED&#125;</span>%&quot;</span></span><br><span class="line">    BODY=<span class="string">&quot;告警级别: 严重\n数据库: <span class="variable">$&#123;ORACLE_SID&#125;</span>\nFRA 使用率: <span class="variable">$&#123;PCT_USED&#125;</span>%\n已用: <span class="variable">$&#123;USED_GB&#125;</span>GB / <span class="variable">$&#123;TOTAL_GB&#125;</span>GB\n\n请立即处理！&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> -e <span class="string">&quot;<span class="variable">$&#123;BODY&#125;</span>&quot;</span> | mail -s <span class="string">&quot;<span class="variable">$&#123;SUBJECT&#125;</span>&quot;</span> <span class="variable">$&#123;ALERT_EMAIL&#125;</span></span><br><span class="line"><span class="keyword">elif</span> (( $(echo &quot;<span class="variable">$&#123;PCT_USED&#125;</span> &gt;= <span class="variable">$&#123;WARN_THRESHOLD&#125;</span>&quot; | bc -l) )); <span class="keyword">then</span></span><br><span class="line">    SUBJECT=<span class="string">&quot;[WARNING] Oracle FRA 空间告警 - <span class="variable">$&#123;PCT_USED&#125;</span>%&quot;</span></span><br><span class="line">    BODY=<span class="string">&quot;告警级别: 警告\n数据库: <span class="variable">$&#123;ORACLE_SID&#125;</span>\nFRA 使用率: <span class="variable">$&#123;PCT_USED&#125;</span>%\n已用: <span class="variable">$&#123;USED_GB&#125;</span>GB / <span class="variable">$&#123;TOTAL_GB&#125;</span>GB\n\n请关注并安排处理。&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> -e <span class="string">&quot;<span class="variable">$&#123;BODY&#125;</span>&quot;</span> | mail -s <span class="string">&quot;<span class="variable">$&#123;SUBJECT&#125;</span>&quot;</span> <span class="variable">$&#123;ALERT_EMAIL&#125;</span></span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-DG-环境的归档管理"><a href="#3-4-DG-环境的归档管理" class="headerlink" title="3.4 DG 环境的归档管理"></a>3.4 DG 环境的归档管理</h3><p>DG 环境的归档管理比单机环境更复杂，需要同时考虑主库和备库的归档生命周期。</p>
+<p><strong>归档 Gap 处理：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在备库检查 Gap</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> v$archive_gap;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 手动注册缺失的归档日志</span></span><br><span class="line"><span class="keyword">ALTER</span> DATABASE REGISTER PHYSICAL LOGFILE <span class="string">&#x27;/path/to/missing_archive.arc&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 自动 Gap Resolution 配置检查</span></span><br><span class="line"><span class="comment">-- 确保 FAL_SERVER 和 FAL_CLIENT 配置正确</span></span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> fal;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Standby 端自动删除：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 在备库配置归档日志删除策略</span></span><br><span class="line"><span class="comment">-- 应用完成后自动删除</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> log_archive_dest_state_1<span class="operator">=</span><span class="string">&#x27;DEFER&#x27;</span>;  <span class="comment">-- 如需临时暂停</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- RMAN 配置（在主库执行）</span></span><br><span class="line">CONFIGURE ARCHIVELOG DELETION POLICY <span class="keyword">TO</span> APPLIED <span class="keyword">ON</span> <span class="keyword">ALL</span> STANDBY;</span><br></pre></td></tr></table></figure>
+
+<p>备库自动清理脚本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment"># Standby 归档自动清理脚本</span></span><br><span class="line"><span class="built_in">export</span> ORACLE_SID=STDBY</span><br><span class="line"><span class="built_in">export</span> ORACLE_HOME=/u01/app/oracle/product/19c/dbhome_1</span><br><span class="line"></span><br><span class="line">rman target / &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">DELETE NOPROMPT ARCHIVELOG ALL COMPLETED BEFORE &#x27;SYSDATE-1&#x27;;</span></span><br><span class="line"><span class="string">EOF</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>远程归档目标清理：</strong></p>
+<p>主库如果配置了多个归档目标（<code>log_archive_dest_N</code>），需要确保远程目标的归档也被正确管理。当远程目标不可达时，主库归档会堆积在本地，此时需要：</p>
+<ol>
+<li>检查网络连通性</li>
+<li>临时禁用问题目标（<code>ALTER SYSTEM SET log_archive_dest_state_N=DEFER</code>）</li>
+<li>清理本地堆积的归档</li>
+<li>修复后重新启用目标</li>
+</ol>
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><p>应急处置和根因修复完成后，需要进行系统性验证：</p>
+<p><strong>归档生成速率验证：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 验证归档生成速率恢复正常</span></span><br><span class="line"><span class="keyword">SELECT</span> TRUNC(first_time, <span class="string">&#x27;HH&#x27;</span>) <span class="keyword">AS</span> <span class="keyword">hour</span>,</span><br><span class="line">       <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> log_count,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(blocks <span class="operator">*</span> block_size) <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span>, <span class="number">2</span>) <span class="keyword">AS</span> size_mb</span><br><span class="line"><span class="keyword">FROM</span> v$archived_log</span><br><span class="line"><span class="keyword">WHERE</span> first_time <span class="operator">&gt;</span> SYSDATE <span class="operator">-</span> <span class="number">1</span><span class="operator">/</span><span class="number">24</span>  <span class="comment">-- 最近 1 小时</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> TRUNC(first_time, <span class="string">&#x27;HH&#x27;</span>)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">hour</span> <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>空间使用率验证：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 确认 FRA 使用率在安全范围（建议 &lt; 70%）</span></span><br><span class="line"><span class="keyword">SELECT</span> name,</span><br><span class="line">       ROUND(space_limit <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span>, <span class="number">2</span>) <span class="keyword">AS</span> limit_gb,</span><br><span class="line">       ROUND(space_used <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span> <span class="operator">/</span> <span class="number">1024</span>, <span class="number">2</span>) <span class="keyword">AS</span> used_gb,</span><br><span class="line">       ROUND((space_used <span class="operator">/</span> space_limit) <span class="operator">*</span> <span class="number">100</span>, <span class="number">2</span>) <span class="keyword">AS</span> pct_used</span><br><span class="line"><span class="keyword">FROM</span> v$recovery_file_dest;</span><br></pre></td></tr></table></figure>
+
+<p><strong>监控告警验证：</strong></p>
+<ul>
+<li>确认监控脚本按计划执行（检查 cron 日志）</li>
+<li>验证告警邮件发送正常</li>
+<li>确认告警阈值设置合理</li>
+</ul>
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="归档日志管理最佳实践"><a href="#归档日志管理最佳实践" class="headerlink" title="归档日志管理最佳实践"></a>归档日志管理最佳实践</h3><ol>
+<li><strong>配置合理的 RMAN 保留策略</strong>：生产环境建议使用 <code>RECOVERY WINDOW OF 7 DAYS</code>，而非无限制保留</li>
+<li><strong>归档日志定期备份</strong>：确保 RMAN 归档日志备份任务正常运行，备份完成后自动清理</li>
+<li><strong>DG 环境使用 APPLIED ON ALL STANDBY 策略</strong>：归档在所有备库应用后自动标记可删除</li>
+<li><strong>避免归档与数据文件共用磁盘</strong>：归档目录应独立，防止空间争用导致数据库不可用</li>
+</ol>
+<h3 id="空间规划原则"><a href="#空间规划原则" class="headerlink" title="空间规划原则"></a>空间规划原则</h3><ol>
+<li><strong>FRA 大小至少为数据库大小的 2 倍</strong>：覆盖一次全库备份 + 1-2 天的归档日志</li>
+<li><strong>监控阈值分级</strong>：Warning 70%、Critical 85%、Emergency 95%</li>
+<li><strong>预留应急空间</strong>：至少保留 20% 的空间用于紧急情况</li>
+<li><strong>定期容量规划</strong>：根据业务增长趋势，提前扩容存储</li>
+</ol>
+<h3 id="自动化监控方案"><a href="#自动化监控方案" class="headerlink" title="自动化监控方案"></a>自动化监控方案</h3><ol>
+<li><strong>多维度监控</strong>：同时监控 FRA 使用率、归档目录文件系统使用率、归档生成速率</li>
+<li><strong>告警分级</strong>：Warning 级别发邮件，Critical 级别触发短信&#x2F;电话通知</li>
+<li><strong>自动清理</strong>：配置自动清理脚本，在 Warning 级别时自动触发清理</li>
+<li><strong>趋势分析</strong>：记录历史数据，建立归档生成趋势模型，提前预测空间需求</li>
+</ol>
+<p>归档日志空间管理看似简单，但在生产环境中一旦失控，后果非常严重。DBA 需要建立完善的监控体系和自动化的应急响应机制，将问题消灭在萌芽阶段。记住：<strong>预防永远比救火更重要</strong>。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%BD%92%E6%A1%A3%E6%97%A5%E5%BF%97/" rel="tag"># 归档日志</a>
+              <a href="/tags/%E7%A9%BA%E9%97%B4%E7%AE%A1%E7%90%86/" rel="tag"># 空间管理</a>
+              <a href="/tags/RMAN/" rel="tag"># RMAN</a>
+              <a href="/tags/%E5%BA%94%E6%80%A5/" rel="tag"># 应急</a>
+              <a href="/tags/%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" rel="tag"># 故障排查</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/04/07/oracle/startup-failures-controlfile-recovery/" rel="prev" title="Oracle 启动故障排查与 Control File 恢复实战">
+                  <i class="fa fa-angle-left"></i> Oracle 启动故障排查与 Control File 恢复实战
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/04/17/oracle/network-tns-debugging/" rel="next" title="TNS 网络故障排查：TNS-12541, ORA-12170 系统化诊断指南">
+                  TNS 网络故障排查：TNS-12541, ORA-12170 系统化诊断指南 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

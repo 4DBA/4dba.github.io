@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/06/03/oracle/oracle-23ai-ai-vector-search-json/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/06/03/oracle/oracle-23ai-ai-vector-search-json/","path":"2026/06/03/oracle/oracle-23ai-ai-vector-search-json/","title":"Oracle 23ai 新特性尝鲜：AI Vector Search 与 JSON Relational Duality"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Oracle 23ai 新特性尝鲜：AI Vector Search 与 JSON Relational Duality | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-AI-Vector-Search"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 AI Vector Search</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%EF%BC%9AVECTOR"><span class="nav-number">2.1.1.</span> <span class="nav-text">向量数据类型：VECTOR</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%91%E9%87%8F%E8%B7%9D%E7%A6%BB%E5%87%BD%E6%95%B0"><span class="nav-number">2.1.2.</span> <span class="nav-text">向量距离函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%91%E9%87%8F%E7%B4%A2%E5%BC%95%EF%BC%9AIVF-%E4%B8%8E-HNSW"><span class="nav-number">2.1.3.</span> <span class="nav-text">向量索引：IVF 与 HNSW</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8E%E4%BC%A0%E7%BB%9F-SQL-%E7%9A%84%E6%97%A0%E7%BC%9D%E7%BB%93%E5%90%88"><span class="nav-number">2.1.4.</span> <span class="nav-text">与传统 SQL 的无缝结合</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-JSON-Relational-Duality-View"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 JSON Relational Duality View</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="nav-number">2.2.1.</span> <span class="nav-text">核心概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8E%E4%BC%A0%E7%BB%9F-JSON-%E5%AD%98%E5%82%A8%E7%9A%84%E5%AF%B9%E6%AF%94"><span class="nav-number">2.2.2.</span> <span class="nav-text">与传统 JSON 存储的对比</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CRUD-%E6%93%8D%E4%BD%9C"><span class="nav-number">2.2.3.</span> <span class="nav-text">CRUD 操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Schema-Relational-Duality"><span class="nav-number">2.2.4.</span> <span class="nav-text">Schema-Relational Duality</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E5%85%B6%E4%BB%96-23ai-%E6%96%B0%E7%89%B9%E6%80%A7%E9%80%9F%E8%A7%88"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 其他 23ai 新特性速览</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-AI-Vector-Search-%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 AI Vector Search 配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%AF%E7%94%A8-Vector-%E5%8A%9F%E8%83%BD"><span class="nav-number">3.1.1.</span> <span class="nav-text">启用 Vector 功能</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA-VECTOR-%E5%88%97"><span class="nav-number">3.1.2.</span> <span class="nav-text">创建 VECTOR 列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8F%92%E5%85%A5%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE"><span class="nav-number">3.1.3.</span> <span class="nav-text">插入向量数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%90%91%E9%87%8F%E7%B4%A2%E5%BC%95"><span class="nav-number">3.1.4.</span> <span class="nav-text">创建向量索引</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%91%E9%87%8F%E7%9B%B8%E4%BC%BC%E5%BA%A6%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.1.5.</span> <span class="nav-text">向量相似度查询</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-JSON-Duality-View"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 JSON Duality View</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA-Duality-View"><span class="nav-number">3.2.1.</span> <span class="nav-text">创建 Duality View</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E8%BF%87-JSON-%E8%A7%86%E5%9B%BE%E8%BF%9B%E8%A1%8C-CRUD"><span class="nav-number">3.2.2.</span> <span class="nav-text">通过 JSON 视图进行 CRUD</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B5%8C%E5%A5%97-JSON-%E5%A4%84%E7%90%86"><span class="nav-number">3.2.3.</span> <span class="nav-text">嵌套 JSON 处理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 实际应用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E6%90%9C%E7%B4%A2"><span class="nav-number">3.3.1.</span> <span class="nav-text">文档语义搜索</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BE%E7%89%87%E7%9B%B8%E4%BC%BC%E5%BA%A6%E6%90%9C%E7%B4%A2"><span class="nav-number">3.3.2.</span> <span class="nav-text">图片相似度搜索</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RAG-%E5%BA%94%E7%94%A8%E9%9B%86%E6%88%90"><span class="nav-number">3.3.3.</span> <span class="nav-text">RAG 应用集成</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-%E8%BF%90%E7%BB%B4%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 运维注意事项</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%91%E9%87%8F%E7%B4%A2%E5%BC%95%E7%9A%84%E5%AD%98%E5%82%A8%E5%BC%80%E9%94%80"><span class="nav-number">3.4.1.</span> <span class="nav-text">向量索引的存储开销</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%91%E9%87%8F%E6%A3%80%E7%B4%A2%E7%9A%84%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98"><span class="nav-number">3.4.2.</span> <span class="nav-text">向量检索的性能调优</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8E-AI-%E6%A1%86%E6%9E%B6%E9%9B%86%E6%88%90"><span class="nav-number">3.4.3.</span> <span class="nav-text">与 AI 框架集成</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#VECTOR-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E9%AA%8C%E8%AF%81"><span class="nav-number">4.1.</span> <span class="nav-text">VECTOR 数据类型验证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%91%E9%87%8F%E7%B4%A2%E5%BC%95%E7%8A%B6%E6%80%81%E6%A3%80%E6%9F%A5"><span class="nav-number">4.2.</span> <span class="nav-text">向量索引状态检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JSON-Duality-View-%E5%8A%9F%E8%83%BD%E9%AA%8C%E8%AF%81"><span class="nav-number">4.3.</span> <span class="nav-text">JSON Duality View 功能验证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#23ai-%E7%9A%84%E5%8D%87%E7%BA%A7%E8%B7%AF%E5%BE%84"><span class="nav-number">5.1.</span> <span class="nav-text">23ai 的升级路径</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AI-%E7%89%B9%E6%80%A7%E7%9A%84%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%E8%AF%84%E4%BC%B0"><span class="nav-number">5.2.</span> <span class="nav-text">AI 特性的适用场景评估</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E7%BB%B4%E5%9B%A2%E9%98%9F%E7%9A%84%E6%8A%80%E8%83%BD%E5%87%86%E5%A4%87"><span class="nav-number">5.3.</span> <span class="nav-text">运维团队的技能准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#23ai-Free-%E7%89%88%E7%94%A8%E4%BA%8E-POC"><span class="nav-number">5.4.</span> <span class="nav-text">23ai Free 版用于 POC</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/06/03/oracle/oracle-23ai-ai-vector-search-json/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Oracle 23ai 新特性尝鲜：AI Vector Search 与 JSON Relational Duality | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Oracle 23ai 新特性尝鲜：AI Vector Search 与 JSON Relational Duality
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-06-03 10:00:00" itemprop="dateCreated datePublished" datetime="2026-06-03T10:00:00+00:00">2026-06-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p>本文是 Oracle 新特性系列的第 28 篇（收官篇），聚焦 Oracle 23ai 最核心的两个 AI 特性：AI Vector Search 与 JSON Relational Duality View。</p>
+</blockquote>
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>随着 LLM（大语言模型）和 RAG（Retrieval Augmented Generation）应用的爆发式增长，数据库不再只是存储结构化数据的仓库，它还需要具备<strong>向量检索</strong>和<strong>语义搜索</strong>的能力。传统做法是将向量数据存入专用的向量数据库（如 Milvus、Pinecone），但这意味着架构中多了一个组件，数据同步、一致性、运维复杂度都会随之增加。</p>
+<p>Oracle 在 23ai 版本中正式将自己定位为 <strong>AI Database</strong>，核心思路是：<strong>让关系型数据库原生支持向量操作</strong>，无需引入外部向量库，就能在 SQL 层面完成向量存储、索引和相似度检索。同时，23ai 推出了 JSON Relational Duality View，彻底打通关系模型与文档模型之间的壁垒。</p>
+<p>对于 DBA 而言，这些特性不是”锦上添花”，而是<strong>必须掌握的技能栈</strong>：</p>
+<ul>
+<li>应用团队越来越多地要求在数据库层做向量检索，而不是维护额外的向量库</li>
+<li>JSON Duality View 让开发者用 JSON 接口操作关系表，DBA 需要理解其背后的机制才能做好性能调优</li>
+<li>23ai 的 AI 特性已经进入生产环境，早一步掌握就意味着早一步建立技术壁垒</li>
+</ul>
+<span id="more"></span>
+
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-AI-Vector-Search"><a href="#2-1-AI-Vector-Search" class="headerlink" title="2.1 AI Vector Search"></a>2.1 AI Vector Search</h3><h4 id="向量数据类型：VECTOR"><a href="#向量数据类型：VECTOR" class="headerlink" title="向量数据类型：VECTOR"></a>向量数据类型：VECTOR</h4><p>Oracle 23ai 引入了全新的 <code>VECTOR</code> 数据类型，用于存储高维向量数据。它支持多种维度和格式：</p>
+<ul>
+<li><strong>FLOAT32</strong>：32 位浮点数（默认），适合大多数 AI 模型输出</li>
+<li><strong>FLOAT64</strong>：64 位浮点数，精度更高</li>
+<li><strong>INT8</strong>：8 位整数，节省存储空间，适合量化向量</li>
+<li><strong>BINARY</strong>：二进制格式，适合 Hamming 距离计算</li>
+</ul>
+<p>向量维度在列定义时指定，例如 <code>VECTOR(384, FLOAT32)</code> 表示 384 维的 32 位浮点向量。也可以定义为动态维度 <code>VECTOR(*, FLOAT32)</code>。</p>
+<h4 id="向量距离函数"><a href="#向量距离函数" class="headerlink" title="向量距离函数"></a>向量距离函数</h4><p>Oracle 23ai 提供四种内置的距离&#x2F;相似度函数：</p>
+<table>
+<thead>
+<tr>
+<th>函数</th>
+<th>说明</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>COSINE</code></td>
+<td>余弦相似度</td>
+<td>文本嵌入向量，最常用</td>
+</tr>
+<tr>
+<td><code>EUCLIDEAN</code> &#x2F; <code>L2</code></td>
+<td>欧氏距离</td>
+<td>图像特征向量</td>
+</tr>
+<tr>
+<td><code>MANHATTAN</code> &#x2F; <code>L1</code></td>
+<td>曼哈顿距离</td>
+<td>稀疏向量</td>
+</tr>
+<tr>
+<td><code>HAMMING</code></td>
+<td>汉明距离</td>
+<td>二进制向量、哈希比较</td>
+</tr>
+</tbody></table>
+<p>这些函数可以直接在 SQL 中使用，例如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> product_name, VECTOR_DISTANCE(description_vec, :query_vec, COSINE) <span class="keyword">AS</span> similarity</span><br><span class="line"><span class="keyword">FROM</span> products</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> similarity <span class="keyword">ASC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">10</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="向量索引：IVF-与-HNSW"><a href="#向量索引：IVF-与-HNSW" class="headerlink" title="向量索引：IVF 与 HNSW"></a>向量索引：IVF 与 HNSW</h4><p>为了加速向量检索，23ai 提供两种近似最近邻（ANN）索引：</p>
+<ul>
+<li><strong>IVF（Inverted File Index）</strong>：将向量空间划分为若干聚类，查询时只搜索最近的聚类。适合大数据量场景，构建速度快，但精度略低。</li>
+<li><strong>HNSW（Hierarchical Navigable Small World）</strong>：基于图结构的索引，查询精度高，但构建时间和内存占用更大。适合对精度要求高的场景。</li>
+</ul>
+<p>两种索引都可以通过 <code>CREATE VECTOR INDEX</code> 语句创建，并支持配置目标精度（accuracy）参数。</p>
+<h4 id="与传统-SQL-的无缝结合"><a href="#与传统-SQL-的无缝结合" class="headerlink" title="与传统 SQL 的无缝结合"></a>与传统 SQL 的无缝结合</h4><p>23ai 最大的优势在于：<strong>向量操作完全融入 SQL 语法</strong>。你可以：</p>
+<ul>
+<li>在 <code>WHERE</code> 子句中使用向量距离过滤</li>
+<li>在 <code>ORDER BY</code> 中按相似度排序</li>
+<li>将向量检索与传统的关系查询条件组合</li>
+<li>使用 <code>FETCH FIRST N ROWS ONLY</code> 限制返回数量</li>
+</ul>
+<p>这意味着开发者不需要学习新的 API 或查询语言，现有的 SQL 技能可以直接复用。</p>
+<h3 id="2-2-JSON-Relational-Duality-View"><a href="#2-2-JSON-Relational-Duality-View" class="headerlink" title="2.2 JSON Relational Duality View"></a>2.2 JSON Relational Duality View</h3><h4 id="核心概念"><a href="#核心概念" class="headerlink" title="核心概念"></a>核心概念</h4><p>JSON Relational Duality View 是 23ai 的另一个革命性特性。它允许在<strong>同一份关系数据</strong>上创建 JSON 文档视图，应用层可以通过 JSON 接口进行 CRUD 操作，而底层数据仍然以关系表的形式存储。</p>
+<p>简单来说：<strong>同一份数据，两种访问方式</strong>。</p>
+<ul>
+<li>开发者看到的是 JSON 文档（NoSQL 体验）</li>
+<li>DBA 看到的是关系表（传统 RDBMS 体验）</li>
+<li>数据只有一份，不存在同步问题</li>
+</ul>
+<h4 id="与传统-JSON-存储的对比"><a href="#与传统-JSON-存储的对比" class="headerlink" title="与传统 JSON 存储的对比"></a>与传统 JSON 存储的对比</h4><p>传统方案中，要在 Oracle 里存 JSON 通常有两种方式：</p>
+<ol>
+<li><strong>JSON 文档存储</strong>（LOB 列）：灵活性好，但无法高效查询 JSON 内部字段</li>
+<li><strong>关系表 + JSON 映射层</strong>：查询性能好，但开发工作量大</li>
+</ol>
+<p>Duality View 是第三种方案，兼得两者优势：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>JSON LOB</th>
+<th>关系表 + 映射</th>
+<th>Duality View</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>查询性能</td>
+<td>差</td>
+<td>好</td>
+<td>好</td>
+</tr>
+<tr>
+<td>开发效率</td>
+<td>高</td>
+<td>低</td>
+<td>高</td>
+</tr>
+<tr>
+<td>数据一致性</td>
+<td>N&#x2F;A</td>
+<td>应用层保证</td>
+<td>数据库保证</td>
+</tr>
+<tr>
+<td>ACID</td>
+<td>强</td>
+<td>强</td>
+<td>强</td>
+</tr>
+<tr>
+<td>索引支持</td>
+<td>有限</td>
+<td>完整</td>
+<td>完整</td>
+</tr>
+</tbody></table>
+<h4 id="CRUD-操作"><a href="#CRUD-操作" class="headerlink" title="CRUD 操作"></a>CRUD 操作</h4><p>通过 Duality View，应用可以直接对 JSON 视图执行增删改查：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">-- 查询（GET）</span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;orderId&quot;</span><span class="punctuation">:</span> <span class="number">1001</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;customer&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;张三&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;phone&quot;</span><span class="punctuation">:</span> <span class="string">&quot;138xxxx&quot;</span> <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;items&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span> <span class="attr">&quot;product&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Oracle License&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;qty&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span> <span class="attr">&quot;price&quot;</span><span class="punctuation">:</span> <span class="number">50000</span> <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br><span class="line"></span><br><span class="line">-- 插入（POST）：直接插入 JSON 文档</span><br><span class="line">-- 更新（PATCH）：只修改需要变更的字段</span><br><span class="line">-- 删除（DELETE）：通过主键删除</span><br></pre></td></tr></table></figure>
+
+<p>底层的关系表会自动更新，无需手动维护同步。</p>
+<h4 id="Schema-Relational-Duality"><a href="#Schema-Relational-Duality" class="headerlink" title="Schema-Relational Duality"></a>Schema-Relational Duality</h4><p>Duality View 的精髓在于 <strong>Schema-Relational Duality</strong>：关系模式和文档模式可以互相转换。一个 Duality View 可以将多张关系表映射为一个嵌套的 JSON 文档结构，反之亦然。这使得同一份数据可以同时服务于关系型后端和文档型前端。</p>
+<h3 id="2-3-其他-23ai-新特性速览"><a href="#2-3-其他-23ai-新特性速览" class="headerlink" title="2.3 其他 23ai 新特性速览"></a>2.3 其他 23ai 新特性速览</h3><p>除了 AI Vector Search 和 JSON Duality View，23ai 还包含大量值得关注的新特性：</p>
+<ul>
+<li><strong>SQL Domains</strong>：类似自定义数据类型，可以在列级别定义约束和显示格式，比 CHECK 约束更灵活</li>
+<li><strong>True Cache</strong>：数据库层的自动缓存，减少主库 I&#x2F;O 压力，对读密集型应用效果显著</li>
+<li><strong>SQL Firewall</strong>：内置在数据库中的 SQL 防火墙，可以识别和拦截异常 SQL 语句，防范 SQL 注入</li>
+<li><strong>Blockchain Tables 增强</strong>：不可篡改表的改进，支持更灵活的生命周期管理</li>
+<li><strong>Boolean 数据类型</strong>：Oracle 终于原生支持 <code>BOOLEAN</code> 列类型（是的，等了 40 年）</li>
+<li><strong>IF NOT EXISTS 语法</strong>：<code>CREATE TABLE IF NOT EXISTS</code>，告别 ORA-955 错误处理</li>
+</ul>
+<p>这些特性虽然不如 AI Vector Search 那么”性感”，但在日常运维和开发中非常实用。尤其是 Boolean 类型和 IF NOT EXISTS 语法，几乎是所有 Oracle 开发者的”愿望清单”。</p>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-AI-Vector-Search-配置"><a href="#3-1-AI-Vector-Search-配置" class="headerlink" title="3.1 AI Vector Search 配置"></a>3.1 AI Vector Search 配置</h3><h4 id="启用-Vector-功能"><a href="#启用-Vector-功能" class="headerlink" title="启用 Vector 功能"></a>启用 Vector 功能</h4><p>Oracle 23ai 默认已启用 VECTOR 支持，无需额外配置。可以通过以下方式确认：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 确认数据库版本</span></span><br><span class="line"><span class="keyword">SELECT</span> BANNER <span class="keyword">FROM</span> V$VERSION <span class="keyword">WHERE</span> BANNER <span class="keyword">LIKE</span> <span class="string">&#x27;%23%&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 确认 VECTOR 类型可用</span></span><br><span class="line"><span class="keyword">DESC</span> VECTOR;</span><br></pre></td></tr></table></figure>
+
+<h4 id="创建-VECTOR-列"><a href="#创建-VECTOR-列" class="headerlink" title="创建 VECTOR 列"></a>创建 VECTOR 列</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建产品表，包含向量列</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> products (</span><br><span class="line">    product_id   NUMBER GENERATED ALWAYS <span class="keyword">AS</span> <span class="keyword">IDENTITY</span> <span class="keyword">PRIMARY KEY</span>,</span><br><span class="line">    product_name VARCHAR2(<span class="number">200</span>),</span><br><span class="line">    description  <span class="type">CLOB</span>,</span><br><span class="line">    category     VARCHAR2(<span class="number">50</span>),</span><br><span class="line">    <span class="comment">-- 384维浮点向量，适合 all-MiniLM-L6-v2 等轻量模型</span></span><br><span class="line">    description_vec  VECTOR(<span class="number">384</span>, FLOAT32),</span><br><span class="line">    <span class="comment">-- 也可以用动态维度</span></span><br><span class="line">    image_vec    VECTOR(<span class="operator">*</span>, FLOAT32)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 为JSON Duality View准备的订单表</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> orders (</span><br><span class="line">    order_id     NUMBER GENERATED ALWAYS <span class="keyword">AS</span> <span class="keyword">IDENTITY</span> <span class="keyword">PRIMARY KEY</span>,</span><br><span class="line">    customer_id  NUMBER <span class="keyword">NOT NULL</span>,</span><br><span class="line">    order_date   <span class="type">DATE</span> <span class="keyword">DEFAULT</span> SYSDATE,</span><br><span class="line">    status       VARCHAR2(<span class="number">20</span>) <span class="keyword">DEFAULT</span> <span class="string">&#x27;PENDING&#x27;</span></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">CREATE TABLE</span> order_items (</span><br><span class="line">    item_id      NUMBER GENERATED ALWAYS <span class="keyword">AS</span> <span class="keyword">IDENTITY</span> <span class="keyword">PRIMARY KEY</span>,</span><br><span class="line">    order_id     NUMBER <span class="keyword">REFERENCES</span> orders(order_id),</span><br><span class="line">    product_id   NUMBER <span class="keyword">REFERENCES</span> products(product_id),</span><br><span class="line">    quantity     NUMBER <span class="keyword">DEFAULT</span> <span class="number">1</span>,</span><br><span class="line">    unit_price   NUMBER(<span class="number">10</span>,<span class="number">2</span>)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<h4 id="插入向量数据"><a href="#插入向量数据" class="headerlink" title="插入向量数据"></a>插入向量数据</h4><p>在实际场景中，向量通常由 AI 模型（如 OpenAI Embeddings、Sentence Transformers）生成后写入数据库。以下用简化的方式模拟：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 模拟插入带向量的产品数据</span></span><br><span class="line"><span class="keyword">INSERT INTO</span> products (product_name, description, category, description_vec)</span><br><span class="line"><span class="keyword">VALUES</span> (</span><br><span class="line">    <span class="string">&#x27;Oracle Database 23ai&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Oracle最新一代AI数据库，原生支持向量检索&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Database&#x27;</span>,</span><br><span class="line">    TO_VECTOR(<span class="string">&#x27;[0.02, -0.15, 0.33, 0.08, -0.21, 0.45, 0.12, -0.09, 0.27, 0.03]&#x27;</span>, FLOAT32, <span class="number">384</span>)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">INSERT INTO</span> products (product_name, description, category, description_vec)</span><br><span class="line"><span class="keyword">VALUES</span> (</span><br><span class="line">    <span class="string">&#x27;Oracle Exadata X9M&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;高性能数据库一体机，极致OLTP和OLAP性能&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Hardware&#x27;</span>,</span><br><span class="line">    TO_VECTOR(<span class="string">&#x27;[0.11, -0.08, 0.25, 0.19, -0.14, 0.38, 0.07, -0.22, 0.31, 0.15]&#x27;</span>, FLOAT32, <span class="number">384</span>)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 从外部向量格式转换</span></span><br><span class="line"><span class="comment">-- 支持逗号分隔、JSON数组、十六进制等多种格式</span></span><br><span class="line"><span class="keyword">INSERT INTO</span> products (product_name, description, category, description_vec)</span><br><span class="line"><span class="keyword">VALUES</span> (</span><br><span class="line">    <span class="string">&#x27;MySQL HeatWave&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;云原生OLAP引擎，实时分析海量数据&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;Database&#x27;</span>,</span><br><span class="line">    TO_VECTOR(<span class="string">&#x27;[-0.05, 0.12, 0.41, -0.03, 0.18, 0.29, -0.11, 0.06, 0.35, -0.02]&#x27;</span>, FLOAT32, <span class="number">384</span>)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="创建向量索引"><a href="#创建向量索引" class="headerlink" title="创建向量索引"></a>创建向量索引</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建 HNSW 索引（推荐，精度高）</span></span><br><span class="line"><span class="keyword">CREATE</span> VECTOR INDEX idx_prod_desc_vec <span class="keyword">ON</span> products (description_vec)</span><br><span class="line">    ORGANIZATION NEIGHBOR_PARTITIONS</span><br><span class="line">    DISTANCE COSINE</span><br><span class="line">    <span class="keyword">WITH</span> TARGET ACCURACY <span class="number">95</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 创建 IVF 索引（适合大数据量）</span></span><br><span class="line"><span class="keyword">CREATE</span> VECTOR INDEX idx_prod_desc_ivf <span class="keyword">ON</span> products (description_vec)</span><br><span class="line">    ORGANIZATION NEIGHBOR_PARTITIONS</span><br><span class="line">    DISTANCE COSINE</span><br><span class="line">    <span class="keyword">WITH</span> TARGET ACCURACY <span class="number">90</span></span><br><span class="line">    PARAMETERS (TYPE IVF, NEIGHBOR_PARTITIONS <span class="number">100</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看索引信息</span></span><br><span class="line"><span class="keyword">SELECT</span> INDEX_NAME, INDEX_TYPE, TABLE_NAME, STATUS</span><br><span class="line"><span class="keyword">FROM</span> USER_INDEXES</span><br><span class="line"><span class="keyword">WHERE</span> INDEX_NAME <span class="keyword">LIKE</span> <span class="string">&#x27;%VEC%&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="向量相似度查询"><a href="#向量相似度查询" class="headerlink" title="向量相似度查询"></a>向量相似度查询</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查找与查询向量最相似的3个产品</span></span><br><span class="line"><span class="comment">-- 假设查询向量由应用层的AI模型生成</span></span><br><span class="line">VARIABLE query_vec VARCHAR2(<span class="number">4000</span>);</span><br><span class="line"><span class="keyword">EXEC</span> :query_vec :<span class="operator">=</span> <span class="string">&#x27;[0.03, -0.12, 0.35, 0.06, -0.19, 0.42, 0.10, -0.11, 0.29, 0.05]&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> product_name,</span><br><span class="line">       category,</span><br><span class="line">       ROUND(VECTOR_DISTANCE(description_vec, TO_VECTOR(:query_vec, FLOAT32, <span class="number">384</span>), COSINE), <span class="number">4</span>) <span class="keyword">AS</span> distance</span><br><span class="line"><span class="keyword">FROM</span> products</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> VECTOR_DISTANCE(description_vec, TO_VECTOR(:query_vec, FLOAT32, <span class="number">384</span>), COSINE)</span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">3</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 使用相似度阈值过滤</span></span><br><span class="line"><span class="keyword">SELECT</span> product_name,</span><br><span class="line">       ROUND(<span class="number">1</span> <span class="operator">-</span> VECTOR_DISTANCE(description_vec, TO_VECTOR(:query_vec, FLOAT32, <span class="number">384</span>), COSINE), <span class="number">4</span>) <span class="keyword">AS</span> similarity</span><br><span class="line"><span class="keyword">FROM</span> products</span><br><span class="line"><span class="keyword">WHERE</span> VECTOR_DISTANCE(description_vec, TO_VECTOR(:query_vec, FLOAT32, <span class="number">384</span>), COSINE) <span class="operator">&lt;</span> <span class="number">0.3</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> VECTOR_DISTANCE(description_vec, TO_VECTOR(:query_vec, FLOAT32, <span class="number">384</span>), COSINE);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 向量检索与关系条件结合</span></span><br><span class="line"><span class="keyword">SELECT</span> product_name,</span><br><span class="line">       category,</span><br><span class="line">       ROUND(VECTOR_DISTANCE(description_vec, TO_VECTOR(:query_vec, FLOAT32, <span class="number">384</span>), COSINE), <span class="number">4</span>) <span class="keyword">AS</span> distance</span><br><span class="line"><span class="keyword">FROM</span> products</span><br><span class="line"><span class="keyword">WHERE</span> category <span class="operator">=</span> <span class="string">&#x27;Database&#x27;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> VECTOR_DISTANCE(description_vec, TO_VECTOR(:query_vec, FLOAT32, <span class="number">384</span>), COSINE)</span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">5</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-JSON-Duality-View"><a href="#3-2-JSON-Duality-View" class="headerlink" title="3.2 JSON Duality View"></a>3.2 JSON Duality View</h3><h4 id="创建-Duality-View"><a href="#创建-Duality-View" class="headerlink" title="创建 Duality View"></a>创建 Duality View</h4><p>基于前面创建的 <code>orders</code> 和 <code>order_items</code> 表，创建一个 JSON Duality View：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建订单的 JSON Duality View</span></span><br><span class="line"><span class="keyword">CREATE</span> JSON RELATIONAL DUALITY <span class="keyword">VIEW</span> order_dv <span class="keyword">AS</span></span><br><span class="line"><span class="keyword">SELECT</span> JSON &#123;</span><br><span class="line">    <span class="string">&#x27;_id&#x27;</span>: o.order_id,</span><br><span class="line">    <span class="string">&#x27;orderId&#x27;</span>: o.order_id,</span><br><span class="line">    <span class="string">&#x27;orderDate&#x27;</span>: o.order_date <span class="keyword">WITH</span> <span class="keyword">UPDATE</span>,</span><br><span class="line">    <span class="string">&#x27;status&#x27;</span>: o.status <span class="keyword">WITH</span> <span class="keyword">UPDATE</span>,</span><br><span class="line">    <span class="string">&#x27;customerId&#x27;</span>: o.customer_id <span class="keyword">WITH</span> <span class="keyword">UPDATE</span>,</span><br><span class="line">    <span class="string">&#x27;items&#x27;</span>: [</span><br><span class="line">        <span class="keyword">SELECT</span> JSON &#123;</span><br><span class="line">            <span class="string">&#x27;itemId&#x27;</span>: oi.item_id,</span><br><span class="line">            <span class="string">&#x27;productId&#x27;</span>: oi.product_id <span class="keyword">WITH</span> <span class="keyword">UPDATE</span>,</span><br><span class="line">            <span class="string">&#x27;quantity&#x27;</span>: oi.quantity <span class="keyword">WITH</span> <span class="keyword">UPDATE</span>,</span><br><span class="line">            <span class="string">&#x27;unitPrice&#x27;</span>: oi.unit_price <span class="keyword">WITH</span> <span class="keyword">UPDATE</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">FROM</span> order_items oi <span class="keyword">WITH</span> <span class="keyword">INSERT</span> <span class="keyword">UPDATE</span> <span class="keyword">DELETE</span></span><br><span class="line">        <span class="keyword">WHERE</span> oi.order_id <span class="operator">=</span> o.order_id</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">FROM</span> orders o <span class="keyword">WITH</span> <span class="keyword">INSERT</span> <span class="keyword">UPDATE</span> <span class="keyword">DELETE</span>;</span><br></pre></td></tr></table></figure>
+
+<p>关键语法说明：</p>
+<ul>
+<li><code>WITH INSERT UPDATE DELETE</code>：控制该层级的 DML 权限</li>
+<li><code>WITH UPDATE</code>：只允许更新</li>
+<li><code>_id</code>：JSON 文档的主键标识</li>
+<li>嵌套的 <code>SELECT JSON</code>：定义子文档结构</li>
+</ul>
+<h4 id="通过-JSON-视图进行-CRUD"><a href="#通过-JSON-视图进行-CRUD" class="headerlink" title="通过 JSON 视图进行 CRUD"></a>通过 JSON 视图进行 CRUD</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 插入新订单（通过 JSON 视图）</span></span><br><span class="line"><span class="keyword">INSERT INTO</span> order_dv <span class="keyword">VALUES</span> (</span><br><span class="line">    <span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">        &quot;orderId&quot;: 2001,</span></span><br><span class="line"><span class="string">        &quot;orderDate&quot;: &quot;2026-06-10T10:00:00&quot;,</span></span><br><span class="line"><span class="string">        &quot;status&quot;: &quot;PENDING&quot;,</span></span><br><span class="line"><span class="string">        &quot;customerId&quot;: 101,</span></span><br><span class="line"><span class="string">        &quot;items&quot;: [</span></span><br><span class="line"><span class="string">            &#123;&quot;itemId&quot;: 3001, &quot;productId&quot;: 1, &quot;quantity&quot;: 2, &quot;unitPrice&quot;: 50000.00&#125;,</span></span><br><span class="line"><span class="string">            &#123;&quot;itemId&quot;: 3002, &quot;productId&quot;: 3, &quot;quantity&quot;: 1, &quot;unitPrice&quot;: 28000.00&#125;</span></span><br><span class="line"><span class="string">        ]</span></span><br><span class="line"><span class="string">    &#125;&#x27;</span></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查询订单（返回 JSON 格式）</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> order_dv <span class="keyword">WHERE</span> <span class="built_in">JSON_VALUE</span>(data, <span class="string">&#x27;$.orderId&#x27;</span>) <span class="operator">=</span> <span class="number">2001</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 更新订单状态</span></span><br><span class="line"><span class="keyword">UPDATE</span> order_dv d</span><br><span class="line"><span class="keyword">SET</span> d.data <span class="operator">=</span> JSON_MERGEPATCH(d.data, <span class="string">&#x27;&#123;&quot;status&quot;: &quot;SHIPPED&quot;&#125;&#x27;</span>)</span><br><span class="line"><span class="keyword">WHERE</span> <span class="built_in">JSON_VALUE</span>(d.data, <span class="string">&#x27;$.orderId&#x27;</span>) <span class="operator">=</span> <span class="number">2001</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 删除订单</span></span><br><span class="line"><span class="keyword">DELETE</span> <span class="keyword">FROM</span> order_dv <span class="keyword">WHERE</span> <span class="built_in">JSON_VALUE</span>(data, <span class="string">&#x27;$.orderId&#x27;</span>) <span class="operator">=</span> <span class="number">2001</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="嵌套-JSON-处理"><a href="#嵌套-JSON-处理" class="headerlink" title="嵌套 JSON 处理"></a>嵌套 JSON 处理</h4><p>Duality View 支持多层嵌套，例如在订单项中包含产品详情：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> JSON RELATIONAL DUALITY <span class="keyword">VIEW</span> order_full_dv <span class="keyword">AS</span></span><br><span class="line"><span class="keyword">SELECT</span> JSON &#123;</span><br><span class="line">    <span class="string">&#x27;_id&#x27;</span>: o.order_id,</span><br><span class="line">    <span class="string">&#x27;orderId&#x27;</span>: o.order_id,</span><br><span class="line">    <span class="string">&#x27;status&#x27;</span>: o.status <span class="keyword">WITH</span> <span class="keyword">UPDATE</span>,</span><br><span class="line">    <span class="string">&#x27;customer&#x27;</span>: (</span><br><span class="line">        <span class="keyword">SELECT</span> JSON &#123;</span><br><span class="line">            <span class="string">&#x27;customerId&#x27;</span>: c.customer_id,</span><br><span class="line">            <span class="string">&#x27;name&#x27;</span>: c.name,</span><br><span class="line">            <span class="string">&#x27;email&#x27;</span>: c.email</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">FROM</span> customers c</span><br><span class="line">        <span class="keyword">WHERE</span> c.customer_id <span class="operator">=</span> o.customer_id</span><br><span class="line">    ),</span><br><span class="line">    <span class="string">&#x27;items&#x27;</span>: [</span><br><span class="line">        <span class="keyword">SELECT</span> JSON &#123;</span><br><span class="line">            <span class="string">&#x27;itemId&#x27;</span>: oi.item_id,</span><br><span class="line">            <span class="string">&#x27;product&#x27;</span>: (</span><br><span class="line">                <span class="keyword">SELECT</span> JSON &#123;</span><br><span class="line">                    <span class="string">&#x27;productId&#x27;</span>: p.product_id,</span><br><span class="line">                    <span class="string">&#x27;name&#x27;</span>: p.product_name,</span><br><span class="line">                    <span class="string">&#x27;category&#x27;</span>: p.category</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">FROM</span> products p</span><br><span class="line">                <span class="keyword">WHERE</span> p.product_id <span class="operator">=</span> oi.product_id</span><br><span class="line">            ),</span><br><span class="line">            <span class="string">&#x27;quantity&#x27;</span>: oi.quantity <span class="keyword">WITH</span> <span class="keyword">UPDATE</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">FROM</span> order_items oi <span class="keyword">WITH</span> <span class="keyword">INSERT</span> <span class="keyword">UPDATE</span> <span class="keyword">DELETE</span></span><br><span class="line">        <span class="keyword">WHERE</span> oi.order_id <span class="operator">=</span> o.order_id</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">FROM</span> orders o <span class="keyword">WITH</span> <span class="keyword">INSERT</span> <span class="keyword">UPDATE</span> <span class="keyword">DELETE</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-实际应用场景"><a href="#3-3-实际应用场景" class="headerlink" title="3.3 实际应用场景"></a>3.3 实际应用场景</h3><h4 id="文档语义搜索"><a href="#文档语义搜索" class="headerlink" title="文档语义搜索"></a>文档语义搜索</h4><p>最常见的应用场景：企业知识库的语义搜索。将文档的 Embedding 向量存入 Oracle，利用 AI Vector Search 实现”找意思相近的文档”而非”找关键词匹配的文档”。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 知识库语义搜索</span></span><br><span class="line"><span class="keyword">SELECT</span> doc_title,</span><br><span class="line">       ROUND(<span class="number">1</span> <span class="operator">-</span> VECTOR_DISTANCE(content_vec, TO_VECTOR(:query_embedding, FLOAT32, <span class="number">1536</span>), COSINE), <span class="number">4</span>) <span class="keyword">AS</span> relevance</span><br><span class="line"><span class="keyword">FROM</span> knowledge_base</span><br><span class="line"><span class="keyword">WHERE</span> VECTOR_DISTANCE(content_vec, TO_VECTOR(:query_embedding, FLOAT32, <span class="number">1536</span>), COSINE) <span class="operator">&lt;</span> <span class="number">0.4</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> VECTOR_DISTANCE(content_vec, TO_VECTOR(:query_embedding, FLOAT32, <span class="number">1536</span>), COSINE)</span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">10</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="图片相似度搜索"><a href="#图片相似度搜索" class="headerlink" title="图片相似度搜索"></a>图片相似度搜索</h4><p>将图片通过 CNN 模型（如 ResNet、CLIP）提取特征向量后存入数据库，实现以图搜图：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 以图搜图</span></span><br><span class="line"><span class="keyword">SELECT</span> image_name,</span><br><span class="line">       image_url,</span><br><span class="line">       VECTOR_DISTANCE(feature_vec, TO_VECTOR(:query_image_vec, FLOAT32, <span class="number">2048</span>), EUCLIDEAN) <span class="keyword">AS</span> distance</span><br><span class="line"><span class="keyword">FROM</span> image_gallery</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> VECTOR_DISTANCE(feature_vec, TO_VECTOR(:query_image_vec, FLOAT32, <span class="number">2048</span>), EUCLIDEAN)</span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">5</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="RAG-应用集成"><a href="#RAG-应用集成" class="headerlink" title="RAG 应用集成"></a>RAG 应用集成</h4><p>在 RAG 架构中，Oracle 23ai 可以同时扮演<strong>向量数据库</strong>和<strong>关系数据库</strong>的角色：</p>
+<ol>
+<li>文档分块后，通过 Embedding 模型生成向量，存入 Oracle 的 VECTOR 列</li>
+<li>用户提问时，将问题向量化，在 Oracle 中做相似度检索</li>
+<li>检索到的文档片段作为上下文，发送给 LLM 生成回答</li>
+<li>整个过程中，文档元数据、用户信息、访问日志都可以存在同一数据库中</li>
+</ol>
+<p>这种架构比”关系库 + 外部向量库”的组合更简洁，数据一致性也更好保障。</p>
+<h3 id="3-4-运维注意事项"><a href="#3-4-运维注意事项" class="headerlink" title="3.4 运维注意事项"></a>3.4 运维注意事项</h3><h4 id="向量索引的存储开销"><a href="#向量索引的存储开销" class="headerlink" title="向量索引的存储开销"></a>向量索引的存储开销</h4><p>向量索引（尤其是 HNSW）会占用显著的存储空间。粗略估算：</p>
+<ul>
+<li>HNSW 索引大小 ≈ 原始向量数据大小的 2~3 倍</li>
+<li>IVF 索引大小 ≈ 原始向量数据大小的 1~1.5 倍</li>
+<li>100 万条 384 维 FLOAT32 向量的原始数据约 1.4GB，HNSW 索引约 3~4GB</li>
+</ul>
+<p>规划存储时务必考虑索引开销。</p>
+<h4 id="向量检索的性能调优"><a href="#向量检索的性能调优" class="headerlink" title="向量检索的性能调优"></a>向量检索的性能调优</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 调整目标精度（accuracy）：精度越高，查询越慢</span></span><br><span class="line"><span class="comment">-- 95% 精度通常在性能和准确性之间取得较好平衡</span></span><br><span class="line"><span class="keyword">CREATE</span> VECTOR INDEX idx_vec <span class="keyword">ON</span> table_name (vec_column)</span><br><span class="line">    ORGANIZATION NEIGHBOR_PARTITIONS</span><br><span class="line">    DISTANCE COSINE</span><br><span class="line">    <span class="keyword">WITH</span> TARGET ACCURACY <span class="number">95</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 监控索引构建进度</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$VECTOR_INDEX_BUILD_PROGRESS;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看向量索引的统计信息</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> USER_VECTOR_INDEX_STATS;</span><br></pre></td></tr></table></figure>
+
+<h4 id="与-AI-框架集成"><a href="#与-AI-框架集成" class="headerlink" title="与 AI 框架集成"></a>与 AI 框架集成</h4><p>Oracle 23ai 提供了多种与 AI 框架集成的方式：</p>
+<ul>
+<li><strong>Python oracledb 驱动</strong>：原生支持 VECTOR 类型的读写</li>
+<li><strong>LangChain 集成</strong>：<code>OracleVS</code> 类可直接将 Oracle 作为 LangChain 的 Vector Store</li>
+<li><strong>LlamaIndex 集成</strong>：通过 <code>OracleVectorStore</code> 连接器</li>
+<li><strong>REST API</strong>：通过 Oracle REST Data Services（ORDS）暴露向量检索接口</li>
+</ul>
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><h3 id="VECTOR-数据类型验证"><a href="#VECTOR-数据类型验证" class="headerlink" title="VECTOR 数据类型验证"></a>VECTOR 数据类型验证</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 验证表结构</span></span><br><span class="line"><span class="keyword">DESC</span> products;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证向量数据正确存储</span></span><br><span class="line"><span class="keyword">SELECT</span> product_id, product_name,</span><br><span class="line">       description_vec,</span><br><span class="line">       VECTOR_DIMENSION_COUNT(description_vec) <span class="keyword">AS</span> dimensions,</span><br><span class="line">       VECTOR_DIMENSION_FORMAT(description_vec) <span class="keyword">AS</span> format</span><br><span class="line"><span class="keyword">FROM</span> products;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证距离函数</span></span><br><span class="line"><span class="keyword">SELECT</span> VECTOR_DISTANCE(</span><br><span class="line">    TO_VECTOR(<span class="string">&#x27;[1,0,0]&#x27;</span>, FLOAT32, <span class="number">3</span>),</span><br><span class="line">    TO_VECTOR(<span class="string">&#x27;[0,1,0]&#x27;</span>, FLOAT32, <span class="number">3</span>),</span><br><span class="line">    COSINE</span><br><span class="line">) <span class="keyword">AS</span> cos_distance <span class="keyword">FROM</span> DUAL;</span><br><span class="line"><span class="comment">-- 预期结果：1（正交向量，余弦距离最大）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="向量索引状态检查"><a href="#向量索引状态检查" class="headerlink" title="向量索引状态检查"></a>向量索引状态检查</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 检查索引状态</span></span><br><span class="line"><span class="keyword">SELECT</span> INDEX_NAME, STATUS, NUM_ROWS, LAST_ANALYZED</span><br><span class="line"><span class="keyword">FROM</span> USER_INDEXES</span><br><span class="line"><span class="keyword">WHERE</span> INDEX_TYPE <span class="keyword">LIKE</span> <span class="string">&#x27;%VECTOR%&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证索引是否被查询使用</span></span><br><span class="line">EXPLAIN PLAN <span class="keyword">FOR</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> products</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> VECTOR_DISTANCE(description_vec, TO_VECTOR(:q, FLOAT32, <span class="number">384</span>), COSINE)</span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">3</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> <span class="keyword">TABLE</span>(DBMS_XPLAN.DISPLAY);</span><br><span class="line"><span class="comment">-- 预期：执行计划中应出现 VECTOR INDEX SCAN</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="JSON-Duality-View-功能验证"><a href="#JSON-Duality-View-功能验证" class="headerlink" title="JSON Duality View 功能验证"></a>JSON Duality View 功能验证</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 验证视图类型</span></span><br><span class="line"><span class="keyword">SELECT</span> VIEW_NAME, VIEW_TYPE</span><br><span class="line"><span class="keyword">FROM</span> USER_VIEWS</span><br><span class="line"><span class="keyword">WHERE</span> VIEW_NAME <span class="keyword">LIKE</span> <span class="string">&#x27;%DV%&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证 JSON 输出格式</span></span><br><span class="line"><span class="keyword">SELECT</span> data <span class="keyword">FROM</span> order_dv <span class="keyword">WHERE</span> <span class="built_in">JSON_VALUE</span>(data, <span class="string">&#x27;$.orderId&#x27;</span>) <span class="operator">=</span> <span class="number">2001</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证关系表与JSON视图数据一致性</span></span><br><span class="line"><span class="keyword">SELECT</span> o.order_id, o.status, <span class="built_in">JSON_VALUE</span>(d.data, <span class="string">&#x27;$.status&#x27;</span>) <span class="keyword">AS</span> json_status</span><br><span class="line"><span class="keyword">FROM</span> orders o</span><br><span class="line"><span class="keyword">JOIN</span> order_dv d <span class="keyword">ON</span> o.order_id <span class="operator">=</span> <span class="built_in">JSON_VALUE</span>(d.data, <span class="string">&#x27;$.orderId&#x27;</span>)</span><br><span class="line"><span class="keyword">WHERE</span> o.order_id <span class="operator">=</span> <span class="number">2001</span>;</span><br><span class="line"><span class="comment">-- 预期：两列值相同</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="23ai-的升级路径"><a href="#23ai-的升级路径" class="headerlink" title="23ai 的升级路径"></a>23ai 的升级路径</h3><p>Oracle 23ai 目前提供两种部署方式：</p>
+<ul>
+<li><strong>Oracle Database 23ai Free</strong>：免费版，适合个人学习和 POC 验证，支持所有 AI 特性</li>
+<li><strong>Oracle Database 23ai Enterprise</strong>：企业版，适合生产环境</li>
+</ul>
+<p>从 19c 或 21c 升级到 23ai 的路径与以往版本升级类似，建议在非生产环境充分测试后再推进生产升级。</p>
+<h3 id="AI-特性的适用场景评估"><a href="#AI-特性的适用场景评估" class="headerlink" title="AI 特性的适用场景评估"></a>AI 特性的适用场景评估</h3><p>并非所有场景都需要在数据库层做向量检索：</p>
+<ul>
+<li><strong>数据量 &lt; 100 万条</strong>：Oracle AI Vector Search 完全胜任，无需引入外部向量库</li>
+<li><strong>数据量 100 万 ~ 1000 万条</strong>：Oracle 仍然可行，但需要注意索引构建时间和存储成本</li>
+<li><strong>数据量 &gt; 1000 万条</strong>：需要评估 Oracle 的性能是否满足 SLA，可能需要考虑分区策略</li>
+<li><strong>已有完善的向量库架构</strong>：不必急于迁移，新项目可以优先考虑 Oracle 一体化方案</li>
+</ul>
+<h3 id="运维团队的技能准备"><a href="#运维团队的技能准备" class="headerlink" title="运维团队的技能准备"></a>运维团队的技能准备</h3><p>作为 DBA，建议从以下方面储备技能：</p>
+<ol>
+<li><strong>理解 Embedding 原理</strong>：不需要训练模型，但要理解向量是什么、距离函数的含义</li>
+<li><strong>掌握 VECTOR 类型的 DDL&#x2F;DML</strong>：创建表、索引、查询的标准语法</li>
+<li><strong>熟悉 JSON Duality View</strong>：理解映射关系，能够排查 JSON 视图的问题</li>
+<li><strong>学习 Python + oracledb</strong>：AI 应用通常用 Python 开发，DBA 需要能读懂和调试相关代码</li>
+<li><strong>了解 LangChain&#x2F;LlamaIndex 基础</strong>：知道 RAG 的基本架构，才能做好数据库层的优化</li>
+</ol>
+<h3 id="23ai-Free-版用于-POC"><a href="#23ai-Free-版用于-POC" class="headerlink" title="23ai Free 版用于 POC"></a>23ai Free 版用于 POC</h3><p>强烈建议用 Oracle 23ai Free 版本进行 POC 验证：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 快速验证向量功能</span></span><br><span class="line"><span class="keyword">SELECT</span> TO_VECTOR(<span class="string">&#x27;[1,2,3]&#x27;</span>) <span class="keyword">FROM</span> DUAL;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 快速验证 Duality View</span></span><br><span class="line"><span class="keyword">CREATE</span> JSON RELATIONAL DUALITY <span class="keyword">VIEW</span> test_dv <span class="keyword">AS</span></span><br><span class="line"><span class="keyword">SELECT</span> JSON &#123; <span class="string">&#x27;_id&#x27;</span>: t.id, <span class="string">&#x27;name&#x27;</span>: t.name <span class="keyword">WITH</span> <span class="keyword">UPDATE</span> &#125;</span><br><span class="line"><span class="keyword">FROM</span> test_table t <span class="keyword">WITH</span> <span class="keyword">INSERT</span> <span class="keyword">UPDATE</span> <span class="keyword">DELETE</span>;</span><br></pre></td></tr></table></figure>
+
+<p>Free 版完全支持 AI Vector Search 和 JSON Duality View，是学习和验证的最佳起点。</p>
+<hr>
+<blockquote>
+<p><strong>写在最后</strong>：本文是 Oracle 新特性系列的第 28 篇，也是收官之作。从 12c 到 23ai，Oracle 数据库经历了从多租户到 AI 原生的巨大飞跃。作为 DBA，我们有幸见证并参与了这个历程。希望这个系列能帮助大家更好地理解和使用 Oracle 的新特性，在 AI 时代继续发挥数据库守护者的价值。</p>
+<p>感谢每一位读者的陪伴，我们下个系列再见！</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/23ai/" rel="tag"># 23ai</a>
+              <a href="/tags/AI-Vector-Search/" rel="tag"># AI Vector Search</a>
+              <a href="/tags/JSON/" rel="tag"># JSON</a>
+              <a href="/tags/%E6%96%B0%E7%89%B9%E6%80%A7/" rel="tag"># 新特性</a>
+              <a href="/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 向量数据库</a>
+              <a href="/tags/AI/" rel="tag"># AI</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/05/29/oracle/ords-exposing-database-rest-api/" rel="prev" title="ORDS 实战：将 Oracle 数据库转化为 RESTful API 服务">
+                  <i class="fa fa-angle-left"></i> ORDS 实战：将 Oracle 数据库转化为 RESTful API 服务
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

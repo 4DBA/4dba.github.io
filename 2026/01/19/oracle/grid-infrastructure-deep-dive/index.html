@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/01/19/oracle/grid-infrastructure-deep-dive/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/01/19/oracle/grid-infrastructure-deep-dive/","path":"2026/01/19/oracle/grid-infrastructure-deep-dive/","title":"Grid Infrastructure 深度解析：OCR/Voting Disk/SCAN 与集群启动逻辑"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Grid Infrastructure 深度解析：OCR/Voting Disk/SCAN 与集群启动逻辑 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-GI-%E6%9E%B6%E6%9E%84%E6%A6%82%E8%A7%88"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 GI 架构概览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-OCR-Oracle-Cluster-Registry"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 OCR (Oracle Cluster Registry)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-1-OCR-%E7%9A%84%E4%BD%9C%E7%94%A8%E4%B8%8E%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84"><span class="nav-number">2.2.1.</span> <span class="nav-text">2.2.1 OCR 的作用与存储结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-2-OCR-%E7%9A%84%E5%A4%87%E4%BB%BD%E6%9C%BA%E5%88%B6"><span class="nav-number">2.2.2.</span> <span class="nav-text">2.2.2 OCR 的备份机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-3-OCR-%E6%81%A2%E5%A4%8D%E6%B5%81%E7%A8%8B"><span class="nav-number">2.2.3.</span> <span class="nav-text">2.2.3 OCR 恢复流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Voting-Disk"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 Voting Disk</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-1-Voting-Disk-%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">2.3.1.</span> <span class="nav-text">2.3.1 Voting Disk 的作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-2-Voting-Disk-%E7%9A%84%E5%AD%98%E5%82%A8%E6%BC%94%E5%8F%98"><span class="nav-number">2.3.2.</span> <span class="nav-text">2.3.2 Voting Disk 的存储演变</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-SCAN-Single-Client-Access-Name"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 SCAN (Single Client Access Name)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-1-SCAN-%E7%9A%84%E5%8E%9F%E7%90%86"><span class="nav-number">2.4.1.</span> <span class="nav-text">2.4.1 SCAN 的原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-2-SCAN-Listener-%E4%B8%8E-Local-Listener-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">2.4.2.</span> <span class="nav-text">2.4.2 SCAN Listener 与 Local Listener 的关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-3-SCAN-%E7%9A%84%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E6%9C%BA%E5%88%B6"><span class="nav-number">2.4.3.</span> <span class="nav-text">2.4.3 SCAN 的负载均衡机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-4-SCAN-IP-%E5%8F%98%E6%9B%B4%E6%B5%81%E7%A8%8B"><span class="nav-number">2.4.4.</span> <span class="nav-text">2.4.4 SCAN IP 变更流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-GPNP-Profile"><span class="nav-number">2.5.</span> <span class="nav-text">2.5 GPNP Profile</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-5-1-GPNP-%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">2.5.1.</span> <span class="nav-text">2.5.1 GPNP 的作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-5-2-profile-xml-%E6%96%87%E4%BB%B6%E8%A7%A3%E6%9E%90"><span class="nav-number">2.5.2.</span> <span class="nav-text">2.5.2 profile.xml 文件解析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-6-GI-%E9%9B%86%E7%BE%A4%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B"><span class="nav-number">2.6.</span> <span class="nav-text">2.6 GI 集群启动过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%84%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B%E7%9A%84%E8%81%8C%E8%B4%A3"><span class="nav-number">2.6.1.</span> <span class="nav-text">各守护进程的职责</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E6%97%A5%E5%BF%97%E4%BD%8D%E7%BD%AE"><span class="nav-number">2.6.2.</span> <span class="nav-text">关键日志位置</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-OCR-%E7%AE%A1%E7%90%86"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 OCR 管理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-1-%E6%A3%80%E6%9F%A5-OCR-%E7%8A%B6%E6%80%81"><span class="nav-number">3.1.1.</span> <span class="nav-text">3.1.1 检查 OCR 状态</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-2-OCR-%E5%A4%87%E4%BB%BD"><span class="nav-number">3.1.2.</span> <span class="nav-text">3.1.2 OCR 备份</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-3-%E6%B7%BB%E5%8A%A0-%E5%88%A0%E9%99%A4-OCR-%E9%95%9C%E5%83%8F"><span class="nav-number">3.1.3.</span> <span class="nav-text">3.1.3 添加&#x2F;删除 OCR 镜像</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Voting-Disk-%E7%AE%A1%E7%90%86"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 Voting Disk 管理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-%E6%9F%A5%E7%9C%8B-Voting-Disk-%E7%8A%B6%E6%80%81"><span class="nav-number">3.2.1.</span> <span class="nav-text">3.2.1 查看 Voting Disk 状态</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-%E6%B7%BB%E5%8A%A0-%E5%88%A0%E9%99%A4-Voting-Disk"><span class="nav-number">3.2.2.</span> <span class="nav-text">3.2.2 添加&#x2F;删除 Voting Disk</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-SCAN-%E7%AE%A1%E7%90%86"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 SCAN 管理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-1-%E6%9F%A5%E7%9C%8B-SCAN-%E9%85%8D%E7%BD%AE"><span class="nav-number">3.3.1.</span> <span class="nav-text">3.3.1 查看 SCAN 配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-2-SCAN-IP-%E5%8F%98%E6%9B%B4%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B"><span class="nav-number">3.3.2.</span> <span class="nav-text">3.3.2 SCAN IP 变更完整流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-GI-%E5%90%AF%E5%8A%A8%E8%AF%8A%E6%96%AD"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 GI 启动诊断</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-4-1-%E5%90%AF%E5%8A%A8%E5%A4%B1%E8%B4%A5%E8%AF%8A%E6%96%AD%E6%B5%81%E7%A8%8B"><span class="nav-number">3.4.1.</span> <span class="nav-text">3.4.1 启动失败诊断流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-4-2-%E6%97%A5%E5%BF%97%E6%94%B6%E9%9B%86%E5%B7%A5%E5%85%B7"><span class="nav-number">3.4.2.</span> <span class="nav-text">3.4.2 日志收集工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-4-3-%E7%B4%A7%E6%80%A5%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.4.3.</span> <span class="nav-text">3.4.3 紧急启动模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-4-4-%E5%B8%B8%E8%A7%81%E5%90%AF%E5%8A%A8%E6%95%85%E9%9A%9C%E5%8F%8A%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">3.4.4.</span> <span class="nav-text">3.4.4 常见启动故障及解决方案</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-GI-%E6%97%A5%E5%B8%B8%E5%B7%A1%E6%A3%80%E8%A6%81%E7%82%B9"><span class="nav-number">5.1.</span> <span class="nav-text">5.1 GI 日常巡检要点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-OCR-Voting-Disk-%E5%A4%87%E4%BB%BD%E7%AD%96%E7%95%A5"><span class="nav-number">5.2.</span> <span class="nav-text">5.2 OCR&#x2F;Voting Disk 备份策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-SCAN-%E9%85%8D%E7%BD%AE%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">5.3.</span> <span class="nav-text">5.3 SCAN 配置的最佳实践</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-4-%E5%B8%B8%E8%A7%81-GI-%E6%95%85%E9%9A%9C%E7%9A%84%E5%BF%AB%E9%80%9F%E5%AE%9A%E4%BD%8D%E6%96%B9%E6%B3%95"><span class="nav-number">5.4.</span> <span class="nav-text">5.4 常见 GI 故障的快速定位方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-5-%E6%8E%A8%E8%8D%90-MOS-%E6%96%87%E6%A1%A3"><span class="nav-number">5.5.</span> <span class="nav-text">5.5 推荐 MOS 文档</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/01/19/oracle/grid-infrastructure-deep-dive/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Grid Infrastructure 深度解析：OCR&#x2F;Voting Disk&#x2F;SCAN 与集群启动逻辑 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Grid Infrastructure 深度解析：OCR/Voting Disk/SCAN 与集群启动逻辑
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-01-19 10:00:00" itemprop="dateCreated datePublished" datetime="2026-01-19T10:00:00+00:00">2026-01-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>Oracle Grid Infrastructure (GI) 是 RAC 架构的基石，负责集群管理、存储管理、网络管理三大核心功能。然而，很多 DBA 对 GI 的理解仅停留在 <code>crsctl start/stop</code> 的层面，一旦遇到 OCR 损坏、Voting Disk 丢失、SCAN IP 漂移等生产故障，往往束手无策。本文将从底层机制出发，深入剖析 GI 的核心组件与启动逻辑，帮助读者建立对 GI 架构的系统性认知。</p>
+<span id="more"></span>
+
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>在日常运维中，我们经常遇到这样的场景：</p>
+<ul>
+<li>某次存储故障导致 OCR 所在磁盘组不可用，整个 RAC 集群瞬间宕机</li>
+<li>网络抖动触发 Voting Disk 仲裁失败，节点被逐出集群</li>
+<li>SCAN IP 无法解析，大量应用连接失败</li>
+</ul>
+<p>这些问题的根源在于我们对 GI 底层机制的理解不够深入。<strong>只会用 <code>srvctl</code> 和 <code>crsctl</code> 管理集群，却不了解它们背后的运行逻辑，就像会开车却不懂发动机原理——平时没问题，出故障就抓瞎。</strong></p>
+<blockquote>
+<p>本文基于 Oracle 12c&#x2F;19c 版本，部分内容在 11gR2 中有差异，会在文中注明。参考了 roger wiki 的 RAC 内部机制分析以及多篇 MOS 文档。</p>
+</blockquote>
+<hr>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-GI-架构概览"><a href="#2-1-GI-架构概览" class="headerlink" title="2.1 GI 架构概览"></a>2.1 GI 架构概览</h3><p>在深入各组件之前，先用文字描述一下 GI 的整体架构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────┐</span><br><span class="line">│                    应用层 / 数据库层                    │</span><br><span class="line">│              Oracle RAC Database Instances            │</span><br><span class="line">├─────────────────────────────────────────────────────┤</span><br><span class="line">│                   资源管理层 (CRSD)                     │</span><br><span class="line">│     Database / Service / Listener / VIP / SCAN VIP    │</span><br><span class="line">├─────────────────────────────────────────────────────┤</span><br><span class="line">│                   集群同步层 (OCSSD)                    │</span><br><span class="line">│        CSS (Cluster Synchronization Services)          │</span><br><span class="line">│              Voting Disk / 网络心跳                      │</span><br><span class="line">├─────────────────────────────────────────────────────┤</span><br><span class="line">│                   集群注册表层                           │</span><br><span class="line">│              OCR (Cluster Registry)                    │</span><br><span class="line">│              GPNP (Grid Plug and Play)                 │</span><br><span class="line">├─────────────────────────────────────────────────────┤</span><br><span class="line">│                   基础服务层 (OHASD)                     │</span><br><span class="line">│          OHASD -&gt; CSSDAGENT -&gt; OCSSD                   │</span><br><span class="line">│              ASM / 网络 / 存储管理                       │</span><br><span class="line">├─────────────────────────────────────────────────────┤</span><br><span class="line">│                   操作系统 / 网络 / 存储                  │</span><br><span class="line">└─────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p>GI 的层次关系可以概括为：<strong>OHASD 是最底层的守护进程，负责启动整个集群栈；OCSSD 负责节点间的心跳同步和脑裂仲裁；CRSD 负责管理所有集群资源；ASM 负责存储管理。</strong> 这些组件的启动有严格的顺序依赖关系，下文会详细分析。</p>
+<hr>
+<h3 id="2-2-OCR-Oracle-Cluster-Registry"><a href="#2-2-OCR-Oracle-Cluster-Registry" class="headerlink" title="2.2 OCR (Oracle Cluster Registry)"></a>2.2 OCR (Oracle Cluster Registry)</h3><h4 id="2-2-1-OCR-的作用与存储结构"><a href="#2-2-1-OCR-的作用与存储结构" class="headerlink" title="2.2.1 OCR 的作用与存储结构"></a>2.2.1 OCR 的作用与存储结构</h4><p>OCR 是整个 RAC 集群的”配置中心”，存储了以下关键信息：</p>
+<ul>
+<li>集群节点列表与节点编号</li>
+<li>数据库、实例、Service 的配置信息</li>
+<li>VIP、SCAN VIP、Listener 的网络配置</li>
+<li>ASM 磁盘组配置</li>
+<li>资源的属性（如 <code>AUTO_START</code>、<code>START_DEPENDENCIES</code> 等）</li>
+</ul>
+<p><strong>OCR 的存储结构经历了重大演变：</strong></p>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th>存储位置</th>
+<th>冗余方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10g&#x2F;11gR1</td>
+<td>共享裸设备&#x2F;OCFS</td>
+<td>OCR + OCR Mirror（最多2份）</td>
+</tr>
+<tr>
+<td>11gR2+</td>
+<td>ASM 磁盘组</td>
+<td>Normal Redundancy &#x3D; 3份副本，High &#x3D; 5份</td>
+</tr>
+<tr>
+<td>12c+</td>
+<td>ASM 磁盘组</td>
+<td>同 11gR2，但引入了 OCR 备份存储在 ASM 中</td>
+</tr>
+</tbody></table>
+<p>在 11.2.0.2+ 中，OCR 默认存储在 ASM 磁盘组中（通常是 <code>+CRS</code> 磁盘组），Oracle 会在磁盘组中创建一个名为 <code>SYSTEMDG</code> 的文件来存储 OCR。这种设计的好处是利用了 ASM 的镜像机制来保护 OCR，而不再需要单独管理 OCR Mirror。</p>
+<h4 id="2-2-2-OCR-的备份机制"><a href="#2-2-2-OCR-的备份机制" class="headerlink" title="2.2.2 OCR 的备份机制"></a>2.2.2 OCR 的备份机制</h4><p>OCR 有三种备份方式：</p>
+<p><strong>1) 自动备份</strong></p>
+<p>CRSD 进程会按照以下策略自动备份 OCR：</p>
+<ul>
+<li><strong>每 4 小时</strong>：保留最近 3 次备份</li>
+<li><strong>每天一次</strong>：保留最近 1 天的备份</li>
+<li><strong>每周一次</strong>：保留最近 1 周的备份</li>
+</ul>
+<p>备份文件存储在 <code>$GRID_HOME/cdata/&lt;cluster_name&gt;/</code> 目录下。</p>
+<p><strong>2) 手动备份</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 手动备份 OCR</span></span><br><span class="line">ocrconfig -manualbackup</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看手动备份列表</span></span><br><span class="line">ocrconfig -showbackup manual</span><br><span class="line"></span><br><span class="line">node1 2026/06/05 10:30:15 /u01/app/19c/grid/cdata/rac-cluster/backup_20260605_103015.ocr</span><br></pre></td></tr></table></figure>
+
+<p><strong>3) 逻辑导出</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 导出 OCR 到文件（建议在重大变更前执行）</span></span><br><span class="line">ocrconfig -<span class="built_in">export</span> /tmp/ocr_export_$(<span class="built_in">date</span> +%Y%m%d).bak</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>最佳实践</strong>：每次 CRS 变更（添加&#x2F;删除节点、修改网络配置）前，手动执行 <code>ocrconfig -manualbackup</code> 和 <code>ocrconfig -export</code>。MOS Doc ID 394654.1 详细介绍了 OCR 的备份与恢复策略。</p>
+</blockquote>
+<h4 id="2-2-3-OCR-恢复流程"><a href="#2-2-3-OCR-恢复流程" class="headerlink" title="2.2.3 OCR 恢复流程"></a>2.2.3 OCR 恢复流程</h4><p>当 OCR 出现损坏时，可以使用以下流程恢复：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 停止所有节点的 CRS</span></span><br><span class="line">crsctl stop crs -f</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 在一个节点上以 exclusive 模式启动 CRS</span></span><br><span class="line">crsctl start crs -excl</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 查看可用的 OCR 备份</span></span><br><span class="line">ocrconfig -showbackup</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 恢复 OCR</span></span><br><span class="line">ocrconfig -restore /u01/app/19c/grid/cdata/rac-cluster/backup_20260604_040000.ocr</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 停止 exclusive 模式的 CRS</span></span><br><span class="line">crsctl stop crs -f</span><br><span class="line"></span><br><span class="line"><span class="comment"># 6. 在所有节点正常启动 CRS</span></span><br><span class="line">crsctl start crs</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：如果使用的是 12c+ 且 OCR 存储在 ASM 中，恢复时需要确保 ASM 磁盘组已经 mount。</p>
+</blockquote>
+<hr>
+<h3 id="2-3-Voting-Disk"><a href="#2-3-Voting-Disk" class="headerlink" title="2.3 Voting Disk"></a>2.3 Voting Disk</h3><h4 id="2-3-1-Voting-Disk-的作用"><a href="#2-3-1-Voting-Disk-的作用" class="headerlink" title="2.3.1 Voting Disk 的作用"></a>2.3.1 Voting Disk 的作用</h4><p>Voting Disk 是 RAC 集群的”仲裁者”，承担两个核心职责：</p>
+<p><strong>1) 节点健康检查</strong></p>
+<p>每个节点的 OCSSD 进程会定期向 Voting Disk 写入心跳信息（称为 <strong>disk heartbeat</strong>）。如果某个节点在 <code>Misscount</code>（默认 30 秒）内没有写入心跳，其他节点会认为该节点”死亡”，并将其从集群中驱逐。</p>
+<p><strong>2) 脑裂仲裁（Split Brain Resolution）</strong></p>
+<p>当集群网络发生分区（网络分裂）时，可能出现两个分区都认为自己是”活的”。此时，Voting Disk 的仲裁机制发挥作用：</p>
+<ul>
+<li>每个分区的节点都会尝试读取 Voting Disk 中其他节点的心跳信息</li>
+<li>拥有<strong>多数节点</strong>（&gt; N&#x2F;2）的分区胜出，继续运行</li>
+<li>少数节点分区被驱逐（eviction）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">节点A ──┐         ┌── 节点B</span><br><span class="line">节点C ──┤ 网络分区 ├── 节点D</span><br><span class="line">        └─────────┘</span><br><span class="line">分区1: 2个节点 → 胜出，继续运行</span><br><span class="line">分区2: 2个节点 → 投票决定，取决于 Voting Disk 的仲裁结果</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>关键参数</strong>：</p>
+<ul>
+<li><code>Misscount</code>：默认 30 秒（12c+ 中可配置），超过此时间未写入 Voting Disk 则认为节点死亡</li>
+<li><code>Disktimeout</code>：默认 200 秒，Voting Disk I&#x2F;O 操作的超时时间</li>
+<li><code>Reboottime</code>：节点被驱逐后的等待重启时间，默认 3 秒</li>
+</ul>
+</blockquote>
+<h4 id="2-3-2-Voting-Disk-的存储演变"><a href="#2-3-2-Voting-Disk-的存储演变" class="headerlink" title="2.3.2 Voting Disk 的存储演变"></a>2.3.2 Voting Disk 的存储演变</h4><p>与 OCR 类似，Voting Disk 在 11gR2+ 中也存储在 ASM 磁盘组中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查询 Voting Disk 位置</span></span><br><span class="line">crsctl query css votedisk</span><br><span class="line"></span><br><span class="line"><span class="comment">##  STATE    File Universal Id                File Name Disk group</span></span><br><span class="line">--  -----    -----------------                --------- ---------</span><br><span class="line"> 1. ONLINE   a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6 (DATA01) [DATA]</span><br><span class="line"> 2. ONLINE   b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7 (DATA02) [DATA]</span><br><span class="line"> 3. ONLINE   c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8 (DATA03) [DATA]</span><br><span class="line">Located 3 voting file(s).</span><br></pre></td></tr></table></figure>
+
+<p><strong>冗余要求：</strong></p>
+<ul>
+<li>External Redundancy：至少 1 个 Voting Disk</li>
+<li>Normal Redundancy：至少 3 个 Voting Disk（推荐）</li>
+<li>High Redundancy：至少 5 个 Voting Disk</li>
+</ul>
+<blockquote>
+<p><strong>重要提醒</strong>：在 11gR2 之前，Voting Disk 可以存储在裸设备或 OCFS 上，需要手动管理冗余。11gR2 之后，Voting Disk 的冗余完全由 ASM 管理。MOS Doc ID 1388755.1 详细说明了 11gR2 中 Voting Disk 存储在 ASM 中的变化。</p>
+</blockquote>
+<hr>
+<h3 id="2-4-SCAN-Single-Client-Access-Name"><a href="#2-4-SCAN-Single-Client-Access-Name" class="headerlink" title="2.4 SCAN (Single Client Access Name)"></a>2.4 SCAN (Single Client Access Name)</h3><h4 id="2-4-1-SCAN-的原理"><a href="#2-4-1-SCAN-的原理" class="headerlink" title="2.4.1 SCAN 的原理"></a>2.4.1 SCAN 的原理</h4><p>SCAN 是 11gR2 引入的客户端连接抽象层，其核心设计思想是：<strong>让客户端连接与集群节点解耦</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">客户端应用</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">SCAN Name: scan.example.com</span><br><span class="line">    │</span><br><span class="line">    ├── SCAN VIP 1 (192.168.1.100) → SCAN Listener 1 → Node1 Local Listener → Instance1</span><br><span class="line">    ├── SCAN VIP 2 (192.168.1.101) → SCAN Listener 2 → Node2 Local Listener → Instance2</span><br><span class="line">    └── SCAN VIP 3 (192.168.1.102) → SCAN Listener 3 → Node1 Local Listener → Instance1</span><br></pre></td></tr></table></figure>
+
+<p><strong>SCAN 的关键特性：</strong></p>
+<ul>
+<li><strong>3 个 SCAN VIP</strong>：Oracle 推荐配置 3 个 SCAN VIP，通过 DNS 解析返回 3 个 IP 地址（round-robin）</li>
+<li><strong>2 个 SCAN Listener</strong>：默认情况下，Oracle 只会启动 2 个 SCAN Listener（在不同节点上），因为 2 个 Listener 就能服务 3 个 VIP</li>
+<li><strong>DNS 或 GNS 解析</strong>：SCAN Name 必须通过 DNS 或 GNS (Grid Naming Service) 解析</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 验证 SCAN 配置</span></span><br><span class="line">srvctl config scan</span><br><span class="line"></span><br><span class="line">SCAN name: scan.example.com, Network: 1</span><br><span class="line">Subnet IPv4: 192.168.1.0/255.255.255.0/eth0, static</span><br><span class="line">Subnet IPv6:</span><br><span class="line">SCAN 1 IPv4 VIP: 192.168.1.100/255.255.255.0</span><br><span class="line">SCAN 2 IPv4 VIP: 192.168.1.101/255.255.255.0</span><br><span class="line">SCAN 3 IPv4 VIP: 192.168.1.102/255.255.255.0</span><br><span class="line"></span><br><span class="line">srvctl config scan_listener</span><br><span class="line"></span><br><span class="line">SCAN Listener LISTENER_SCAN1 exists. Port: TCP:1521</span><br><span class="line">SCAN Listener LISTENER_SCAN2 exists. Port: TCP:1521</span><br><span class="line">SCAN Listener LISTENER_SCAN3 exists. Port: TCP:1521</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-4-2-SCAN-Listener-与-Local-Listener-的关系"><a href="#2-4-2-SCAN-Listener-与-Local-Listener-的关系" class="headerlink" title="2.4.2 SCAN Listener 与 Local Listener 的关系"></a>2.4.2 SCAN Listener 与 Local Listener 的关系</h4><p>这是很多 DBA 容易混淆的地方。理解这个关系对性能调优和故障排查至关重要：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">客户端 → SCAN Listener → Local Listener → 数据库实例</span><br></pre></td></tr></table></figure>
+
+<p><strong>完整连接流程：</strong></p>
+<ol>
+<li>客户端使用 SCAN Name 连接数据库（如 <code>jdbc:oracle:thin:@scan.example.com:1521/service_name</code>）</li>
+<li>DNS 返回 3 个 SCAN VIP 中的一个（round-robin）</li>
+<li>客户端连接到对应的 SCAN Listener</li>
+<li>SCAN Listener 根据负载均衡算法选择一个 Local Listener</li>
+<li>SCAN Listener 将请求重定向（redirect）到 Local Listener</li>
+<li>Local Listener 建立与数据库实例的连接</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 SCAN Listener 的状态</span></span><br><span class="line">srvctl status scan_listener</span><br><span class="line"></span><br><span class="line">SCAN Listener LISTENER_SCAN1 is enabled</span><br><span class="line">SCAN Listener LISTENER_SCAN1 is running on node node2</span><br><span class="line">SCAN Listener LISTENER_SCAN2 is enabled</span><br><span class="line">SCAN Listener LISTENER_SCAN2 is running on node node1</span><br><span class="line">SCAN Listener LISTENER_SCAN3 is enabled</span><br><span class="line">SCAN Listener LISTENER_SCAN3 is running on node node2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 Local Listener 的配置</span></span><br><span class="line">srvctl config listener -l LISTENER</span><br><span class="line"></span><br><span class="line">Name: LISTENER</span><br><span class="line">Type: Database Listener</span><br><span class="line">Network: 1, Owner: grid</span><br><span class="line">Home: &lt;CRS home&gt;</span><br><span class="line">End points: TCP:1521</span><br><span class="line">Listener is enabled.</span><br><span class="line">Listener is individually enabled on nodes:</span><br><span class="line">Listener is individually disabled on nodes:</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-4-3-SCAN-的负载均衡机制"><a href="#2-4-3-SCAN-的负载均衡机制" class="headerlink" title="2.4.3 SCAN 的负载均衡机制"></a>2.4.3 SCAN 的负载均衡机制</h4><p>SCAN 提供了两层负载均衡：</p>
+<p><strong>第一层：DNS Round-Robin</strong></p>
+<p>客户端解析 SCAN Name 时，DNS 返回 3 个 IP 中的一个。这是最基本的负载分散机制。</p>
+<p><strong>第二层：SCAN Listener 智能路由</strong></p>
+<p>SCAN Listener 会根据各节点的负载情况，将连接请求路由到负载最低的节点。这个信息来自 PMON 进程注册到 Listener 中的 <code>Load</code> 指标。</p>
+<blockquote>
+<p><strong>11.2 vs 12c 的差异</strong>：12c 引入了 <strong>Remote Listener</strong> 的概念，Local Listener 和 SCAN Listener 都注册到 Remote Listener，实现了更灵活的连接路由。此外，12c 的 SCAN 支持 IPv6 和 TLS 加密连接。</p>
+</blockquote>
+<h4 id="2-4-4-SCAN-IP-变更流程"><a href="#2-4-4-SCAN-IP-变更流程" class="headerlink" title="2.4.4 SCAN IP 变更流程"></a>2.4.4 SCAN IP 变更流程</h4><p>生产环境中，SCAN IP 变更是一个常见需求（如网络迁移）。正确的变更流程如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 停止 SCAN 相关资源</span></span><br><span class="line">srvctl stop scan_listener</span><br><span class="line">srvctl stop scan</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 修改 SCAN 配置</span></span><br><span class="line">srvctl modify scan -scanname scan.newdomain.com</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 如果需要修改 SCAN IP（不使用 DNS 的场景）</span></span><br><span class="line">srvctl modify scan -scanname scan.example.com -netnum 1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 重新启动 SCAN 资源</span></span><br><span class="line">srvctl start scan</span><br><span class="line">srvctl start scan_listener</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 验证配置</span></span><br><span class="line">srvctl config scan</span><br><span class="line">srvctl status scan_listener</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>重要</strong>：修改 SCAN IP 后，必须同步更新 DNS 记录或 <code>/etc/hosts</code> 文件（仅测试环境）。生产环境强烈建议使用 DNS 解析。</p>
+</blockquote>
+<hr>
+<h3 id="2-5-GPNP-Profile"><a href="#2-5-GPNP-Profile" class="headerlink" title="2.5 GPNP Profile"></a>2.5 GPNP Profile</h3><h4 id="2-5-1-GPNP-的作用"><a href="#2-5-1-GPNP-的作用" class="headerlink" title="2.5.1 GPNP 的作用"></a>2.5.1 GPNP 的作用</h4><p>GPNP (Grid Plug and Play) 是 11gR2 引入的集群配置管理框架，其核心作用是：</p>
+<ul>
+<li><strong>存储集群网络配置</strong>：节点名称、网络接口、IP 地址等</li>
+<li><strong>支持动态添加&#x2F;删除节点</strong>：新节点加入集群时自动获取配置</li>
+<li><strong>与 OUI 集成</strong>：安装 GI 时自动创建和分发 GPNP Profile</li>
+</ul>
+<p>GPNP Profile 存储在 <code>$GRID_HOME/gpnp/&lt;hostname&gt;/profiles/peer/profile.xml</code> 文件中。</p>
+<h4 id="2-5-2-profile-xml-文件解析"><a href="#2-5-2-profile-xml-文件解析" class="headerlink" title="2.5.2 profile.xml 文件解析"></a>2.5.2 profile.xml 文件解析</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">gpn:GpnPProfile</span></span></span><br><span class="line"><span class="tag">    <span class="attr">xmlns:gpnp</span>=<span class="string">&quot;http://www.oracle.com/GpnP/Profile&quot;</span></span></span><br><span class="line"><span class="tag">    <span class="attr">version</span>=<span class="string">&quot;11.2.0.4.0&quot;</span></span></span><br><span class="line"><span class="tag">    <span class="attr">...</span></span></span><br><span class="line"><span class="tag">    &lt;<span class="attr">gpnp:Network-Profile</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">gpnp:HostNetwork</span> <span class="attr">id</span>=<span class="string">&quot;gen&quot;</span> <span class="attr">HostName</span>=<span class="string">&quot;node1&quot;</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">gpnp:Network</span> <span class="attr">id</span>=<span class="string">&quot;net1&quot;</span></span></span><br><span class="line"><span class="tag">                <span class="attr">Adapter</span>=<span class="string">&quot;eth0&quot;</span> <span class="attr">IP</span>=<span class="string">&quot;subnet&quot;</span> <span class="attr">Prefix</span>=<span class="string">&quot;24&quot;</span></span></span><br><span class="line"><span class="tag">                <span class="attr">Use</span>=<span class="string">&quot;cluster_interconnect&quot;</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">gpnp:Network</span> <span class="attr">id</span>=<span class="string">&quot;net2&quot;</span></span></span><br><span class="line"><span class="tag">                <span class="attr">Adapter</span>=<span class="string">&quot;eth1&quot;</span> <span class="attr">IP</span>=<span class="string">&quot;public&quot;</span> <span class="attr">Prefix</span>=<span class="string">&quot;24&quot;</span></span></span><br><span class="line"><span class="tag">                <span class="attr">Use</span>=<span class="string">&quot;public&quot;</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">gpnp:HostNetwork</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">gpnp:Network</span> <span class="attr">id</span>=<span class="string">&quot;net3&quot;</span></span></span><br><span class="line"><span class="tag">            <span class="attr">Adapter</span>=<span class="string">&quot;eth2&quot;</span> <span class="attr">IP</span>=<span class="string">&quot;192.168.10.0&quot;</span> <span class="attr">Prefix</span>=<span class="string">&quot;24&quot;</span></span></span><br><span class="line"><span class="tag">            <span class="attr">Use</span>=<span class="string">&quot;public&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">gpnp:Network-Profile</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">orcl:CSS-Profile</span> <span class="attr">id</span>=<span class="string">&quot;css&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">DiscoveryString</span>=<span class="string">&quot;+asm&quot;</span> <span class="attr">LeaseDuration</span>=<span class="string">&quot;400&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">orcl:ASM-Profile</span> <span class="attr">id</span>=<span class="string">&quot;asm&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">DiscoveryString</span>=<span class="string">&quot;/dev/sd*&quot;</span> <span class="attr">SPFile</span>=<span class="string">&quot;+CRS/rac-cluster/ASMPARAMETERFILE/registry.253.xxx&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">gpn:GpnPProfile</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：不要手动修改 profile.xml，这会导致集群配置不一致。如果 profile.xml 损坏，可以使用 <code>gpnptool</code> 工具从其他节点获取正确的版本。</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 GPNP Profile</span></span><br><span class="line">gpnptool get -o- 2&gt;/dev/null | xmllint --format -</span><br><span class="line"></span><br><span class="line"><span class="comment"># 导出 GPNP Profile（用于故障排查）</span></span><br><span class="line">gpnptool getpval -asm_dis -pval 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="2-6-GI-集群启动过程"><a href="#2-6-GI-集群启动过程" class="headerlink" title="2.6 GI 集群启动过程"></a>2.6 GI 集群启动过程</h3><p>理解 GI 的启动顺序是排查集群启动故障的关键。整个启动过程可以分为以下几个阶段：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">[OS启动]</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">[init/systemd 启动 ohasd.service]</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">OHASD (Oracle High Availability Services Daemon)</span><br><span class="line">    │</span><br><span class="line">    ├──→ CSSDAGENT ──→ OCSSD (集群同步服务)</span><br><span class="line">    │                      │</span><br><span class="line">    │                      ├── 读取 Voting Disk</span><br><span class="line">    │                      ├── 建立节点间心跳</span><br><span class="line">    │                      └── 完成集群成员发现</span><br><span class="line">    │</span><br><span class="line">    ├──→ ORAROOTAGENT ──→ 网络资源（VIP、SCAN VIP、Node VIP）</span><br><span class="line">    │</span><br><span class="line">    ├──→ GPNPD (Grid Plug and Play Daemon)</span><br><span class="line">    │       └── 加载 profile.xml</span><br><span class="line">    │</span><br><span class="line">    └──→ CTSSD (Cluster Time Synchronization Service)</span><br><span class="line">            └── 时间同步检查</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">[OCSSD 就绪，集群成员确认]</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">CRSD (Cluster Ready Services Daemon)</span><br><span class="line">    │</span><br><span class="line">    ├──→ 读取 OCR</span><br><span class="line">    │</span><br><span class="line">    ├──→ ORAROOTAGENT</span><br><span class="line">    │       ├── 启动 Node VIP</span><br><span class="line">    │       ├── 启动 SCAN VIP</span><br><span class="line">    │       └── 启动 Network Resource</span><br><span class="line">    │</span><br><span class="line">    └──→ ORAAGENT (grid 用户)</span><br><span class="line">            ├── 启动 ASM 实例</span><br><span class="line">            ├── 启动 SCAN Listener</span><br><span class="line">            └── 启动 Local Listener</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">[CRSD 就绪，可以管理数据库资源]</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">ORAAGENT (oracle 用户)</span><br><span class="line">    ├── 启动数据库实例</span><br><span class="line">    ├── 启动数据库 Service</span><br><span class="line">    └── 启动数据库 Listener（如果使用独立 Listener）</span><br></pre></td></tr></table></figure>
+
+<h4 id="各守护进程的职责"><a href="#各守护进程的职责" class="headerlink" title="各守护进程的职责"></a>各守护进程的职责</h4><table>
+<thead>
+<tr>
+<th>进程</th>
+<th>全称</th>
+<th>职责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OHASD</td>
+<td>Oracle High Availability Services Daemon</td>
+<td>最底层守护进程，管理所有本地资源</td>
+</tr>
+<tr>
+<td>OCSSD</td>
+<td>Oracle Cluster Synchronization Services Daemon</td>
+<td>集群同步、节点发现、脑裂仲裁</td>
+</tr>
+<tr>
+<td>CSSDAGENT</td>
+<td>CSS Daemon Agent</td>
+<td>监控 OCSSD 健康状态，负责节点驱逐</td>
+</tr>
+<tr>
+<td>CRSD</td>
+<td>Cluster Ready Services Daemon</td>
+<td>管理集群资源（数据库、Service、VIP 等）</td>
+</tr>
+<tr>
+<td>CTSSD</td>
+<td>Cluster Time Synchronization Service Daemon</td>
+<td>集群节点时间同步</td>
+</tr>
+<tr>
+<td>GPNPD</td>
+<td>Grid Plug and Play Daemon</td>
+<td>管理 GPNP Profile</td>
+</tr>
+<tr>
+<td>EVMD</td>
+<td>Event Manager Daemon</td>
+<td>集群事件管理</td>
+</tr>
+</tbody></table>
+<h4 id="关键日志位置"><a href="#关键日志位置" class="headerlink" title="关键日志位置"></a>关键日志位置</h4><p>排查 GI 启动问题时，需要关注以下日志：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># OHASD 日志（启动最早，最先查看）</span></span><br><span class="line"><span class="variable">$GRID_HOME</span>/log/&lt;hostname&gt;/ohasd/ohasd.log</span><br><span class="line"></span><br><span class="line"><span class="comment"># OCSSD 日志（集群同步相关问题）</span></span><br><span class="line"><span class="variable">$GRID_HOME</span>/log/&lt;hostname&gt;/cssd/ocssd.log</span><br><span class="line"></span><br><span class="line"><span class="comment"># CRSD 日志（资源管理相关问题）</span></span><br><span class="line"><span class="variable">$GRID_HOME</span>/log/&lt;hostname&gt;/crsd/crsd.log</span><br><span class="line"></span><br><span class="line"><span class="comment"># ASM 日志（ASM 实例启动问题）</span></span><br><span class="line"><span class="variable">$GRID_HOME</span>/log/&lt;hostname&gt;/asm/asm_&lt;+ASM1&gt;.<span class="built_in">log</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ALERT 日志（集群级别的告警）</span></span><br><span class="line"><span class="variable">$GRID_HOME</span>/log/&lt;hostname&gt;/alert&lt;hostname&gt;.<span class="built_in">log</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 节点驱逐相关日志</span></span><br><span class="line"><span class="variable">$GRID_HOME</span>/log/&lt;hostname&gt;/cssd/cssdOUT.<span class="built_in">log</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-OCR-管理"><a href="#3-1-OCR-管理" class="headerlink" title="3.1 OCR 管理"></a>3.1 OCR 管理</h3><h4 id="3-1-1-检查-OCR-状态"><a href="#3-1-1-检查-OCR-状态" class="headerlink" title="3.1.1 检查 OCR 状态"></a>3.1.1 检查 OCR 状态</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 检查 OCR 完整性</span></span><br><span class="line">ocrcheck</span><br><span class="line"></span><br><span class="line">Status of Oracle Cluster Registry is as follows :</span><br><span class="line">         Version                  :          4</span><br><span class="line">         Total space (kbytes)     :     409600</span><br><span class="line">         Used space (kbytes)      :       3456</span><br><span class="line">         Available space (kbytes) :     406144</span><br><span class="line">         ID                       : 1234567890</span><br><span class="line">         Device/File Name         :       +CRS</span><br><span class="line">                                    Device/File integrity check succeeded</span><br><span class="line"></span><br><span class="line">         Device/File not configured</span><br><span class="line"></span><br><span class="line">         Device/File not configured</span><br><span class="line"></span><br><span class="line">         Device/File not configured</span><br><span class="line"></span><br><span class="line">         Device/File not configured</span><br><span class="line"></span><br><span class="line">         Cluster registry integrity check succeeded</span><br><span class="line"></span><br><span class="line">         Logical corruption check bypassed due to insufficient quorum</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>解读</strong>：12c+ 中，OCR 存储在 ASM 磁盘组中，<code>Device/File Name</code> 显示的是磁盘组名称（如 <code>+CRS</code>）。如果配置了 Normal Redundancy，ASM 会自动维护 3 份 OCR 副本。</p>
+</blockquote>
+<h4 id="3-1-2-OCR-备份"><a href="#3-1-2-OCR-备份" class="headerlink" title="3.1.2 OCR 备份"></a>3.1.2 OCR 备份</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 手动备份 OCR</span></span><br><span class="line">ocrconfig -manualbackup</span><br><span class="line"></span><br><span class="line">node1     2026/06/05 10:30:15     /u01/app/19c/grid/cdata/rac-cluster/backup_20260605.ocr</span><br><span class="line">node2     2026/06/04 22:00:10     /u01/app/19c/grid/cdata/rac-cluster/backup_20260604.ocr</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看自动备份</span></span><br><span class="line">ocrconfig -showbackup auto</span><br><span class="line"></span><br><span class="line">node1     2026/06/05 06:00:00     /u01/app/19c/grid/cdata/rac-cluster/backup00.ocr</span><br><span class="line">node1     2026/06/05 02:00:00     /u01/app/19c/grid/cdata/rac-cluster/backup01.ocr</span><br><span class="line">node1     2026/06/04 22:00:00     /u01/app/19c/grid/cdata/rac-cluster/backup02.ocr</span><br><span class="line">node1     2026/06/04 18:00:00     /u01/app/19c/grid/cdata/rac-cluster/day.ocr</span><br><span class="line">node1     2026/05/29 06:00:00     /u01/app/19c/grid/cdata/rac-cluster/week.ocr</span><br><span class="line"></span><br><span class="line"><span class="comment"># 逻辑导出 OCR（建议定期执行）</span></span><br><span class="line">ocrconfig -<span class="built_in">export</span> /tmp/ocr_export_20260605.bak</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-1-3-添加-删除-OCR-镜像"><a href="#3-1-3-添加-删除-OCR-镜像" class="headerlink" title="3.1.3 添加&#x2F;删除 OCR 镜像"></a>3.1.3 添加&#x2F;删除 OCR 镜像</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前 OCR 配置</span></span><br><span class="line">ocrcheck</span><br><span class="line"><span class="comment"># 假设当前 OCR 在 +CRS 磁盘组，需要添加镜像到 +DATA 磁盘组</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加 OCR 到另一个 ASM 磁盘组（12c+ 中使用 ocrconfig -add）</span></span><br><span class="line">ocrconfig -add +DATA</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证添加成功</span></span><br><span class="line">ocrcheck</span><br><span class="line"></span><br><span class="line">Status of Oracle Cluster Registry is as follows :</span><br><span class="line">         Version                  :          4</span><br><span class="line">         Total space (kbytes)     :     409600</span><br><span class="line">         Used space (kbytes)      :       3456</span><br><span class="line">         Available space (kbytes) :     406144</span><br><span class="line">         ID                       : 1234567890</span><br><span class="line">         Device/File Name         :       +CRS</span><br><span class="line">                                    Device/File integrity check succeeded</span><br><span class="line">         Device/File Name         :       +DATA</span><br><span class="line">                                    Device/File integrity check succeeded</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除 OCR 镜像（注意：不能删除最后一份 OCR）</span></span><br><span class="line">ocrconfig -delete +DATA</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>MOS 参考</strong>：Doc ID 394654.1 - OCR &#x2F; Voting Disk Location and Management</p>
+</blockquote>
+<hr>
+<h3 id="3-2-Voting-Disk-管理"><a href="#3-2-Voting-Disk-管理" class="headerlink" title="3.2 Voting Disk 管理"></a>3.2 Voting Disk 管理</h3><h4 id="3-2-1-查看-Voting-Disk-状态"><a href="#3-2-1-查看-Voting-Disk-状态" class="headerlink" title="3.2.1 查看 Voting Disk 状态"></a>3.2.1 查看 Voting Disk 状态</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">crsctl query css votedisk</span><br><span class="line"></span><br><span class="line"><span class="comment">##  STATE    File Universal Id                File Name Disk group</span></span><br><span class="line">--  -----    -----------------                --------- ---------</span><br><span class="line"> 1. ONLINE   a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6 (DATA01) [DATA]</span><br><span class="line"> 2. ONLINE   b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7 (DATA02) [DATA]</span><br><span class="line"> 3. ONLINE   c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8 (DATA03) [DATA]</span><br><span class="line">Located 3 voting file(s).</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-2-2-添加-删除-Voting-Disk"><a href="#3-2-2-添加-删除-Voting-Disk" class="headerlink" title="3.2.2 添加&#x2F;删除 Voting Disk"></a>3.2.2 添加&#x2F;删除 Voting Disk</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加 Voting Disk 到另一个 ASM 磁盘组</span></span><br><span class="line">crsctl add css votedisk +FLASH</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除 Voting Disk</span></span><br><span class="line">crsctl delete css votedisk a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6</span><br><span class="line"></span><br><span class="line"><span class="comment"># 注意：11gR2+ 中，如果 Voting Disk 存储在 ASM 磁盘组中，</span></span><br><span class="line"><span class="comment"># Voting Disk 的数量由磁盘组的冗余级别决定，无法手动增减。</span></span><br><span class="line"><span class="comment"># 只能将 Voting Disk 迁移到另一个冗余级别不同的磁盘组。</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>重要提醒</strong>：在 11gR2+ 中，如果 Voting Disk 存储在 Normal Redundancy 的 ASM 磁盘组中，ASM 会自动维护 3 份 Voting Disk 副本。你无法手动添加或删除单个 Voting Disk，只能将 Voting Disk 整体迁移到另一个磁盘组。</p>
+</blockquote>
+<hr>
+<h3 id="3-3-SCAN-管理"><a href="#3-3-SCAN-管理" class="headerlink" title="3.3 SCAN 管理"></a>3.3 SCAN 管理</h3><h4 id="3-3-1-查看-SCAN-配置"><a href="#3-3-1-查看-SCAN-配置" class="headerlink" title="3.3.1 查看 SCAN 配置"></a>3.3.1 查看 SCAN 配置</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 SCAN 配置</span></span><br><span class="line">srvctl config scan</span><br><span class="line"></span><br><span class="line">SCAN name: scan.example.com, Network: 1</span><br><span class="line">Subnet IPv4: 192.168.1.0/255.255.255.0/eth0, static</span><br><span class="line">Subnet IPv6:</span><br><span class="line">SCAN 1 IPv4 VIP: 192.168.1.100/255.255.255.0</span><br><span class="line">SCAN 2 IPv4 VIP: 192.168.1.101/255.255.255.0</span><br><span class="line">SCAN 3 IPv4 VIP: 192.168.1.102/255.255.255.0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 SCAN Listener 状态</span></span><br><span class="line">srvctl status scan_listener</span><br><span class="line"></span><br><span class="line">SCAN Listener LISTENER_SCAN1 is enabled</span><br><span class="line">SCAN Listener LISTENER_SCAN1 is running on node node2</span><br><span class="line">SCAN Listener LISTENER_SCAN2 is enabled</span><br><span class="line">SCAN Listener LISTENER_SCAN2 is running on node node1</span><br><span class="line">SCAN Listener LISTENER_SCAN3 is enabled</span><br><span class="line">SCAN Listener LISTENER_SCAN3 is running on node node2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证 DNS 解析</span></span><br><span class="line">nslookup scan.example.com</span><br><span class="line"></span><br><span class="line">Server:         192.168.1.1</span><br><span class="line">Address:        192.168.1.1#53</span><br><span class="line"></span><br><span class="line">Name:   scan.example.com</span><br><span class="line">Address: 192.168.1.100</span><br><span class="line">Name:   scan.example.com</span><br><span class="line">Address: 192.168.1.101</span><br><span class="line">Name:   scan.example.com</span><br><span class="line">Address: 192.168.1.102</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-3-2-SCAN-IP-变更完整流程"><a href="#3-3-2-SCAN-IP-变更完整流程" class="headerlink" title="3.3.2 SCAN IP 变更完整流程"></a>3.3.2 SCAN IP 变更完整流程</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 步骤 1：更新 DNS 记录（在 DNS 服务器上操作）</span></span><br><span class="line"><span class="comment"># 将 scan.example.com 的 A 记录修改为新的 IP 地址</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 2：停止 SCAN 相关资源</span></span><br><span class="line">srvctl stop scan_listener</span><br><span class="line">srvctl stop scan</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 3：修改 SCAN 配置（如果 SCAN Name 改变）</span></span><br><span class="line">srvctl modify scan -scanname scan.newdomain.com</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 4：更新 SCAN VIP（如果 IP 地址改变，需要先获取资源名称）</span></span><br><span class="line">srvctl modify scan -scanname scan.example.com</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 5：重新启动 SCAN 资源</span></span><br><span class="line">srvctl start scan</span><br><span class="line">srvctl start scan_listener</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 6：验证</span></span><br><span class="line">srvctl status scan</span><br><span class="line">srvctl status scan_listener</span><br><span class="line">nslookup scan.example.com</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-4-GI-启动诊断"><a href="#3-4-GI-启动诊断" class="headerlink" title="3.4 GI 启动诊断"></a>3.4 GI 启动诊断</h3><h4 id="3-4-1-启动失败诊断流程"><a href="#3-4-1-启动失败诊断流程" class="headerlink" title="3.4.1 启动失败诊断流程"></a>3.4.1 启动失败诊断流程</h4><p>当 GI 启动失败时，建议按照以下顺序排查：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 步骤 1：查看 OHASD 日志</span></span><br><span class="line"><span class="built_in">tail</span> -100 <span class="variable">$GRID_HOME</span>/log/$(hostname)/ohasd/ohasd.log</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 2：查看集群 alert 日志</span></span><br><span class="line"><span class="built_in">tail</span> -100 <span class="variable">$GRID_HOME</span>/log/$(hostname)/alert$(hostname).<span class="built_in">log</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 3：查看 OCSSD 日志（如果集群同步失败）</span></span><br><span class="line"><span class="built_in">tail</span> -100 <span class="variable">$GRID_HOME</span>/log/$(hostname)/cssd/ocssd.log</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 4：检查 CRS 资源状态</span></span><br><span class="line">crsctl <span class="built_in">stat</span> res -t -init</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 5：检查 ASM 实例状态</span></span><br><span class="line">srvctl status asm</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 6：检查磁盘组状态</span></span><br><span class="line">asmcmd lsdg</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-4-2-日志收集工具"><a href="#3-4-2-日志收集工具" class="headerlink" title="3.4.2 日志收集工具"></a>3.4.2 日志收集工具</h4><p>Oracle 提供了 <code>diagcollection.sh</code> 工具，可以一键收集所有 GI 相关日志：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 收集所有 GI 日志（需要 root 权限）</span></span><br><span class="line"><span class="variable">$GRID_HOME</span>/bin/diagcollection.pl --collect --crs --crshome <span class="variable">$GRID_HOME</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 收集结果会打包成 .tar.gz 文件，通常在 /tmp 目录下</span></span><br><span class="line"><span class="comment"># 文件名格式：crsData_&lt;hostname&gt;_&lt;timestamp&gt;.tar.gz</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-4-3-紧急启动模式"><a href="#3-4-3-紧急启动模式" class="headerlink" title="3.4.3 紧急启动模式"></a>3.4.3 紧急启动模式</h4><p>当 CRS 无法正常启动时，可以使用 exclusive 模式进行紧急操作：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 以 exclusive 模式启动 CRS（跳过 OCR 和 Voting Disk 的集群检查）</span></span><br><span class="line">crsctl start crs -excl</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在 exclusive 模式下，可以执行以下操作：</span></span><br><span class="line"><span class="comment"># - 恢复 OCR</span></span><br><span class="line"><span class="comment"># - 修改网络配置</span></span><br><span class="line"><span class="comment"># - 修复 ASM 磁盘组</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 完成修复后，停止 CRS</span></span><br><span class="line">crsctl stop crs -f</span><br><span class="line"></span><br><span class="line"><span class="comment"># 正常启动 CRS</span></span><br><span class="line">crsctl start crs</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：<code>crsctl start crs -excl</code> 会在当前节点启动一个简化的 CRS 栈，不进行集群成员验证。这在 OCR 或 Voting Disk 损坏时非常有用。</p>
+</blockquote>
+<h4 id="3-4-4-常见启动故障及解决方案"><a href="#3-4-4-常见启动故障及解决方案" class="headerlink" title="3.4.4 常见启动故障及解决方案"></a>3.4.4 常见启动故障及解决方案</h4><p><strong>故障 1：OHASD 无法启动</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 症状：crsctl start crs 报错</span></span><br><span class="line"><span class="comment"># CRS-4640: Oracle High Availability Services is already active</span></span><br><span class="line"><span class="comment"># CRS-4000: Start command failed, or completed with errors.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 解决方案：</span></span><br><span class="line">crsctl stop crs -f</span><br><span class="line"><span class="comment"># 如果无法停止，使用 kill</span></span><br><span class="line"><span class="built_in">kill</span> -9 $(pgrep -f ohasd)</span><br><span class="line"><span class="comment"># 重新启动</span></span><br><span class="line">crsctl start crs</span><br></pre></td></tr></table></figure>
+
+<p><strong>故障 2：OCSSD 无法加入集群</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 症状：ocssd.log 中出现</span></span><br><span class="line"><span class="comment"># CSSD]clssnmvDHBValidateNCopy: node 1, node1, has a disk HB, but no network HB</span></span><br><span class="line"><span class="comment"># CSSD]clssnmvDHBValidateNCopy: node 2, node2, has a disk HB, but no network HB</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 解决方案：检查网络连通性和防火墙</span></span><br><span class="line"><span class="comment"># 检查私有网络是否互通</span></span><br><span class="line">ping -c 3 &lt;node2-priv-ip&gt;</span><br><span class="line"><span class="comment"># 检查防火墙是否放行</span></span><br><span class="line">iptables -L -n | grep 1521</span><br></pre></td></tr></table></figure>
+
+<p><strong>故障 3：CRSD 启动失败（OCR 不可访问）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 症状：crsd.log 中出现</span></span><br><span class="line"><span class="comment"># CRS-1205: Auto-start failed for the CRS stack.</span></span><br><span class="line"><span class="comment"># CRS-2883: Resource &#x27;ora.asm&#x27; failed during Clusterware stack start.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 解决方案：使用 exclusive 模式启动，检查 ASM 磁盘组状态</span></span><br><span class="line">crsctl start crs -excl</span><br><span class="line">asmcmd lsdg</span><br><span class="line"><span class="comment"># 如果 ASM 磁盘组需要修复</span></span><br><span class="line">sqlplus / as sysasm</span><br><span class="line">ALTER DISKGROUP DATA MOUNT;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><p>GI 安装或变更后，需要执行以下验证命令确认集群状态正常：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 检查集群整体状态</span></span><br><span class="line">crsctl check cluster -all</span><br><span class="line"></span><br><span class="line">node1:</span><br><span class="line">CRS-4537: Cluster Ready Services is online</span><br><span class="line">CRS-4529: Cluster Synchronization Services is online</span><br><span class="line">CRS-4533: Event Manager is online</span><br><span class="line"></span><br><span class="line">node2:</span><br><span class="line">CRS-4537: Cluster Ready Services is online</span><br><span class="line">CRS-4529: Cluster Synchronization Services is online</span><br><span class="line">CRS-4533: Event Manager is online</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 检查 OCR 完整性</span></span><br><span class="line">ocrcheck</span><br><span class="line"></span><br><span class="line">Status of Oracle Cluster Registry is as follows :</span><br><span class="line">         Version                  :          4</span><br><span class="line">         Total space (kbytes)     :     409600</span><br><span class="line">         Used space (kbytes)      :       3456</span><br><span class="line">         Available space (kbytes) :     406144</span><br><span class="line">         ID                       : 1234567890</span><br><span class="line">         Device/File Name         :       +CRS</span><br><span class="line">                                    Device/File integrity check succeeded</span><br><span class="line">         Cluster registry integrity check succeeded</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 检查 Voting Disk 状态</span></span><br><span class="line">crsctl query css votedisk</span><br><span class="line"></span><br><span class="line"><span class="comment">##  STATE    File Universal Id                File Name Disk group</span></span><br><span class="line">--  -----    -----------------                --------- ---------</span><br><span class="line"> 1. ONLINE   a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6 (DATA01) [DATA]</span><br><span class="line"> 2. ONLINE   b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7 (DATA02) [DATA]</span><br><span class="line"> 3. ONLINE   c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8 (DATA03) [DATA]</span><br><span class="line">Located 3 voting file(s).</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 检查 SCAN Listener 状态</span></span><br><span class="line">srvctl status scan_listener</span><br><span class="line"></span><br><span class="line">SCAN Listener LISTENER_SCAN1 is enabled</span><br><span class="line">SCAN Listener LISTENER_SCAN1 is running on node node2</span><br><span class="line">SCAN Listener LISTENER_SCAN2 is enabled</span><br><span class="line">SCAN Listener LISTENER_SCAN2 is running on node node1</span><br><span class="line">SCAN Listener LISTENER_SCAN3 is enabled</span><br><span class="line">SCAN Listener LISTENER_SCAN3 is running on node node2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 检查所有 CRS 资源状态</span></span><br><span class="line">crsctl <span class="built_in">stat</span> res -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 6. 检查 ASM 磁盘组状态</span></span><br><span class="line">asmcmd lsdg</span><br><span class="line"></span><br><span class="line"><span class="comment"># 7. 检查节点间网络连通性</span></span><br><span class="line">oifcfg getif</span><br><span class="line">eth0  192.168.1.0  global  public</span><br><span class="line">eth1  10.10.10.0   global  cluster_interconnect</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="5-1-GI-日常巡检要点"><a href="#5-1-GI-日常巡检要点" class="headerlink" title="5.1 GI 日常巡检要点"></a>5.1 GI 日常巡检要点</h3><p>建议将以下命令纳入日常巡检脚本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment"># GI 日常巡检脚本</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;=== 集群状态检查 ===&quot;</span></span><br><span class="line">crsctl check cluster -all</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;=== OCR 状态检查 ===&quot;</span></span><br><span class="line">ocrcheck</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;=== Voting Disk 状态检查 ===&quot;</span></span><br><span class="line">crsctl query css votedisk</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;=== SCAN Listener 状态 ===&quot;</span></span><br><span class="line">srvctl status scan_listener</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;=== ASM 磁盘组状态 ===&quot;</span></span><br><span class="line">asmcmd lsdg</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;=== CRS 资源状态 ===&quot;</span></span><br><span class="line">crsctl <span class="built_in">stat</span> res -t</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;=== 集群告警日志最近 50 行 ===&quot;</span></span><br><span class="line"><span class="built_in">tail</span> -50 <span class="variable">$GRID_HOME</span>/log/$(hostname)/alert$(hostname).<span class="built_in">log</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="5-2-OCR-Voting-Disk-备份策略"><a href="#5-2-OCR-Voting-Disk-备份策略" class="headerlink" title="5.2 OCR&#x2F;Voting Disk 备份策略"></a>5.2 OCR&#x2F;Voting Disk 备份策略</h3><table>
+<thead>
+<tr>
+<th>备份项目</th>
+<th>频率</th>
+<th>保留策略</th>
+<th>工具</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OCR 自动备份</td>
+<td>每 4 小时</td>
+<td>保留最近 3 次</td>
+<td>CRSD 自动执行</td>
+</tr>
+<tr>
+<td>OCR 手动备份</td>
+<td>每次变更前</td>
+<td>永久保留</td>
+<td><code>ocrconfig -manualbackup</code></td>
+</tr>
+<tr>
+<td>OCR 逻辑导出</td>
+<td>每周一次</td>
+<td>保留最近 4 周</td>
+<td><code>ocrconfig -export</code></td>
+</tr>
+<tr>
+<td>GPNP Profile</td>
+<td>每次变更前</td>
+<td>永久保留</td>
+<td><code>gpnptool get</code></td>
+</tr>
+</tbody></table>
+<h3 id="5-3-SCAN-配置的最佳实践"><a href="#5-3-SCAN-配置的最佳实践" class="headerlink" title="5.3 SCAN 配置的最佳实践"></a>5.3 SCAN 配置的最佳实践</h3><ol>
+<li><strong>始终使用 DNS 解析 SCAN Name</strong>，不要在生产环境使用 <code>/etc/hosts</code></li>
+<li><strong>配置 3 个 SCAN VIP</strong>，确保 DNS 返回 3 个 IP 地址</li>
+<li><strong>定期验证 DNS 解析</strong>：<code>nslookup scan.example.com</code> 应返回 3 个 IP</li>
+<li><strong>SCAN Listener 的端口统一使用 1521</strong>，避免应用连接配置复杂化</li>
+<li><strong>不要将 SCAN VIP 绑定到特定节点</strong>，让 Oracle 自动管理 SCAN Listener 的分布</li>
+</ol>
+<h3 id="5-4-常见-GI-故障的快速定位方法"><a href="#5-4-常见-GI-故障的快速定位方法" class="headerlink" title="5.4 常见 GI 故障的快速定位方法"></a>5.4 常见 GI 故障的快速定位方法</h3><table>
+<thead>
+<tr>
+<th>故障现象</th>
+<th>可能原因</th>
+<th>排查方向</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CRS 启动失败</td>
+<td>OCR 损坏</td>
+<td>查看 ohsd.log、crsd.log</td>
+</tr>
+<tr>
+<td>节点频繁驱逐</td>
+<td>网络抖动&#x2F;存储超时</td>
+<td>查看 cssd.log、检查 Misscount</td>
+</tr>
+<tr>
+<td>SCAN IP 无法解析</td>
+<td>DNS 配置错误</td>
+<td>nslookup、检查 DNS 记录</td>
+</tr>
+<tr>
+<td>ASM 实例无法启动</td>
+<td>磁盘组损坏</td>
+<td>查看 asm alert log、asmcmd lsdg</td>
+</tr>
+<tr>
+<td>VIP 漂移异常</td>
+<td>网络配置错误</td>
+<td>oifcfg getif、检查网卡配置</td>
+</tr>
+<tr>
+<td>集群时间不同步</td>
+<td>NTP&#x2F;CTSS 配置问题</td>
+<td>查看 ctssd.log、检查时钟偏移</td>
+</tr>
+</tbody></table>
+<h3 id="5-5-推荐-MOS-文档"><a href="#5-5-推荐-MOS-文档" class="headerlink" title="5.5 推荐 MOS 文档"></a>5.5 推荐 MOS 文档</h3><table>
+<thead>
+<tr>
+<th>Doc ID</th>
+<th>标题</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>394654.1</td>
+<td>OCR &#x2F; Voting Disk Location and Management</td>
+<td>OCR&#x2F;Voting Disk 管理</td>
+</tr>
+<tr>
+<td>1068982.1</td>
+<td>How to restore OCR from backup</td>
+<td>OCR 恢复</td>
+</tr>
+<tr>
+<td>1388755.1</td>
+<td>Changes in 11.2.0.2 with Voting Disk on ASM</td>
+<td>Voting Disk 存储变化</td>
+</tr>
+<tr>
+<td>1481369.1</td>
+<td>SCAN VIP and Listener Configuration</td>
+<td>SCAN 配置</td>
+</tr>
+<tr>
+<td>1323538.1</td>
+<td>11gR2 Clusterware Startup Sequence</td>
+<td>集群启动顺序</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>GI 是 RAC 架构的核心，深入理解其底层机制对于 DBA 至关重要。本文从 OCR、Voting Disk、SCAN、GPNP、集群启动过程五个维度，系统性地分析了 GI 的内部工作原理，并提供了丰富的实战操作命令和故障排查方法。</p>
+<p><strong>核心要点回顾：</strong></p>
+<ol>
+<li><strong>OCR</strong> 是集群配置中心，12c+ 存储在 ASM 中，利用 ASM 冗余机制保护</li>
+<li><strong>Voting Disk</strong> 是集群仲裁者，负责节点健康检查和脑裂解决</li>
+<li><strong>SCAN</strong> 是客户端连接抽象层，通过 DNS 解析和 SCAN Listener 实现负载均衡</li>
+<li><strong>GPNP</strong> 存储集群网络配置，支持动态节点管理</li>
+<li><strong>集群启动</strong> 有严格的顺序依赖：OHASD → CSSDAGENT → OCSSD → CRSD</li>
+</ol>
+<p>掌握这些知识，不仅能帮助你在生产故障中快速定位问题，更能让你在架构设计和容量规划时做出更明智的决策。作为 OCM 认证的 DBA，我始终认为：<strong>深入理解底层原理，才是区分高级 DBA 和普通 DBA 的关键。</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Grid-Infrastructure/" rel="tag"># Grid Infrastructure</a>
+              <a href="/tags/RAC/" rel="tag"># RAC</a>
+              <a href="/tags/OCR/" rel="tag"># OCR</a>
+              <a href="/tags/Voting-Disk/" rel="tag"># Voting Disk</a>
+              <a href="/tags/SCAN/" rel="tag"># SCAN</a>
+              <a href="/tags/GPNP/" rel="tag"># GPNP</a>
+              <a href="/tags/%E9%9B%86%E7%BE%A4/" rel="tag"># 集群</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/01/12/oracle/silent-installation-best-practices-19c-23ai/" rel="prev" title="Oracle 19c&#x2F;23ai 静默安装最佳实践：标准化环境交付指南">
+                  <i class="fa fa-angle-left"></i> Oracle 19c/23ai 静默安装最佳实践：标准化环境交付指南
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/01/26/oracle/rac-asm-multipath-storage/" rel="next" title="RAC + ASM on Multipath 存储：从多路径配置到磁盘组管理的完整指南">
+                  RAC + ASM on Multipath 存储：从多路径配置到磁盘组管理的完整指南 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

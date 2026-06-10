@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/05/02/oracle/unified-auditing-implementation/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/05/02/oracle/unified-auditing-implementation/","path":"2026/05/02/oracle/unified-auditing-implementation/","title":"Unified Auditing 统一审计实施：策略定制与审计日志管理"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Unified Auditing 统一审计实施：策略定制与审计日志管理 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Unified-Auditing-%E6%9E%B6%E6%9E%84"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 Unified Auditing 架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E5%AE%A1%E8%AE%A1%E7%AD%96%E7%95%A5%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 审计策略类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E5%AE%A1%E8%AE%A1%E6%97%A5%E5%BF%97%E7%AE%A1%E7%90%86"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 审计日志管理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E5%90%AF%E7%94%A8-Unified-Auditing"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 启用 Unified Auditing</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5%E5%BD%93%E5%89%8D%E5%AE%A1%E8%AE%A1%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.1.1.</span> <span class="nav-text">检查当前审计模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%81%E7%A7%BB%E5%88%B0%E7%BA%AF-Unified-Auditing-%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.1.2.</span> <span class="nav-text">迁移到纯 Unified Auditing 模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81%E5%90%AF%E7%94%A8%E7%8A%B6%E6%80%81"><span class="nav-number">3.1.3.</span> <span class="nav-text">验证启用状态</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E5%88%9B%E5%BB%BA%E5%AE%A1%E8%AE%A1%E7%AD%96%E7%95%A5"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 创建审计策略</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9D%83%E9%99%90%E5%AE%A1%E8%AE%A1%E7%AD%96%E7%95%A5"><span class="nav-number">3.2.1.</span> <span class="nav-text">权限审计策略</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DML-%E6%93%8D%E4%BD%9C%E5%AE%A1%E8%AE%A1%E7%AD%96%E7%95%A5"><span class="nav-number">3.2.2.</span> <span class="nav-text">DML 操作审计策略</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%99%BB%E5%BD%95%E5%A4%B1%E8%B4%A5%E5%AE%A1%E8%AE%A1"><span class="nav-number">3.2.3.</span> <span class="nav-text">登录失败审计</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%89%B9%E6%9D%83%E6%93%8D%E4%BD%9C%E5%AE%A1%E8%AE%A1"><span class="nav-number">3.2.4.</span> <span class="nav-text">特权操作审计</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-FGA-%E9%85%8D%E7%BD%AE"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 FGA 配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#FGA-%E7%AD%96%E7%95%A5%E5%88%9B%E5%BB%BA"><span class="nav-number">3.3.1.</span> <span class="nav-text">FGA 策略创建</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FGA-%E7%AD%96%E7%95%A5%E7%AE%A1%E7%90%86"><span class="nav-number">3.3.2.</span> <span class="nav-text">FGA 策略管理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FGA-%E6%97%A5%E5%BF%97%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.3.3.</span> <span class="nav-text">FGA 日志查询</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-%E5%AE%A1%E8%AE%A1%E6%97%A5%E5%BF%97%E7%BB%B4%E6%8A%A4"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 审计日志维护</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E5%AE%A1%E8%AE%A1%E6%B8%85%E7%90%86%E6%A1%86%E6%9E%B6"><span class="nav-number">3.4.1.</span> <span class="nav-text">初始化审计清理框架</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E6%B8%85%E7%90%86%E8%84%9A%E6%9C%AC"><span class="nav-number">3.4.2.</span> <span class="nav-text">日志清理脚本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BD%92%E6%A1%A3%E7%AD%96%E7%95%A5"><span class="nav-number">3.4.3.</span> <span class="nav-text">归档策略</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/05/02/oracle/unified-auditing-implementation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Unified Auditing 统一审计实施：策略定制与审计日志管理 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Unified Auditing 统一审计实施：策略定制与审计日志管理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-05-02 10:00:00" itemprop="dateCreated datePublished" datetime="2026-05-02T10:00:00+00:00">2026-05-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>在企业级数据库管理中，审计是安全合规的核心环节。无论是等保测评、GDPR、还是内部安全审计，数据库审计都扮演着不可替代的角色。然而在 Oracle 12c 之前，传统审计（Traditional Auditing）的实施一直让 DBA 感到头疼。</p>
+<span id="more"></span>
+
+
+<p><strong>传统审计的局限性主要体现在以下几个方面：</strong></p>
+<ul>
+<li><strong>性能影响大</strong>：传统审计依赖大量独立的审计表（如 <code>AUD$</code>、<code>FGA_LOG$</code>），每次审计事件触发都需要写入磁盘 I&#x2F;O，高并发场景下对 OLTP 性能影响显著。根据实践经验，在未优化的情况下，开启全量审计可能导致 5%-15% 的性能下降。尤其是在高频 DML 操作的生产系统上，审计带来的额外 I&#x2F;O 开销往往成为性能瓶颈。</li>
+<li><strong>管理复杂度高</strong>：权限审计、操作审计、对象审计分别使用不同的语法和配置方式（<code>AUDIT</code> 语句、<code>AUDIT_TRAIL</code> 参数、<code>DBMS_FGA</code> 包），缺乏统一管理入口，策略分散难以维护。当需要对某类操作添加审计时，DBA 可能需要同时修改多个配置点。</li>
+<li><strong>审计数据碎片化</strong>：标准审计写入 <code>SYS.AUD$</code>，FGA 审计写入 <code>SYS.FGA_LOG$</code>，OS 审计写入操作系统文件，审计数据分散在多个位置，查询和归档都极为不便。想要获取一份完整的审计报告，需要从多个数据源中整合数据，这在安全事件调查时尤为被动。</li>
+<li><strong>灵活性不足</strong>：传统审计难以按时间、IP 地址、应用模块等条件进行精细过滤，往往只能开启或关闭某个审计项，无法做到按需审计。</li>
+</ul>
+<p><strong>Oracle Unified Auditing（12c 引入）</strong> 彻底重构了审计架构，提供统一的策略管理框架，解决了传统审计的诸多痛点。其核心优势包括：</p>
+<ol>
+<li><strong>统一的策略模型</strong>：所有审计类型（权限、操作、对象、FGA）通过统一的审计策略（Audit Policy）管理，一条策略即可覆盖多种审计需求，极大简化了管理复杂度。</li>
+<li><strong>内置性能优化</strong>：审计记录先写入内存缓冲区（SGA 中的 Unified Audit Queue），再批量持久化到 <code>AUDSYS</code> schema 下的表中，大幅减少磁盘 I&#x2F;O 开销。相比传统审计，性能影响降低显著。</li>
+<li><strong>灵活的条件过滤</strong>：支持按用户、角色、时间、操作系统用户、IP 地址、应用模块等条件精细过滤审计范围，真正做到「该审的审，不该审的不审」。</li>
+<li><strong>集成化的日志管理</strong>：通过 <code>DBA_UNIFIED_AUDIT_TRAIL</code> 统一视图查询所有审计数据，支持标准化的清理和归档机制（<code>DBMS_AUDIT_MGMT</code> 包）。</li>
+</ol>
+<p>对于有合规审计要求的生产环境，迁移到 Unified Auditing 是必然的选择。本文将从架构原理出发，结合实际项目经验，详细介绍 Unified Auditing 的策略定制、FGA 配置和审计日志管理的最佳实践。</p>
+<hr>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-Unified-Auditing-架构"><a href="#2-1-Unified-Auditing-架构" class="headerlink" title="2.1 Unified Auditing 架构"></a>2.1 Unified Auditing 架构</h3><p>Unified Auditing 的架构设计围绕三个核心组件展开，理解这些组件的工作原理是正确实施审计策略的前提。</p>
+<p><strong>统一审计策略（Unified Audit Policy）</strong></p>
+<p>所有审计规则通过 <code>CREATE AUDIT POLICY</code> 语句定义，一条策略可同时包含权限审计、操作审计和对象审计条件。策略创建后处于 DISABLED 状态，需要通过 <code>AUDIT POLICY</code> 语句显式启用。这种「先定义、后启用」的设计使得策略可以预先准备，在变更窗口统一上线。</p>
+<p><strong>AUDIT_TRAIL 参数与审计模式</strong></p>
+<p>Oracle 提供两种审计模式：Mixed Mode 和 Pure Unified Auditing Mode。</p>
+<ul>
+<li><strong>Mixed Mode（默认）</strong>：传统审计和 Unified Auditing 并存。在 Mixed Mode 下，Oracle 自动启用一些默认的统一审计策略（如 <code>ORA_LOGON_FAILURES</code>、<code>ORA_SECURECONFIG</code> 等），同时传统审计的 <code>AUDIT_TRAIL</code> 参数仍然生效。这是大多数环境的默认状态。</li>
+<li><strong>Pure Unified Auditing Mode</strong>：完全关闭传统审计，所有审计行为统一由 Unified Auditing 管理。需要通过重新链接 Oracle 二进制文件来切换。</li>
+</ul>
+<p>在 Mixed Mode 下，可以通过 <code>AUDIT_TRAIL</code> 参数查看传统审计的配置状态：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> audit_trail;</span><br><span class="line"><span class="comment">-- DB       : 审计记录写入SYS.AUD$表</span></span><br><span class="line"><span class="comment">-- DB,EXTENDED: 写入表且包含SQL绑定变量</span></span><br><span class="line"><span class="comment">-- OS       : 审计记录写入操作系统文件</span></span><br><span class="line"><span class="comment">-- NONE     : 关闭传统审计</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>审计记录存储</strong></p>
+<p>Unified Auditing 的审计记录存储在 <code>SYSAUX</code> 表空间的 <code>AUDSYS</code> schema 下，采用内部表结构和自动分区设计。数据写入流程如下：</p>
+<ol>
+<li>审计事件首先写入 SGA 中的 Unified Audit Queue（内存队列）</li>
+<li>后台进程（Unified Auditing Background Writer）定期将队列数据批量刷新到磁盘</li>
+<li>默认每 3 秒或队列达到 1MB 时触发一次刷新</li>
+<li>数据持久化到 <code>AUDSYS</code> schema 下的分区表中</li>
+</ol>
+<p>这种异步写入机制是 Unified Auditing 性能优于传统审计的关键所在。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看审计队列配置</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$UNIFIED_AUDIT_QUEUE_WRITERS;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看SYSAUX中审计占用空间</span></span><br><span class="line"><span class="keyword">SELECT</span> occupant_name, space_usage_kbytes,</span><br><span class="line">       ROUND(space_usage_kbytes<span class="operator">/</span><span class="number">1024</span>, <span class="number">2</span>) <span class="keyword">AS</span> usage_mb</span><br><span class="line"><span class="keyword">FROM</span> V$SYSAUX_OCCUPANTS</span><br><span class="line"><span class="keyword">WHERE</span> occupant_name <span class="keyword">LIKE</span> <span class="string">&#x27;%AUDIT%&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-审计策略类型"><a href="#2-2-审计策略类型" class="headerlink" title="2.2 审计策略类型"></a>2.2 审计策略类型</h3><p>Unified Auditing 支持以下四种审计策略类型，可以在一条策略中混合使用，这是其灵活性的核心体现：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>说明</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>权限审计（Privilege Audit）</td>
+<td>审计系统权限的使用，无论用户是否真正拥有该权限</td>
+<td>监控特权操作，如 <code>DROP ANY TABLE</code></td>
+</tr>
+<tr>
+<td>操作审计（Action Audit）</td>
+<td>审计 DDL&#x2F;DML 操作，按操作类型审计</td>
+<td>监控特定表的增删改查</td>
+</tr>
+<tr>
+<td>对象审计（Object Audit）</td>
+<td>审计特定对象上的操作</td>
+<td>精确控制到表&#x2F;视图级别的审计</td>
+</tr>
+<tr>
+<td>细粒度审计（FGA）</td>
+<td>基于条件的精细审计，支持 WHERE 条件过滤</td>
+<td>按业务逻辑条件审计，如薪资超过某阈值</td>
+</tr>
+</tbody></table>
+<p>实际项目中，最常用的是操作审计和 FGA 的组合：操作审计负责记录所有对核心表的变更操作，FGA 负责在特定业务条件下触发更详细的审计记录。</p>
+<h3 id="2-3-审计日志管理"><a href="#2-3-审计日志管理" class="headerlink" title="2.3 审计日志管理"></a>2.3 审计日志管理</h3><p><strong>查询审计日志</strong></p>
+<p>统一通过 <code>DBA_UNIFIED_AUDIT_TRAIL</code> 视图查询，该视图整合了所有类型的审计记录：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> event_timestamp, dbusername, action_name,</span><br><span class="line">       object_schema, object_name, sql_text</span><br><span class="line"><span class="keyword">FROM</span> DBA_UNIFIED_AUDIT_TRAIL</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> event_timestamp <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">100</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>审计日志清理策略</strong></p>
+<p>审计日志不能无限制增长，否则将迅速填满 <code>SYSAUX</code> 表空间，影响数据库正常运行。建议按以下策略管理：</p>
+<ul>
+<li><strong>保留周期</strong>：根据合规要求设定（通常 90 天至 1 年），等保三级通常要求至少 6 个月</li>
+<li><strong>清理方式</strong>：使用 <code>DBMS_AUDIT_MGMT</code> 包进行标准化清理，这是 Oracle 官方推荐的方式</li>
+<li><strong>归档方式</strong>：清理前先导出到独立表空间或外部存储，确保历史数据可追溯</li>
+</ul>
+<p><strong>审计日志导出</strong></p>
+<p>可通过 Data Pump 或 CTAS 方式导出审计数据。建议使用 CTAS 导出到独立表空间，便于后续查询和归档管理：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 导出到独立表（建议使用独立表空间）</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> aud_archive.unified_audit_202606</span><br><span class="line">TABLESPACE aud_archive_ts</span><br><span class="line"><span class="keyword">AS</span> <span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> UNIFIED_AUDIT_TRAIL</span><br><span class="line"><span class="keyword">WHERE</span> event_timestamp <span class="operator">&lt;</span> SYSTIMESTAMP <span class="operator">-</span> <span class="type">INTERVAL</span> <span class="string">&#x27;90&#x27;</span> <span class="keyword">DAY</span>;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-启用-Unified-Auditing"><a href="#3-1-启用-Unified-Auditing" class="headerlink" title="3.1 启用 Unified Auditing"></a>3.1 启用 Unified Auditing</h3><h4 id="检查当前审计模式"><a href="#检查当前审计模式" class="headerlink" title="检查当前审计模式"></a>检查当前审计模式</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 检查Unified Auditing是否已编译启用</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">VALUE</span> <span class="keyword">FROM</span> V$OPTION <span class="keyword">WHERE</span> <span class="keyword">PARAMETER</span> <span class="operator">=</span> <span class="string">&#x27;Unified Auditing&#x27;</span>;</span><br><span class="line"><span class="comment">-- TRUE 表示已编译启用（12c及以上默认为TRUE）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 检查当前审计模式</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">PARAMETER</span>, <span class="keyword">VALUE</span> <span class="keyword">FROM</span> V$OPTION</span><br><span class="line"><span class="keyword">WHERE</span> <span class="keyword">PARAMETER</span> <span class="operator">=</span> <span class="string">&#x27;Unified Auditing&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="迁移到纯-Unified-Auditing-模式"><a href="#迁移到纯-Unified-Auditing-模式" class="headerlink" title="迁移到纯 Unified Auditing 模式"></a>迁移到纯 Unified Auditing 模式</h4><p>Oracle 12c 默认是 Mixed Mode，如需完全迁移到纯 Unified Auditing 模式（关闭传统审计），需要关闭数据库并执行以下步骤：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 关闭数据库</span></span><br><span class="line">sqlplus / as sysdba</span><br><span class="line">SHUTDOWN IMMEDIATE;</span><br><span class="line">EXIT;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 重新链接Oracle二进制文件，启用纯Unified Auditing</span></span><br><span class="line"><span class="built_in">cd</span> <span class="variable">$ORACLE_HOME</span>/rdbms/lib</span><br><span class="line">make -f ins_rdbms.mk uniaud_on ioracle</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 启动数据库</span></span><br><span class="line">sqlplus / as sysdba</span><br><span class="line">STARTUP;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：切换到纯 Unified Auditing 模式是不可逆操作（需要重新安装数据库才能回退）。如果当前使用 Mixed Mode 能满足需求，建议保持 Mixed Mode。大多数环境下 Mixed Mode 已经足够。</p>
+</blockquote>
+<h4 id="验证启用状态"><a href="#验证启用状态" class="headerlink" title="验证启用状态"></a>验证启用状态</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 验证Unified Auditing模式</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">PARAMETER</span>, <span class="keyword">VALUE</span></span><br><span class="line"><span class="keyword">FROM</span> V$OPTION</span><br><span class="line"><span class="keyword">WHERE</span> <span class="keyword">PARAMETER</span> <span class="operator">=</span> <span class="string">&#x27;Unified Auditing&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看已有的审计策略（包括默认策略）</span></span><br><span class="line"><span class="keyword">SELECT</span> POLICY_NAME, ENABLED_OPT, USER_AUDIT_OPTION</span><br><span class="line"><span class="keyword">FROM</span> AUDIT_UNIFIED_POLICIES</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> POLICY_NAME;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看已启用的策略</span></span><br><span class="line"><span class="keyword">SELECT</span> POLICY_NAME, ENABLED_OPTION, ENTITY_NAME, ENTITY_TYPE</span><br><span class="line"><span class="keyword">FROM</span> AUDIT_UNIFIED_ENABLED_POLICIES;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看默认策略的具体审计项</span></span><br><span class="line"><span class="keyword">SELECT</span> POLICY_NAME, AUDIT_OPTION, AUDIT_OPTION_TYPE, OBJECT_SCHEMA, OBJECT_NAME</span><br><span class="line"><span class="keyword">FROM</span> AUDIT_UNIFIED_POLICIES</span><br><span class="line"><span class="keyword">WHERE</span> POLICY_NAME <span class="operator">=</span> <span class="string">&#x27;ORA_SECURECONFIG&#x27;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> AUDIT_OPTION;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-创建审计策略"><a href="#3-2-创建审计策略" class="headerlink" title="3.2 创建审计策略"></a>3.2 创建审计策略</h3><h4 id="权限审计策略"><a href="#权限审计策略" class="headerlink" title="权限审计策略"></a>权限审计策略</h4><p>审计所有使用 <code>DROP ANY TABLE</code> 权限的操作，这是安全合规中最基本的要求之一：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建权限审计策略</span></span><br><span class="line"><span class="keyword">CREATE</span> AUDIT POLICY priv_drop_any_table_policy</span><br><span class="line">  PRIVILEGES <span class="keyword">DROP</span> <span class="keyword">ANY</span> <span class="keyword">TABLE</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用策略（对所有用户生效）</span></span><br><span class="line">AUDIT POLICY priv_drop_any_table_policy;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 仅对特定用户启用</span></span><br><span class="line">AUDIT POLICY priv_drop_any_table_policy <span class="keyword">BY</span> scott, hr;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 仅对非DBA用户启用（排除SYS和SYSDBA连接）</span></span><br><span class="line">AUDIT POLICY priv_drop_any_table_policy <span class="keyword">EXCEPT</span> SYS;</span><br></pre></td></tr></table></figure>
+
+<h4 id="DML-操作审计策略"><a href="#DML-操作审计策略" class="headerlink" title="DML 操作审计策略"></a>DML 操作审计策略</h4><p>审计 HR 模式下核心人事表的所有 DML 操作，这类审计在等保测评中经常被要求：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建DML审计策略</span></span><br><span class="line"><span class="keyword">CREATE</span> AUDIT POLICY hr_dml_audit_policy</span><br><span class="line">  ACTIONS <span class="keyword">INSERT</span> <span class="keyword">ON</span> HR.EMPLOYEES,</span><br><span class="line">          <span class="keyword">UPDATE</span> <span class="keyword">ON</span> HR.EMPLOYEES,</span><br><span class="line">          <span class="keyword">DELETE</span> <span class="keyword">ON</span> HR.EMPLOYEES,</span><br><span class="line">          <span class="keyword">INSERT</span> <span class="keyword">ON</span> HR.DEPARTMENTS,</span><br><span class="line">          <span class="keyword">UPDATE</span> <span class="keyword">ON</span> HR.DEPARTMENTS,</span><br><span class="line">          <span class="keyword">DELETE</span> <span class="keyword">ON</span> HR.DEPARTMENTS;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用策略（排除SYS用户）</span></span><br><span class="line">AUDIT POLICY hr_dml_audit_policy <span class="keyword">BY</span> <span class="keyword">ALL</span> <span class="keyword">EXCEPT</span> SYS;</span><br></pre></td></tr></table></figure>
+
+<h4 id="登录失败审计"><a href="#登录失败审计" class="headerlink" title="登录失败审计"></a>登录失败审计</h4><p>Oracle 默认已启用 <code>ORA_LOGON_FAILURES</code> 策略，但可以自定义更精细的登录审计策略，用于检测暴力破解和异常登录：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建登录审计策略</span></span><br><span class="line"><span class="keyword">CREATE</span> AUDIT POLICY login_audit_policy</span><br><span class="line">  ACTIONS LOGON, LOGOFF,</span><br><span class="line">  ROLES DBA, DATAPUMP_EXP_FULL_DATABASE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用</span></span><br><span class="line">AUDIT POLICY login_audit_policy;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查询最近7天的登录失败记录</span></span><br><span class="line"><span class="keyword">SELECT</span> event_timestamp, dbusername, client_identifier,</span><br><span class="line">       action_name, return_code, userhost,</span><br><span class="line">       terminal, authentication_type</span><br><span class="line"><span class="keyword">FROM</span> DBA_UNIFIED_AUDIT_TRAIL</span><br><span class="line"><span class="keyword">WHERE</span> action_name <span class="keyword">IN</span> (<span class="string">&#x27;LOGON&#x27;</span>, <span class="string">&#x27;LOGOFF&#x27;</span>)</span><br><span class="line">  <span class="keyword">AND</span> return_code <span class="operator">!=</span> <span class="number">0</span></span><br><span class="line">  <span class="keyword">AND</span> event_timestamp <span class="operator">&gt;</span> SYSTIMESTAMP <span class="operator">-</span> <span class="type">INTERVAL</span> <span class="string">&#x27;7&#x27;</span> <span class="keyword">DAY</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> event_timestamp <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 统计失败登录的用户分布</span></span><br><span class="line"><span class="keyword">SELECT</span> dbusername, <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> fail_count</span><br><span class="line"><span class="keyword">FROM</span> DBA_UNIFIED_AUDIT_TRAIL</span><br><span class="line"><span class="keyword">WHERE</span> action_name <span class="operator">=</span> <span class="string">&#x27;LOGON&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> return_code <span class="operator">!=</span> <span class="number">0</span></span><br><span class="line">  <span class="keyword">AND</span> event_timestamp <span class="operator">&gt;</span> SYSTIMESTAMP <span class="operator">-</span> <span class="type">INTERVAL</span> <span class="string">&#x27;7&#x27;</span> <span class="keyword">DAY</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> dbusername</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> fail_count <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="特权操作审计"><a href="#特权操作审计" class="headerlink" title="特权操作审计"></a>特权操作审计</h4><p>审计所有 DBA 角色用户的敏感操作，防止特权滥用：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建特权操作审计策略</span></span><br><span class="line"><span class="keyword">CREATE</span> AUDIT POLICY dba_operations_policy</span><br><span class="line">  PRIVILEGES <span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span>,</span><br><span class="line">             <span class="keyword">ALTER</span> DATABASE,</span><br><span class="line">             <span class="keyword">ALTER</span> <span class="keyword">USER</span>,</span><br><span class="line">             <span class="keyword">DROP</span> <span class="keyword">USER</span>,</span><br><span class="line">             <span class="keyword">CREATE</span> <span class="keyword">ANY</span> <span class="keyword">TABLE</span>,</span><br><span class="line">             <span class="keyword">ALTER</span> <span class="keyword">ANY</span> <span class="keyword">TABLE</span>,</span><br><span class="line">             <span class="keyword">DROP</span> <span class="keyword">ANY</span> <span class="keyword">TABLE</span></span><br><span class="line">  <span class="keyword">WHEN</span> <span class="string">&#x27;SYS_CONTEXT(&#x27;&#x27;USERENV&#x27;&#x27;,&#x27;&#x27;SESSION_USER&#x27;&#x27;) NOT IN (&#x27;&#x27;SYS&#x27;&#x27;,&#x27;&#x27;SYSTEM&#x27;&#x27;)&#x27;</span></span><br><span class="line">  EVALUATE <span class="keyword">PER</span> SESSION;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用</span></span><br><span class="line">AUDIT POLICY dba_operations_policy <span class="keyword">BY</span> USERS <span class="keyword">WITH</span> GRANTED ROLES DBA;</span><br></pre></td></tr></table></figure>
+
+<p>策略创建完成后，可以查看策略的详细定义：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看策略详情</span></span><br><span class="line"><span class="keyword">SELECT</span> POLICY_NAME, AUDIT_OPTION, AUDIT_OPTION_TYPE,</span><br><span class="line">       OBJECT_SCHEMA, OBJECT_NAME, COMMON</span><br><span class="line"><span class="keyword">FROM</span> AUDIT_UNIFIED_POLICIES</span><br><span class="line"><span class="keyword">WHERE</span> POLICY_NAME <span class="operator">=</span> <span class="string">&#x27;DBA_OPERATIONS_POLICY&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-FGA-配置"><a href="#3-3-FGA-配置" class="headerlink" title="3.3 FGA 配置"></a>3.3 FGA 配置</h3><p>细粒度审计（FGA）通过 <code>DBMS_FGA</code> 包实现，是 Unified Auditing 中最灵活的审计方式。与普通操作审计不同，FGA 支持基于 WHERE 条件精确控制审计范围，适合对敏感数据的按条件审计。</p>
+<h4 id="FGA-策略创建"><a href="#FGA-策略创建" class="headerlink" title="FGA 策略创建"></a>FGA 策略创建</h4><p><strong>场景一：审计对薪资敏感字段的 SELECT 访问</strong></p>
+<p>当有人查询高薪员工的薪资信息时触发审计，这是金融和人力资源场景中的典型需求：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_FGA.ADD_POLICY(</span><br><span class="line">    object_schema   <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;HR&#x27;</span>,</span><br><span class="line">    object_name     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;EMPLOYEES&#x27;</span>,</span><br><span class="line">    policy_name     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;AUDIT_SALARY_ACCESS&#x27;</span>,</span><br><span class="line">    audit_column    <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SALARY,COMMISSION_PCT&#x27;</span>,</span><br><span class="line">    audit_condition <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SALARY &gt; 10000&#x27;</span>,</span><br><span class="line">    audit_column_opts <span class="operator">=</span><span class="operator">&gt;</span> DBMS_FGA.ANY_COLUMNS,</span><br><span class="line">    statement_types <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SELECT&#x27;</span>,</span><br><span class="line">    handler_schema  <span class="operator">=</span><span class="operator">&gt;</span> <span class="keyword">NULL</span>,</span><br><span class="line">    handler_module  <span class="operator">=</span><span class="operator">&gt;</span> <span class="keyword">NULL</span>,</span><br><span class="line">    enable          <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">TRUE</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<p>参数说明：</p>
+<ul>
+<li><code>audit_column</code>：指定需要审计的列，多列用逗号分隔</li>
+<li><code>audit_condition</code>：触发审计的条件，类似 WHERE 子句</li>
+<li><code>audit_column_opts</code>：<code>ANY_COLUMNS</code> 表示访问任一指定列即触发；<code>ALL_COLUMNS</code> 表示访问所有指定列才触发</li>
+<li><code>statement_types</code>：审计的 SQL 操作类型，支持 <code>SELECT</code>、<code>INSERT</code>、<code>UPDATE</code>、<code>DELETE</code></li>
+</ul>
+<p><strong>场景二：审计对财务交易表的 DELETE 操作</strong></p>
+<p>删除财务交易记录是高风险操作，应无条件审计：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_FGA.ADD_POLICY(</span><br><span class="line">    object_schema   <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;FINANCE&#x27;</span>,</span><br><span class="line">    object_name     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;TRANSACTIONS&#x27;</span>,</span><br><span class="line">    policy_name     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;AUDIT_FINANCE_DELETE&#x27;</span>,</span><br><span class="line">    audit_condition <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;1=1&#x27;</span>,</span><br><span class="line">    statement_types <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;DELETE&#x27;</span>,</span><br><span class="line">    enable          <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">TRUE</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>场景三：审计对客户信息的批量访问</strong></p>
+<p>当查询涉及客户表的全部列（可能意味着批量数据导出）时触发审计：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_FGA.ADD_POLICY(</span><br><span class="line">    object_schema   <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;CRM&#x27;</span>,</span><br><span class="line">    object_name     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;CUSTOMERS&#x27;</span>,</span><br><span class="line">    policy_name     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;AUDIT_BULK_CUSTOMER_ACCESS&#x27;</span>,</span><br><span class="line">    audit_condition <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;1=1&#x27;</span>,</span><br><span class="line">    statement_types <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;SELECT&#x27;</span>,</span><br><span class="line">    audit_column_opts <span class="operator">=</span><span class="operator">&gt;</span> DBMS_FGA.ALL_COLUMNS,</span><br><span class="line">    enable          <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">TRUE</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="FGA-策略管理"><a href="#FGA-策略管理" class="headerlink" title="FGA 策略管理"></a>FGA 策略管理</h4><p>FGA 策略支持动态启用、禁用和删除，无需重建策略：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 启用FGA策略</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_FGA.ENABLE_POLICY(<span class="string">&#x27;HR&#x27;</span>, <span class="string">&#x27;EMPLOYEES&#x27;</span>, <span class="string">&#x27;AUDIT_SALARY_ACCESS&#x27;</span>);</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 禁用FGA策略</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_FGA.DISABLE_POLICY(<span class="string">&#x27;HR&#x27;</span>, <span class="string">&#x27;EMPLOYEES&#x27;</span>, <span class="string">&#x27;AUDIT_SALARY_ACCESS&#x27;</span>);</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 删除FGA策略</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_FGA.DROP_POLICY(<span class="string">&#x27;HR&#x27;</span>, <span class="string">&#x27;EMPLOYEES&#x27;</span>, <span class="string">&#x27;AUDIT_SALARY_ACCESS&#x27;</span>);</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看已有FGA策略</span></span><br><span class="line"><span class="keyword">SELECT</span> object_schema, object_name, policy_name,</span><br><span class="line">       enabled, sel, ins, upd, del,</span><br><span class="line">       audit_column, audit_condition</span><br><span class="line"><span class="keyword">FROM</span> DBA_AUDIT_POLICES;</span><br></pre></td></tr></table></figure>
+
+<h4 id="FGA-日志查询"><a href="#FGA-日志查询" class="headerlink" title="FGA 日志查询"></a>FGA 日志查询</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- FGA审计日志在Unified Auditing模式下统一查询</span></span><br><span class="line"><span class="keyword">SELECT</span> event_timestamp, dbusername, object_schema,</span><br><span class="line">       object_name, sql_text, sql_binds</span><br><span class="line"><span class="keyword">FROM</span> DBA_UNIFIED_AUDIT_TRAIL</span><br><span class="line"><span class="keyword">WHERE</span> audit_type <span class="operator">=</span> <span class="string">&#x27;FGA AUDIT&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> event_timestamp <span class="operator">&gt;</span> SYSTIMESTAMP <span class="operator">-</span> <span class="type">INTERVAL</span> <span class="string">&#x27;1&#x27;</span> <span class="keyword">DAY</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> event_timestamp <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 按对象统计FGA触发次数</span></span><br><span class="line"><span class="keyword">SELECT</span> object_schema, object_name, <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> trigger_count</span><br><span class="line"><span class="keyword">FROM</span> DBA_UNIFIED_AUDIT_TRAIL</span><br><span class="line"><span class="keyword">WHERE</span> audit_type <span class="operator">=</span> <span class="string">&#x27;FGA AUDIT&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> event_timestamp <span class="operator">&gt;</span> SYSTIMESTAMP <span class="operator">-</span> <span class="type">INTERVAL</span> <span class="string">&#x27;7&#x27;</span> <span class="keyword">DAY</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> object_schema, object_name</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> trigger_count <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-审计日志维护"><a href="#3-4-审计日志维护" class="headerlink" title="3.4 审计日志维护"></a>3.4 审计日志维护</h3><p>审计日志维护是生产环境中最容易被忽视，却又最容易出问题的环节。没有及时清理的审计日志会迅速填满 SYSAUX 表空间，导致数据库异常。</p>
+<h4 id="初始化审计清理框架"><a href="#初始化审计清理框架" class="headerlink" title="初始化审计清理框架"></a>初始化审计清理框架</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 初始化审计清理配置（只需执行一次）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_AUDIT_MGMT.INIT_CLEANUP(</span><br><span class="line">    audit_trail_type         <span class="operator">=</span><span class="operator">&gt;</span> DBMS_AUDIT_MGMT.AUDIT_TRAIL_UNIFIED,</span><br><span class="line">    default_cleanup_interval <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">720</span>  <span class="comment">-- 720分钟=12小时检查一次</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 设置审计记录保留天数（90天）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_AUDIT_MGMT.SET_LAST_ARCHIVE_TIMESTAMP(</span><br><span class="line">    audit_trail_type  <span class="operator">=</span><span class="operator">&gt;</span> DBMS_AUDIT_MGMT.AUDIT_TRAIL_UNIFIED,</span><br><span class="line">    last_archive_time <span class="operator">=</span><span class="operator">&gt;</span> SYSTIMESTAMP <span class="operator">-</span> <span class="type">INTERVAL</span> <span class="string">&#x27;90&#x27;</span> <span class="keyword">DAY</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="日志清理脚本"><a href="#日志清理脚本" class="headerlink" title="日志清理脚本"></a>日志清理脚本</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 手动执行清理（清除超过保留期的审计记录）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_AUDIT_MGMT.CLEAN_AUDIT_TRAIL(</span><br><span class="line">    audit_trail_type        <span class="operator">=</span><span class="operator">&gt;</span> DBMS_AUDIT_MGMT.AUDIT_TRAIL_UNIFIED,</span><br><span class="line">    use_last_arch_timestamp <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">TRUE</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 设置自动清理Job（推荐，每日自动清理）</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_AUDIT_MGMT.CREATE_PURGE_JOB(</span><br><span class="line">    audit_trail_type           <span class="operator">=</span><span class="operator">&gt;</span> DBMS_AUDIT_MGMT.AUDIT_TRAIL_UNIFIED,</span><br><span class="line">    audit_trail_purge_interval <span class="operator">=</span><span class="operator">&gt;</span> <span class="number">24</span>,     <span class="comment">-- 每24小时执行一次</span></span><br><span class="line">    audit_trail_purge_name     <span class="operator">=</span><span class="operator">&gt;</span> <span class="string">&#x27;UNIFIED_AUDIT_PURGE_JOB&#x27;</span>,</span><br><span class="line">    use_last_arch_timestamp    <span class="operator">=</span><span class="operator">&gt;</span> <span class="literal">TRUE</span></span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看清理Job状态</span></span><br><span class="line"><span class="keyword">SELECT</span> JOB_NAME, JOB_STATUS, JOB_FREQUENCY</span><br><span class="line"><span class="keyword">FROM</span> DBA_AUDIT_MGMT_CLEANUP_JOBS;</span><br></pre></td></tr></table></figure>
+
+<h4 id="归档策略"><a href="#归档策略" class="headerlink" title="归档策略"></a>归档策略</h4><p>建议在清理前先归档到独立表空间，保留历史数据以满足合规留存要求：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建归档表空间（建议放在独立磁盘组上）</span></span><br><span class="line"><span class="keyword">CREATE</span> TABLESPACE aud_archive_ts</span><br><span class="line">  DATAFILE <span class="string">&#x27;+DATA&#x27;</span> SIZE <span class="number">10</span>G AUTOEXTEND <span class="keyword">ON</span> NEXT <span class="number">1</span>G MAXSIZE <span class="number">50</span>G</span><br><span class="line">  EXTENT MANAGEMENT <span class="keyword">LOCAL</span> AUTOALLOCATE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 创建归档用户</span></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">USER</span> aud_archive IDENTIFIED <span class="keyword">BY</span> &quot;StrongPass123!&quot;</span><br><span class="line">  <span class="keyword">DEFAULT</span> TABLESPACE aud_archive_ts</span><br><span class="line">  QUOTA UNLIMITED <span class="keyword">ON</span> aud_archive_ts;</span><br><span class="line"></span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">CREATE TABLE</span> <span class="keyword">TO</span> aud_archive;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 按月归档（以2026年5月为例）</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> aud_archive.audit_202605</span><br><span class="line">TABLESPACE aud_archive_ts</span><br><span class="line"><span class="keyword">AS</span> <span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> SYS.UNIFIED_AUDIT_TRAIL</span><br><span class="line"><span class="keyword">WHERE</span> event_timestamp <span class="operator">&gt;=</span> <span class="type">DATE</span> <span class="string">&#x27;2026-05-01&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> event_timestamp <span class="operator">&lt;</span>  <span class="type">DATE</span> <span class="string">&#x27;2026-06-01&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 归档完成后，设置归档时间戳，允许清理该时段及之前的数据</span></span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line">  DBMS_AUDIT_MGMT.SET_LAST_ARCHIVE_TIMESTAMP(</span><br><span class="line">    audit_trail_type  <span class="operator">=</span><span class="operator">&gt;</span> DBMS_AUDIT_MGMT.AUDIT_TRAIL_UNIFIED,</span><br><span class="line">    last_archive_time <span class="operator">=</span><span class="operator">&gt;</span> TO_TIMESTAMP(<span class="string">&#x27;2026-06-01 00:00:00&#x27;</span>, <span class="string">&#x27;YYYY-MM-DD HH24:MI:SS&#x27;</span>)</span><br><span class="line">  );</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line"><span class="operator">/</span></span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+              <a href="/tags/%E5%AE%A1%E8%AE%A1/" rel="tag"># 审计</a>
+              <a href="/tags/Unified-Auditing/" rel="tag"># Unified Auditing</a>
+              <a href="/tags/%E5%90%88%E8%A7%84/" rel="tag"># 合规</a>
+              <a href="/tags/FGA/" rel="tag"># FGA</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/04/27/oracle/tde-transparent-data-encryption-guide/" rel="prev" title="TDE 透明数据加密实战：表空间级加密与 Wallet 密钥管理">
+                  <i class="fa fa-angle-left"></i> TDE 透明数据加密实战：表空间级加密与 Wallet 密钥管理
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/05/08/oracle/patch-lifecycle-management-ru-psu/" rel="next" title="补丁生命周期管理：RU&#x2F;PSU 应用、OPlan 冲突检测与滚动升级">
+                  补丁生命周期管理：RU/PSU 应用、OPlan 冲突检测与滚动升级 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

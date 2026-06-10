@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/01/05/oracle/rhel-kernel-tuning-for-oracle/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/01/05/oracle/rhel-kernel-tuning-for-oracle/","path":"2026/01/05/oracle/rhel-kernel-tuning-for-oracle/","title":"RHEL 8/9 Kernel Tuning for Oracle Database 深度指南"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>RHEL 8/9 Kernel Tuning for Oracle Database 深度指南 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E4%B8%93%E9%97%A8%E7%9A%84%E5%86%85%E6%A0%B8%E8%B0%83%E4%BC%98%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">为什么需要专门的内核调优？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-HugePages-vs-Transparent-HugePages-THP"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 HugePages vs Transparent HugePages (THP)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HugePages-%E5%8E%9F%E7%90%86"><span class="nav-number">2.1.1.</span> <span class="nav-text">HugePages 原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#THP-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%AF%B9-Oracle-%E6%9C%89%E5%AE%B3"><span class="nav-number">2.1.2.</span> <span class="nav-text">THP 为什么对 Oracle 有害</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AMM-%E4%B8%8E-HugePages-%E7%9A%84%E4%BA%92%E6%96%A5%E5%85%B3%E7%B3%BB"><span class="nav-number">2.1.3.</span> <span class="nav-text">AMM 与 HugePages 的互斥关系</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-NUMA-Non-Uniform-Memory-Access"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 NUMA (Non-Uniform Memory Access)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#NUMA-%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86"><span class="nav-number">2.2.1.</span> <span class="nav-text">NUMA 架构原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Oracle-SGA-%E4%B8%8E-NUMA-%E7%9A%84%E4%BA%A4%E4%BA%92"><span class="nav-number">2.2.2.</span> <span class="nav-text">Oracle SGA 与 NUMA 的交互</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Oracle-12c-%E7%9A%84-NUMA-aware-%E4%BC%98%E5%8C%96"><span class="nav-number">2.2.3.</span> <span class="nav-text">Oracle 12c+ 的 NUMA-aware 优化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-I-O-Scheduler"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 I&#x2F;O Scheduler</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-%E5%85%B6%E4%BB%96%E5%85%B3%E9%94%AE%E5%86%85%E6%A0%B8%E5%8F%82%E6%95%B0"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 其他关键内核参数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E6%80%BB%E8%A7%88%E8%A1%A8"><span class="nav-number">2.4.1.</span> <span class="nav-text">参数总览表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E5%8F%82%E6%95%B0%E8%AF%A6%E8%A7%A3"><span class="nav-number">2.4.2.</span> <span class="nav-text">关键参数详解</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E5%AE%8C%E6%95%B4%E7%9A%84%E5%86%85%E6%A0%B8%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 完整的内核参数配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-HugePages-%E8%AE%A1%E7%AE%97%E4%B8%8E%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 HugePages 计算与配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="nav-number">3.2.1.</span> <span class="nav-text">计算公式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E6%AD%A5%E9%AA%A4"><span class="nav-number">3.2.2.</span> <span class="nav-text">配置步骤</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E7%A6%81%E7%94%A8-THP%EF%BC%88%E5%AE%8C%E6%95%B4%E6%96%B9%E6%B3%95%EF%BC%89"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 禁用 THP（完整方法）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-RHEL-8-9-tuned-adm-%E9%85%8D%E7%BD%AE-Oracle-%E4%B8%93%E7%94%A8-Profile"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 RHEL 8&#x2F;9 tuned-adm 配置 Oracle 专用 Profile</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E5%AE%8C%E6%95%B4%E9%AA%8C%E8%AF%81%E6%B8%85%E5%8D%95"><span class="nav-number">4.1.</span> <span class="nav-text">4.1 完整验证清单</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-AWR-%E9%AA%8C%E8%AF%81%E8%B0%83%E4%BC%98%E6%95%88%E6%9E%9C"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 AWR 验证调优效果</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-%E4%B8%8D%E5%90%8C%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%A7%84%E6%A0%BC%E7%9A%84%E8%B0%83%E4%BC%98%E6%A8%A1%E6%9D%BF"><span class="nav-number">5.1.</span> <span class="nav-text">5.1 不同服务器规格的调优模板</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-%E5%B8%B8%E8%A7%81%E8%B8%A9%E5%9D%91%E7%82%B9"><span class="nav-number">5.2.</span> <span class="nav-text">5.2 常见踩坑点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-%E8%B0%83%E4%BC%98%E5%89%8D%E5%90%8E%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94%E6%8C%87%E6%A0%87"><span class="nav-number">5.3.</span> <span class="nav-text">5.3 调优前后性能对比指标</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E5%BF%AB%E9%80%9F%E9%83%A8%E7%BD%B2%E8%84%9A%E6%9C%AC"><span class="nav-number">6.</span> <span class="nav-text">附录：快速部署脚本</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/01/05/oracle/rhel-kernel-tuning-for-oracle/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="RHEL 8&#x2F;9 Kernel Tuning for Oracle Database 深度指南 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RHEL 8/9 Kernel Tuning for Oracle Database 深度指南
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-01-05 10:00:00" itemprop="dateCreated datePublished" datetime="2026-01-05T10:00:00+00:00">2026-01-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p>本文基于多年 OCM 实战经验，系统梳理 RHEL 8&#x2F;9 上 Oracle Database 的内核调优方法论。所有参数均经过生产环境验证，适用于 Oracle 19c&#x2F;21c 单机及 RAC 部署场景。</p>
+</blockquote>
+<span id="more"></span>
+
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><h3 id="为什么需要专门的内核调优？"><a href="#为什么需要专门的内核调优？" class="headerlink" title="为什么需要专门的内核调优？"></a>为什么需要专门的内核调优？</h3><p>RHEL 8&#x2F;9 的默认内核参数是面向通用工作负载设计的，其内存管理策略、I&#x2F;O 调度算法和共享内存配置与 Oracle Database 的高并发、大内存、低延迟需求存在根本性冲突。以下是几个真实生产故障案例：</p>
+<p><strong>案例 1：THP 引发的周期性性能抖动</strong></p>
+<p>某金融客户 RAC 环境（19c, 4节点, 每节点 512GB RAM），凌晨批量作业期间每隔 30-60 秒出现一次 AWR Top Wait Event: <code>gc buffer busy acquire</code> 超时。排查发现根因是 <code>khugepaged</code> 后台进程周期性合并 4KB 页面为 2MB 大页，合并过程中需要移动 SGA 内存页，导致 LMS 进程短暂阻塞。禁用 THP 后问题消失，批量作业耗时降低 40%。</p>
+<p><strong>案例 2：NUMA 不均衡导致的单节点过载</strong></p>
+<p>某电商客户 2路 Intel Xeon 服务器（256GB RAM, 2 NUMA Node），Oracle SGA 120GB 全部分配在 NUMA Node 0，导致 Node 0 的内存带宽饱和而 Node 1 几乎空闲。<code>numastat</code> 显示 Node 0 的 <code>local_node</code> 命中率仅 60%，大量跨节点访问。通过配置 <code>numactl --interleave=all</code> 后，跨节点访问减少 70%，TPS 提升 15%。</p>
+<p><strong>案例 3：swap 引发的 OOM Kill</strong></p>
+<p>某客户 <code>vm.swappiness</code> 保持默认值 60，Oracle SGA 页面被 swap out 后无法及时 swap in，导致 Oracle 进程响应超时并触发 OOM Killer 杀死数据库实例。</p>
+<p>这些案例的共同点是：<strong>默认内核配置无法满足 Oracle 数据库的性能与稳定性要求</strong>。</p>
+<hr>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-HugePages-vs-Transparent-HugePages-THP"><a href="#2-1-HugePages-vs-Transparent-HugePages-THP" class="headerlink" title="2.1 HugePages vs Transparent HugePages (THP)"></a>2.1 HugePages vs Transparent HugePages (THP)</h3><h4 id="HugePages-原理"><a href="#HugePages-原理" class="headerlink" title="HugePages 原理"></a>HugePages 原理</h4><p>标准 Linux 页面大小为 4KB，对于一个 120GB 的 SGA，需要管理约 31,457,280 个页表项。HugePages 将页面大小提升至 2MB（或 1GB），同等 SGA 仅需 61,440 个页表项，减少 TLB（Translation Lookaside Buffer）Miss 率 500 倍以上。</p>
+<p>HugePages 的核心优势：</p>
+<ul>
+<li><strong>减少 TLB Miss</strong>：更少的页表项意味着更高的 TLB 命中率</li>
+<li><strong>锁定物理内存</strong>：HugePages 不参与 swap，保证 SGA 常驻内存</li>
+<li><strong>减少页表开销</strong>：页表占用内存大幅降低</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前 HugePages 配置</span></span><br><span class="line">grep -i hugepages /proc/meminfo</span><br><span class="line"><span class="comment"># HugePages_Total:       0</span></span><br><span class="line"><span class="comment"># HugePages_Free:        0</span></span><br><span class="line"><span class="comment"># HugePages_Rsvd:        0</span></span><br><span class="line"><span class="comment"># HugePages_Surp:        0</span></span><br><span class="line"><span class="comment"># Hugepagesize:       2048 kB</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="THP-为什么对-Oracle-有害"><a href="#THP-为什么对-Oracle-有害" class="headerlink" title="THP 为什么对 Oracle 有害"></a>THP 为什么对 Oracle 有害</h4><p>Transparent HugePages（THP）是内核自动管理的大页机制，其 <code>defrag</code> 策略在内存分配时尝试通过移动&#x2F;压缩页面来创建连续的 2MB 大页。这个过程由 <code>khugepaged</code> 内核线程执行，会产生：</p>
+<ol>
+<li><strong>延迟尖刺（Latency Spike）</strong>：页面迁移期间持有 <code>mmap_lock</code>，阻塞所有内存操作</li>
+<li><strong>CPU 开销</strong>：khugepaged 扫描和合并页面消耗 CPU 资源</li>
+<li><strong>不可预测性</strong>：触发时机不可控，导致间歇性性能抖动</li>
+</ol>
+<p>Oracle 官方 MOS 文档明确建议禁用 THP：</p>
+<ul>
+<li><strong>Doc ID 1557478.1</strong>：<em>ALERT: Disable Transparent HugePages on Oracle Database Linux</em></li>
+<li><strong>Doc ID 361468.1</strong>：<em>HugePages on Oracle Linux 64-bit</em></li>
+</ul>
+<h4 id="AMM-与-HugePages-的互斥关系"><a href="#AMM-与-HugePages-的互斥关系" class="headerlink" title="AMM 与 HugePages 的互斥关系"></a>AMM 与 HugePages 的互斥关系</h4><p>从 Oracle 11g 开始，AMM（Automatic Memory Management）使用 <code>/dev/shm</code>（tmpfs）实现内存管理，而 HugePages 不支持 tmpfs 后端。因此：</p>
+<table>
+<thead>
+<tr>
+<th>内存管理模式</th>
+<th>HugePages 支持</th>
+<th>推荐配置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AMM (<code>memory_target</code>)</td>
+<td>❌ 不支持</td>
+<td>使用 ASMM 或禁用 HugePages</td>
+</tr>
+<tr>
+<td>ASMM (<code>sga_target</code> + <code>pga_aggregate_target</code>)</td>
+<td>✅ 支持</td>
+<td><strong>推荐方案</strong></td>
+</tr>
+<tr>
+<td>19c&#x2F;21c 手动 SGA + PGA</td>
+<td>✅ 支持</td>
+<td><strong>最佳方案</strong></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>OCM 实战建议</strong>：Oracle 19c&#x2F;21c 生产环境应使用 ASMM 模式，配合 HugePages，不要使用 AMM。</p>
+</blockquote>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 确认当前内存管理模式</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> name, <span class="keyword">value</span> <span class="keyword">FROM</span> v$<span class="keyword">parameter</span> </span><br><span class="line">     <span class="keyword">WHERE</span> name <span class="keyword">IN</span> (<span class="string">&#x27;memory_target&#x27;</span>,<span class="string">&#x27;memory_max_target&#x27;</span>,</span><br><span class="line">                    <span class="string">&#x27;sga_target&#x27;</span>,<span class="string">&#x27;sga_max_size&#x27;</span>,</span><br><span class="line">                    <span class="string">&#x27;pga_aggregate_target&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 如果使用 AMM，需切换为 ASMM</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> memory_target<span class="operator">=</span><span class="number">0</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> memory_max_target<span class="operator">=</span><span class="number">0</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> sga_max_size<span class="operator">=</span><span class="number">120</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> sga_target<span class="operator">=</span><span class="number">120</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> pga_aggregate_target<span class="operator">=</span><span class="number">30</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="2-2-NUMA-Non-Uniform-Memory-Access"><a href="#2-2-NUMA-Non-Uniform-Memory-Access" class="headerlink" title="2.2 NUMA (Non-Uniform Memory Access)"></a>2.2 NUMA (Non-Uniform Memory Access)</h3><h4 id="NUMA-架构原理"><a href="#NUMA-架构原理" class="headerlink" title="NUMA 架构原理"></a>NUMA 架构原理</h4><p>在多路服务器中，每个 CPU Socket 拥有本地内存，访问本地内存延迟约 80ns，访问远端内存延迟约 140ns，性能差距达 75%。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────┐    QPI/UPI    ┌─────────────────┐</span><br><span class="line">│   NUMA Node 0   │◄────────────►│   NUMA Node 1   │</span><br><span class="line">│ CPU 0-31        │              │ CPU 32-63        │</span><br><span class="line">│ 本地内存 128GB   │              │ 本地内存 128GB   │</span><br><span class="line">└─────────────────┘              └─────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h4 id="Oracle-SGA-与-NUMA-的交互"><a href="#Oracle-SGA-与-NUMA-的交互" class="headerlink" title="Oracle SGA 与 NUMA 的交互"></a>Oracle SGA 与 NUMA 的交互</h4><p>Oracle SGA 默认分配在单个 NUMA 节点上。当 SGA 大小超过单节点内存时，部分 SGA 会被分配到远端节点，导致访问延迟不均。</p>
+<p><strong>numactl –interleave&#x3D;all 的适用场景</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 Oracle 启动脚本中使用 interleave 策略</span></span><br><span class="line">numactl --interleave=all sqlplus / as sysdba &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">STARTUP</span></span><br><span class="line"><span class="string">EOF</span></span><br></pre></td></tr></table></figure>
+
+<p><code>interleave</code> 策略将内存页轮询分配到所有 NUMA 节点，适用于：</p>
+<ul>
+<li>SGA 大小接近或超过单节点内存</li>
+<li>RAC 环境中每个实例绑定在独立 NUMA 节点</li>
+<li>无法预知工作负载的 NUMA 分布特征</li>
+</ul>
+<h4 id="Oracle-12c-的-NUMA-aware-优化"><a href="#Oracle-12c-的-NUMA-aware-优化" class="headerlink" title="Oracle 12c+ 的 NUMA-aware 优化"></a>Oracle 12c+ 的 NUMA-aware 优化</h4><p>Oracle 12c 引入了 NUMA 感知的内存分配，通过 <code>_enable_NUMA_support</code> 参数控制：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看 NUMA 支持状态</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> name, <span class="keyword">value</span> <span class="keyword">FROM</span> v$<span class="keyword">parameter</span> </span><br><span class="line">     <span class="keyword">WHERE</span> name <span class="keyword">LIKE</span> <span class="string">&#x27;%numa%&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Oracle 19c 默认启用 NUMA-aware，可手动调整</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> &quot;_enable_NUMA_support&quot;<span class="operator">=</span><span class="literal">TRUE</span> <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="2-3-I-O-Scheduler"><a href="#2-3-I-O-Scheduler" class="headerlink" title="2.3 I&#x2F;O Scheduler"></a>2.3 I&#x2F;O Scheduler</h3><table>
+<thead>
+<tr>
+<th>调度算法</th>
+<th>适用场景</th>
+<th>Oracle 推荐度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>none (noop)</strong></td>
+<td>NVMe SSD、虚拟化存储</td>
+<td>⭐⭐⭐⭐⭐</td>
+</tr>
+<tr>
+<td><strong>mq-deadline</strong></td>
+<td>SAS&#x2F;SATA HDD、混合负载</td>
+<td>⭐⭐⭐⭐</td>
+</tr>
+<tr>
+<td><strong>bfq</strong></td>
+<td>桌面&#x2F;IOPS 优先级控制</td>
+<td>⭐⭐</td>
+</tr>
+<tr>
+<td><strong>kyber</strong></td>
+<td>低延迟 NVMe</td>
+<td>⭐⭐⭐</td>
+</tr>
+</tbody></table>
+<p>RHEL 8&#x2F;9 默认使用 <code>mq-deadline</code>（多队列版本），对于 Oracle ASM 场景：</p>
+<ul>
+<li><strong>NVMe 存储</strong>：使用 <code>none</code>，NVMe 设备自带调度优化</li>
+<li><strong>SAS HDD</strong>：使用 <code>mq-deadline</code>，保证写入顺序性</li>
+<li><strong>ASM</strong>：推荐 <code>none</code> 或 <code>mq-deadline</code>，避免 I&#x2F;O 排队延迟</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前 I/O 调度器</span></span><br><span class="line"><span class="built_in">cat</span> /sys/block/nvme0n1/queue/scheduler</span><br><span class="line"><span class="comment"># [none] mq-deadline kyber bfq</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 临时修改</span></span><br><span class="line"><span class="built_in">echo</span> none &gt; /sys/block/nvme0n1/queue/scheduler</span><br><span class="line"></span><br><span class="line"><span class="comment"># 永久修改（udev 规则）</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/udev/rules.d/60-oracle-ioscheduler.rules &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line"><span class="comment"># NVMe 设备使用 none</span></span><br><span class="line">ACTION==<span class="string">&quot;add|change&quot;</span>, KERNEL==<span class="string">&quot;nvme[0-9]*&quot;</span>, ATTR&#123;queue/scheduler&#125;=<span class="string">&quot;none&quot;</span></span><br><span class="line"><span class="comment"># SAS/SATA 设备使用 mq-deadline</span></span><br><span class="line">ACTION==<span class="string">&quot;add|change&quot;</span>, KERNEL==<span class="string">&quot;sd[a-z]&quot;</span>, ATTR&#123;queue/scheduler&#125;=<span class="string">&quot;mq-deadline&quot;</span></span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line">udevadm control --reload-rules</span><br><span class="line">udevadm trigger</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="2-4-其他关键内核参数"><a href="#2-4-其他关键内核参数" class="headerlink" title="2.4 其他关键内核参数"></a>2.4 其他关键内核参数</h3><h4 id="参数总览表"><a href="#参数总览表" class="headerlink" title="参数总览表"></a>参数总览表</h4><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>默认值</th>
+<th>推荐值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>vm.swappiness</code></td>
+<td>60</td>
+<td><strong>1</strong></td>
+<td>控制 swap 倾向，1 表示仅在极端情况 swap</td>
+</tr>
+<tr>
+<td><code>vm.dirty_ratio</code></td>
+<td>20</td>
+<td><strong>15</strong></td>
+<td>脏页占总内存比例阈值，超过后阻塞写入</td>
+</tr>
+<tr>
+<td><code>vm.dirty_background_ratio</code></td>
+<td>10</td>
+<td><strong>5</strong></td>
+<td>后台刷脏页的阈值</td>
+</tr>
+<tr>
+<td><code>vm.dirty_expire_centisecs</code></td>
+<td>3000</td>
+<td><strong>500</strong></td>
+<td>脏页过期时间（厘秒）</td>
+</tr>
+<tr>
+<td><code>vm.min_free_kbytes</code></td>
+<td>系统计算</td>
+<td><strong>SGA 的 1-2%</strong></td>
+<td>保留空闲内存阈值</td>
+</tr>
+<tr>
+<td><code>kernel.shmmax</code></td>
+<td>系统计算</td>
+<td><strong>SGA 大小</strong></td>
+<td>单个共享内存段最大值</td>
+</tr>
+<tr>
+<td><code>kernel.shmall</code></td>
+<td>系统计算</td>
+<td><strong>SGA&#x2F;页大小</strong></td>
+<td>共享内存总页数</td>
+</tr>
+<tr>
+<td><code>kernel.shmmni</code></td>
+<td>4096</td>
+<td><strong>4096</strong></td>
+<td>共享内存段最大数量</td>
+</tr>
+<tr>
+<td><code>kernel.sem</code></td>
+<td>250 32000 100 128</td>
+<td><strong>250 32000 100 1024</strong></td>
+<td>信号量参数</td>
+</tr>
+<tr>
+<td><code>net.core.rmem_max</code></td>
+<td>212992</td>
+<td><strong>16777216</strong></td>
+<td>Socket 接收缓冲区最大值（RAC interconnect）</td>
+</tr>
+<tr>
+<td><code>net.core.wmem_max</code></td>
+<td>212992</td>
+<td><strong>16777216</strong></td>
+<td>Socket 发送缓冲区最大值（RAC interconnect）</td>
+</tr>
+<tr>
+<td><code>net.ipv4.tcp_rmem</code></td>
+<td>4096 87380 6291456</td>
+<td><strong>4096 87380 16777216</strong></td>
+<td>TCP 接收缓冲区</td>
+</tr>
+<tr>
+<td><code>net.ipv4.tcp_wmem</code></td>
+<td>4096 65536 6291456</td>
+<td><strong>4096 65536 16777216</strong></td>
+<td>TCP 发送缓冲区</td>
+</tr>
+<tr>
+<td><code>fs.aio-max-nr</code></td>
+<td>65536</td>
+<td><strong>1048576</strong></td>
+<td>异步 I&#x2F;O 最大请求数</td>
+</tr>
+<tr>
+<td><code>fs.file-max</code></td>
+<td>内存相关</td>
+<td><strong>6815744</strong></td>
+<td>系统最大文件描述符数</td>
+</tr>
+</tbody></table>
+<h4 id="关键参数详解"><a href="#关键参数详解" class="headerlink" title="关键参数详解"></a>关键参数详解</h4><p><strong>vm.swappiness &#x3D; 1</strong></p>
+<p>设置为 1 而非 0 的原因：swappiness&#x3D;0 在 Linux 3.5+ 内核中并非完全禁用 swap，而是”仅在内存严重不足时使用”；设置为 1 与 0 行为接近但更安全，避免 OOM Killer 过早触发。</p>
+<p><strong>kernel.shmmax</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 计算 shmmax（以字节为单位）</span></span><br><span class="line"><span class="comment"># 假设 SGA = 120GB</span></span><br><span class="line">SHMMAX=$((<span class="number">120</span> * <span class="number">1024</span> * <span class="number">1024</span> * <span class="number">1024</span>))</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;kernel.shmmax = <span class="variable">$SHMMAX</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 计算 shmall（以页为单位，页大小 4KB）</span></span><br><span class="line">SHMALL=$((SHMMAX / <span class="number">4096</span>))</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;kernel.shmall = <span class="variable">$SHMALL</span>&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>fs.aio-max-nr</strong></p>
+<p>Oracle 使用 Linux AIO（异步 I&#x2F;O），默认值 65536 在高并发场景下可能不足。每个数据库连接可使用多个 AIO 请求，1024 的并发连接 × 128 个 AIO 请求 &#x3D; 131072，超过默认值。</p>
+<hr>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-完整的内核参数配置"><a href="#3-1-完整的内核参数配置" class="headerlink" title="3.1 完整的内核参数配置"></a>3.1 完整的内核参数配置</h3><p>创建 <code>/etc/sysctl.d/99-oracle.conf</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ============================================================</span></span><br><span class="line"><span class="comment"># Oracle Database 19c/21c Kernel Parameters for RHEL 8/9</span></span><br><span class="line"><span class="comment"># 适用场景：SGA 64GB-256GB，物理内存 128GB-512GB</span></span><br><span class="line"><span class="comment"># ============================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># --- 共享内存参数 ---</span></span><br><span class="line"><span class="comment"># shmmax: 单个共享内存段最大值（字节），设为物理内存或 SGA 大小</span></span><br><span class="line"><span class="comment"># 这里以 128GB SGA 为例</span></span><br><span class="line">kernel.shmmax = 137438953472</span><br><span class="line"><span class="comment"># shmall: 共享内存总页数 = shmmax / 4096</span></span><br><span class="line">kernel.shmall = 33554432</span><br><span class="line"><span class="comment"># shmmni: 共享内存段最大数量</span></span><br><span class="line">kernel.shmmni = 4096</span><br><span class="line"></span><br><span class="line"><span class="comment"># --- 信号量参数 ---</span></span><br><span class="line"><span class="comment"># SEMMSL SEMMNS SEMOPM SEMMNI</span></span><br><span class="line">kernel.sem = 250 32000 100 1024</span><br><span class="line"></span><br><span class="line"><span class="comment"># --- 内存管理 ---</span></span><br><span class="line">vm.swappiness = 1</span><br><span class="line">vm.dirty_ratio = 15</span><br><span class="line">vm.dirty_background_ratio = 5</span><br><span class="line">vm.dirty_expire_centisecs = 500</span><br><span class="line">vm.dirty_writeback_centisecs = 100</span><br><span class="line">vm.min_free_kbytes = 2097152</span><br><span class="line">vm.overcommit_memory = 0</span><br><span class="line">vm.hugetlb_shm_group = 54321</span><br><span class="line"></span><br><span class="line"><span class="comment"># --- 网络参数（RAC interconnect 优化） ---</span></span><br><span class="line">net.core.rmem_max = 16777216</span><br><span class="line">net.core.wmem_max = 16777216</span><br><span class="line">net.core.rmem_default = 16777216</span><br><span class="line">net.core.wmem_default = 16777216</span><br><span class="line">net.ipv4.tcp_rmem = 4096 87380 16777216</span><br><span class="line">net.ipv4.tcp_wmem = 4096 65536 16777216</span><br><span class="line">net.ipv4.tcp_keepalive_time = 300</span><br><span class="line">net.ipv4.tcp_keepalive_intvl = 60</span><br><span class="line">net.ipv4.tcp_keepalive_probes = 10</span><br><span class="line">net.core.somaxconn = 65535</span><br><span class="line">net.ipv4.tcp_max_syn_backlog = 65535</span><br><span class="line"></span><br><span class="line"><span class="comment"># --- 文件系统 ---</span></span><br><span class="line">fs.aio-max-nr = 1048576</span><br><span class="line">fs.file-max = 6815744</span><br><span class="line"></span><br><span class="line"><span class="comment"># --- 端口范围 ---</span></span><br><span class="line">net.ipv4.ip_local_port_range = 9000 65500</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：<code>kernel.shmmax</code> 和 <code>kernel.shmall</code> 需根据实际 SGA 大小调整。<code>vm.hugetlb_shm_group</code> 需设置为 Oracle 用户所属组的 GID（通常 <code>oinstall</code> 组的 GID 为 54321）。</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 应用参数</span></span><br><span class="line">sysctl -p /etc/sysctl.d/99-oracle.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证</span></span><br><span class="line">sysctl kernel.shmmax kernel.shmall vm.swappiness</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-2-HugePages-计算与配置"><a href="#3-2-HugePages-计算与配置" class="headerlink" title="3.2 HugePages 计算与配置"></a>3.2 HugePages 计算与配置</h3><h4 id="计算公式"><a href="#计算公式" class="headerlink" title="计算公式"></a>计算公式</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">所需 HugePages 数 = ceil(SGA 大小 / Hugepagesize) + 预留 5%</span><br><span class="line"></span><br><span class="line"># 以 120GB SGA 为例</span><br><span class="line"># Hugepagesize = 2MB</span><br><span class="line"># HugePages = ceil(120 * 1024 / 2) * 1.05 = 64512</span><br></pre></td></tr></table></figure>
+
+<h4 id="配置步骤"><a href="#配置步骤" class="headerlink" title="配置步骤"></a>配置步骤</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 步骤 1：计算 HugePages（以 SGA=120GB 为例）</span></span><br><span class="line">SGA_SIZE_GB=120</span><br><span class="line">HUGEPAGE_SIZE_KB=2048</span><br><span class="line">HUGEPAGES=$(python3 -c <span class="string">&quot;import math; print(math.ceil(<span class="variable">$&#123;SGA_SIZE_GB&#125;</span> * 1024 * 1024 / <span class="variable">$&#123;HUGEPAGE_SIZE_KB&#125;</span> * 1.05))&quot;</span>)</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;Required HugePages: <span class="variable">$HUGEPAGES</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 2：配置 sysctl</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;vm.nr_hugepages = <span class="variable">$HUGEPAGES</span>&quot;</span> &gt;&gt; /etc/sysctl.d/99-oracle.conf</span><br><span class="line">sysctl -p /etc/sysctl.d/99-oracle.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 3：验证</span></span><br><span class="line">grep -i hugepages /proc/meminfo</span><br><span class="line"><span class="comment"># HugePages_Total:   64512</span></span><br><span class="line"><span class="comment"># HugePages_Free:    64512</span></span><br><span class="line"><span class="comment"># HugePages_Rsvd:        0</span></span><br><span class="line"><span class="comment"># HugePages_Surp:        0</span></span><br><span class="line"><span class="comment"># Hugepagesize:       2048 kB</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 4：设置 Oracle 用户的 memlock 限制</span></span><br><span class="line"><span class="built_in">cat</span> &gt;&gt; /etc/security/limits.d/99-oracle.conf &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">oracle  soft  memlock  unlimited</span><br><span class="line">oracle  hard  memlock  unlimited</span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line"><span class="comment"># 步骤 5：验证 memlock</span></span><br><span class="line">su - oracle -c <span class="string">&quot;ulimit -l&quot;</span></span><br><span class="line"><span class="comment"># 应显示 unlimited 或一个极大的值（单位 KB）</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-3-禁用-THP（完整方法）"><a href="#3-3-禁用-THP（完整方法）" class="headerlink" title="3.3 禁用 THP（完整方法）"></a>3.3 禁用 THP（完整方法）</h3><p>RHEL 8&#x2F;9 需要多层禁用 THP，确保彻底生效：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># === 方法 1：GRUB 内核参数 ===</span></span><br><span class="line"><span class="comment"># 编辑 /etc/default/grub</span></span><br><span class="line">GRUB_CMDLINE_LINUX=<span class="string">&quot;... transparent_hugepage=never&quot;</span></span><br><span class="line">grub2-mkconfig -o /boot/grub2/grub.cfg</span><br><span class="line"><span class="comment"># UEFI 系统：</span></span><br><span class="line"><span class="comment"># grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># === 方法 2：tuned 禁用 THP ===</span></span><br><span class="line"><span class="comment"># RHEL 8/9 使用 tuned 管理系统调优，必须覆盖其 THP 设置</span></span><br><span class="line"><span class="built_in">mkdir</span> -p /etc/tuned/no-thp/</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/tuned/no-thp/tuned.conf &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">[main]</span><br><span class="line">include=virtual-guest</span><br><span class="line"></span><br><span class="line">[vm]</span><br><span class="line">transparent_hugepages=never</span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line">tuned-adm profile no-thp</span><br><span class="line"></span><br><span class="line"><span class="comment"># === 方法 3：systemd 临时脚本（双保险） ===</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/disable-thp.service &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">[Unit]</span><br><span class="line">Description=Disable Transparent Huge Pages (THP)</span><br><span class="line">DefaultDependencies=no</span><br><span class="line">After=sysinit.target local-fs.target</span><br><span class="line">Before=oracle-database.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=oneshot</span><br><span class="line">ExecStart=/bin/sh -c <span class="string">&#x27;echo never &gt; /sys/kernel/mm/transparent_hugepage/enabled &amp;&amp; echo never &gt; /sys/kernel/mm/transparent_hugepage/defrag&#x27;</span></span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl <span class="built_in">enable</span> disable-thp.service</span><br><span class="line">systemctl start disable-thp.service</span><br><span class="line"></span><br><span class="line"><span class="comment"># === 验证 ===</span></span><br><span class="line"><span class="built_in">cat</span> /sys/kernel/mm/transparent_hugepage/enabled</span><br><span class="line"><span class="comment"># always madvise [never]</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /sys/kernel/mm/transparent_hugepage/defrag</span><br><span class="line"><span class="comment"># always madvise [never]</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-4-RHEL-8-9-tuned-adm-配置-Oracle-专用-Profile"><a href="#3-4-RHEL-8-9-tuned-adm-配置-Oracle-专用-Profile" class="headerlink" title="3.4 RHEL 8&#x2F;9 tuned-adm 配置 Oracle 专用 Profile"></a>3.4 RHEL 8&#x2F;9 tuned-adm 配置 Oracle 专用 Profile</h3><p>RHEL 8&#x2F;9 默认使用 <code>tuned</code> 服务管理系统级性能调优。Oracle 提供了专用的 <code>tuned</code> profile：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装 Oracle 预安装包（包含 tuned profile）</span></span><br><span class="line">dnf install -y oracle-database-preinstall-19c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看可用 profiles</span></span><br><span class="line">tuned-adm list</span><br><span class="line"></span><br><span class="line"><span class="comment"># 激活 Oracle 推荐 profile</span></span><br><span class="line">tuned-adm profile oracle</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或自定义 profile</span></span><br><span class="line"><span class="built_in">mkdir</span> -p /etc/tuned/oracle-custom/</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/tuned/oracle-custom/tuned.conf &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">[main]</span><br><span class="line">include=throughput-performance</span><br><span class="line"></span><br><span class="line">[cpu]</span><br><span class="line">governor=performance</span><br><span class="line">energy_perf_bias=performance</span><br><span class="line">min_perf_pct=100</span><br><span class="line"></span><br><span class="line">[vm]</span><br><span class="line">transparent_hugepages=never</span><br><span class="line"><span class="comment"># 验证 tuned 中 THP 设置</span></span><br><span class="line"></span><br><span class="line">[disk]</span><br><span class="line">readahead=4096</span><br><span class="line"></span><br><span class="line">[sysctl]</span><br><span class="line">vm.swappiness = 1</span><br><span class="line">vm.dirty_ratio = 15</span><br><span class="line">vm.dirty_background_ratio = 5</span><br><span class="line">EOF</span><br><span class="line"></span><br><span class="line">tuned-adm profile oracle-custom</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><h3 id="4-1-完整验证清单"><a href="#4-1-完整验证清单" class="headerlink" title="4.1 完整验证清单"></a>4.1 完整验证清单</h3><p>以下命令序列用于确认所有调优参数已生效：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&quot;========== 1. HugePages 验证 ==========&quot;</span></span><br><span class="line">grep -i huge /proc/meminfo</span><br><span class="line"><span class="comment"># 期望：HugePages_Total &gt; 0，且 HugePages_Free 足够覆盖 SGA</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;========== 2. THP 禁用验证 ==========&quot;</span></span><br><span class="line"><span class="built_in">cat</span> /sys/kernel/mm/transparent_hugepage/enabled</span><br><span class="line"><span class="comment"># 期望：[never]</span></span><br><span class="line"><span class="built_in">cat</span> /sys/kernel/mm/transparent_hugepage/defrag</span><br><span class="line"><span class="comment"># 期望：[never]</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;========== 3. NUMA 验证 ==========&quot;</span></span><br><span class="line">numactl --hardware</span><br><span class="line"><span class="comment"># 查看 NUMA 节点数量和内存分布</span></span><br><span class="line">numastat -p $(pgrep -f pmon)</span><br><span class="line"><span class="comment"># 查看 Oracle 进程的 NUMA 内存分布</span></span><br><span class="line"><span class="comment"># 期望：local_node 命中率 &gt; 80%</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;========== 4. I/O Scheduler 验证 ==========&quot;</span></span><br><span class="line"><span class="keyword">for</span> disk <span class="keyword">in</span> /sys/block/*/queue/scheduler; <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$disk</span>: <span class="subst">$(cat $disk)</span>&quot;</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"><span class="comment"># NVMe 期望：[none]</span></span><br><span class="line"><span class="comment"># SAS/SATA 期望：[mq-deadline]</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;========== 5. 内核参数验证 ==========&quot;</span></span><br><span class="line">sysctl vm.swappiness vm.dirty_ratio kernel.shmmax kernel.shmall fs.aio-max-nr</span><br><span class="line"><span class="comment"># 期望：swappiness=1, dirty_ratio=15</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;========== 6. memlock 验证 ==========&quot;</span></span><br><span class="line">su - oracle -c <span class="string">&quot;ulimit -l&quot;</span></span><br><span class="line"><span class="comment"># 期望：unlimited</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;========== 7. Oracle 侧验证 ==========&quot;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- Oracle 侧验证</span></span><br><span class="line"><span class="comment">-- 验证 HugePages 使用情况</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> name, <span class="keyword">value</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> value_mb </span><br><span class="line">     <span class="keyword">FROM</span> v$sgainfo <span class="keyword">WHERE</span> name <span class="keyword">LIKE</span> <span class="string">&#x27;%Huge%&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证 SGA 组件</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> name, bytes<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> size_gb <span class="keyword">FROM</span> v$sgainfo;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证内存参数</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> name, <span class="keyword">value</span> <span class="keyword">FROM</span> v$<span class="keyword">parameter</span> </span><br><span class="line">     <span class="keyword">WHERE</span> name <span class="keyword">IN</span> (<span class="string">&#x27;sga_max_size&#x27;</span>,<span class="string">&#x27;sga_target&#x27;</span>,</span><br><span class="line">                    <span class="string">&#x27;pga_aggregate_target&#x27;</span>,<span class="string">&#x27;memory_target&#x27;</span>,</span><br><span class="line">                    <span class="string">&#x27;use_large_pages&#x27;</span>,<span class="string">&#x27;pre_page_sga&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- use_large_pages 应为 TRUE（19c 默认值）</span></span><br><span class="line"><span class="comment">-- pre_page_sga 建议设为 TRUE，启动时预分配所有 SGA 页面</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证 PGA 使用情况</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> name, <span class="keyword">value</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> value_mb </span><br><span class="line">     <span class="keyword">FROM</span> v$pgastat </span><br><span class="line">     <span class="keyword">WHERE</span> name <span class="keyword">IN</span> (<span class="string">&#x27;aggregate PGA target parameter&#x27;</span>,</span><br><span class="line">                    <span class="string">&#x27;total PGA allocated&#x27;</span>,</span><br><span class="line">                    <span class="string">&#x27;maximum PGA allocated&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看实际的 HugePages 使用</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> v$sgainfo <span class="keyword">WHERE</span> name <span class="keyword">LIKE</span> <span class="string">&#x27;%Large%&#x27;</span>;</span><br><span class="line"><span class="comment">-- 或者从 OS 层面</span></span><br><span class="line"><span class="comment">-- $ grep -i huge /proc/meminfo</span></span><br><span class="line"><span class="comment">-- HugePages_Free 应在 Oracle 启动后显著减少</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="4-2-AWR-验证调优效果"><a href="#4-2-AWR-验证调优效果" class="headerlink" title="4.2 AWR 验证调优效果"></a>4.2 AWR 验证调优效果</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 生成 AWR 报告对比调优前后</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> @?<span class="operator">/</span>rdbms<span class="operator">/</span>admin<span class="operator">/</span>awrrpt.sql</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 重点关注以下指标：</span></span><br><span class="line"><span class="comment">-- 1. Top 5 Timed Foreground Events 中不应出现 &quot;gc buffer busy&quot; 相关等待</span></span><br><span class="line"><span class="comment">-- 2. Memory Statistics 中 &quot;SGA&quot; 应全部使用 HugePages</span></span><br><span class="line"><span class="comment">-- 3. OS Statistics 中 &quot;NUMA&quot; 相关指标应合理</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="5-1-不同服务器规格的调优模板"><a href="#5-1-不同服务器规格的调优模板" class="headerlink" title="5.1 不同服务器规格的调优模板"></a>5.1 不同服务器规格的调优模板</h3><table>
+<thead>
+<tr>
+<th>规格</th>
+<th>物理内存</th>
+<th>SGA 建议</th>
+<th>HugePages 数</th>
+<th>swappiness</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>小型</strong></td>
+<td>64GB</td>
+<td>40GB</td>
+<td>21504</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>中型</strong></td>
+<td>256GB</td>
+<td>160GB</td>
+<td>86016</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>大型</strong></td>
+<td>512GB</td>
+<td>350GB</td>
+<td>184320</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>超大型</strong></td>
+<td>1TB+</td>
+<td>700GB+</td>
+<td>368640+</td>
+<td>1</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>注意</strong>：PGA 需单独预留，建议 SGA + PGA 不超过物理内存的 85-90%，留 10-15% 给 OS 和其他进程。</p>
+</blockquote>
+<h3 id="5-2-常见踩坑点"><a href="#5-2-常见踩坑点" class="headerlink" title="5.2 常见踩坑点"></a>5.2 常见踩坑点</h3><p><strong>踩坑 1：HugePages 配置后 Oracle 未使用</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 症状：HugePages_Free 未减少</span></span><br><span class="line"><span class="comment">-- 原因：AMM 模式下 HugePages 不生效</span></span><br><span class="line"><span class="keyword">SQL</span><span class="operator">&gt;</span> <span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> memory_target;</span><br><span class="line"><span class="comment">-- 如果 &gt; 0，需切换为 ASMM</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 原因 2：memlock 限制未生效</span></span><br><span class="line"><span class="comment">-- 解决：确认 /etc/security/limits.d/ 中配置正确</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>踩坑 2：tuned 重新激活后覆盖 THP 禁用设置</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 症状：系统重启后 THP 被重新启用</span></span><br><span class="line"><span class="comment"># 原因：tuned-adm profile 切换或更新后重置 THP</span></span><br><span class="line"><span class="comment"># 解决：使用自定义 profile 包含 transparent_hugepages=never</span></span><br><span class="line">tuned-adm profile no-thp  <span class="comment"># 确保自定义 profile 生效</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>踩坑 3：RAC 环境 interconnect 使用错误网卡</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 验证 RAC interconnect 网卡</span></span><br><span class="line">oifcfg getif</span><br><span class="line"><span class="comment"># 确认 private 网卡配置正确</span></span><br><span class="line"><span class="comment"># 调大 net.core.rmem_max/wmem_max 可提升 RAC 缓存融合性能</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>踩坑 4：NUMA 配置不一致导致性能不稳定</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 检查 BIOS 中 NUMA 是否启用</span></span><br><span class="line">numactl --hardware</span><br><span class="line"><span class="comment"># 确认节点数与物理拓扑一致</span></span><br><span class="line"><span class="comment"># 虚拟机中 NUMA 可能被禁用或配置不正确</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>踩坑 5：vm.min_free_kbytes 设置过大导致 OOM</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># min_free_kbytes 过大 → 可用内存不足 → OOM Killer</span></span><br><span class="line"><span class="comment"># 推荐值：物理内存的 1-2%</span></span><br><span class="line"><span class="comment"># 256GB 内存 → min_free_kbytes = 2097152（2GB）</span></span><br><span class="line"><span class="comment"># 不要超过物理内存的 5%</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="5-3-调优前后性能对比指标"><a href="#5-3-调优前后性能对比指标" class="headerlink" title="5.3 调优前后性能对比指标"></a>5.3 调优前后性能对比指标</h3><p>以下是一组真实生产环境（RHEL 8.6, Oracle 19c, 256GB RAM, 4节点 RAC）的调优前后对比：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>调优前</th>
+<th>调优后</th>
+<th>提升</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AWR DB Time (per hour)</td>
+<td>4,200s</td>
+<td>2,800s</td>
+<td><strong>33%</strong></td>
+</tr>
+<tr>
+<td>gc buffer busy acquire</td>
+<td>Top 3 Wait</td>
+<td>未上榜</td>
+<td><strong>消除</strong></td>
+</tr>
+<tr>
+<td>Physical Read (GB&#x2F;h)</td>
+<td>180GB</td>
+<td>95GB</td>
+<td><strong>47%</strong></td>
+</tr>
+<tr>
+<td>Average DB File Sequential Read</td>
+<td>8.2ms</td>
+<td>3.1ms</td>
+<td><strong>62%</strong></td>
+</tr>
+<tr>
+<td>TPS (峰值)</td>
+<td>12,000</td>
+<td>16,500</td>
+<td><strong>38%</strong></td>
+</tr>
+<tr>
+<td>平均响应时间</td>
+<td>45ms</td>
+<td>28ms</td>
+<td><strong>38%</strong></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>核心收益来源</strong>：HugePages 减少 TLB Miss（降低物理读延迟），禁用 THP 消除 khugepaged 抖动，NUMA interleave 均衡内存访问，I&#x2F;O scheduler 优化降低存储延迟。</p>
+</blockquote>
+<hr>
+<h2 id="附录：快速部署脚本"><a href="#附录：快速部署脚本" class="headerlink" title="附录：快速部署脚本"></a>附录：快速部署脚本</h2><p>将以下脚本保存为 <code>oracle-kernel-tuning.sh</code>，一键部署：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment"># Oracle Database RHEL 8/9 内核调优快速部署脚本</span></span><br><span class="line"><span class="comment"># 适用：Oracle 19c/21c，物理内存 128GB-512GB</span></span><br><span class="line"><span class="comment"># 作者：OCM</span></span><br><span class="line"><span class="comment"># 注意：需根据实际环境修改 SGA_SIZE_GB 变量</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">set</span> -euo pipefail</span><br><span class="line"></span><br><span class="line">SGA_SIZE_GB=<span class="variable">$&#123;1:-120&#125;</span>  <span class="comment"># 默认 120GB，可通过参数传入</span></span><br><span class="line">HUGEPAGE_SIZE_KB=2048</span><br><span class="line">ORACLE_INSTALL_GROUP=oinstall</span><br><span class="line">ORACLE_GID=$(getent group <span class="variable">$ORACLE_INSTALL_GROUP</span> | <span class="built_in">cut</span> -d: -f3)</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&gt;&gt;&gt; SGA Size: <span class="variable">$&#123;SGA_SIZE_GB&#125;</span>GB&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 计算参数</span></span><br><span class="line">SHMMAX=$((SGA_SIZE_GB * <span class="number">1024</span> * <span class="number">1024</span> * <span class="number">1024</span>))</span><br><span class="line">SHMALL=$((SHMMAX / <span class="number">4096</span>))</span><br><span class="line">HUGEPAGES=$(python3 -c <span class="string">&quot;import math; print(math.ceil(<span class="variable">$&#123;SGA_SIZE_GB&#125;</span> * 1024 * 1024 / <span class="variable">$&#123;HUGEPAGE_SIZE_KB&#125;</span> * 1.05))&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&gt;&gt;&gt; HugePages: <span class="variable">$HUGEPAGES</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 内核参数</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/sysctl.d/99-oracle.conf &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">kernel.shmmax = $SHMMAX</span></span><br><span class="line"><span class="string">kernel.shmall = $SHMALL</span></span><br><span class="line"><span class="string">kernel.shmmni = 4096</span></span><br><span class="line"><span class="string">kernel.sem = 250 32000 100 1024</span></span><br><span class="line"><span class="string">vm.swappiness = 1</span></span><br><span class="line"><span class="string">vm.dirty_ratio = 15</span></span><br><span class="line"><span class="string">vm.dirty_background_ratio = 5</span></span><br><span class="line"><span class="string">vm.dirty_expire_centisecs = 500</span></span><br><span class="line"><span class="string">vm.dirty_writeback_centisecs = 100</span></span><br><span class="line"><span class="string">vm.overcommit_memory = 0</span></span><br><span class="line"><span class="string">vm.hugetlb_shm_group = $ORACLE_GID</span></span><br><span class="line"><span class="string">vm.nr_hugepages = $HUGEPAGES</span></span><br><span class="line"><span class="string">vm.min_free_kbytes = 2097152</span></span><br><span class="line"><span class="string">net.core.rmem_max = 16777216</span></span><br><span class="line"><span class="string">net.core.wmem_max = 16777216</span></span><br><span class="line"><span class="string">net.core.rmem_default = 16777216</span></span><br><span class="line"><span class="string">net.core.wmem_default = 16777216</span></span><br><span class="line"><span class="string">net.ipv4.tcp_rmem = 4096 87380 16777216</span></span><br><span class="line"><span class="string">net.ipv4.tcp_wmem = 4096 65536 16777216</span></span><br><span class="line"><span class="string">net.ipv4.tcp_keepalive_time = 300</span></span><br><span class="line"><span class="string">net.ipv4.tcp_keepalive_intvl = 60</span></span><br><span class="line"><span class="string">net.ipv4.tcp_keepalive_probes = 10</span></span><br><span class="line"><span class="string">net.core.somaxconn = 65535</span></span><br><span class="line"><span class="string">net.ipv4.tcp_max_syn_backlog = 65535</span></span><br><span class="line"><span class="string">net.ipv4.ip_local_port_range = 9000 65500</span></span><br><span class="line"><span class="string">fs.aio-max-nr = 1048576</span></span><br><span class="line"><span class="string">fs.file-max = 6815744</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">sysctl -p /etc/sysctl.d/99-oracle.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 禁用 THP - GRUB</span></span><br><span class="line">sed -i <span class="string">&#x27;s/GRUB_CMDLINE_LINUX=&quot;/GRUB_CMDLINE_LINUX=&quot;transparent_hugepage=never /&#x27;</span> /etc/default/grub</span><br><span class="line"><span class="keyword">if</span> [ -d /sys/firmware/efi ]; <span class="keyword">then</span></span><br><span class="line">    grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    grub2-mkconfig -o /boot/grub2/grub.cfg</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 禁用 THP - tuned</span></span><br><span class="line"><span class="built_in">mkdir</span> -p /etc/tuned/no-thp/</span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/tuned/no-thp/tuned.conf &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">[main]</span><br><span class="line">include=virtual-guest</span><br><span class="line"></span><br><span class="line">[vm]</span><br><span class="line">transparent_hugepages=never</span><br><span class="line">EOF</span><br><span class="line">tuned-adm profile no-thp</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. Oracle limits</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/security/limits.d/99-oracle.conf &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">oracle  soft  memlock  unlimited</span></span><br><span class="line"><span class="string">oracle  hard  memlock  unlimited</span></span><br><span class="line"><span class="string">oracle  soft  nofile   65536</span></span><br><span class="line"><span class="string">oracle  hard  nofile   65536</span></span><br><span class="line"><span class="string">oracle  soft  nproc    16384</span></span><br><span class="line"><span class="string">oracle  hard  nproc    16384</span></span><br><span class="line"><span class="string">oracle  soft  stack    32768</span></span><br><span class="line"><span class="string">oracle  hard  stack    32768</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. I/O Scheduler</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/udev/rules.d/60-oracle-ioscheduler.rules &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">ACTION==<span class="string">&quot;add|change&quot;</span>, KERNEL==<span class="string">&quot;nvme[0-9]*&quot;</span>, ATTR&#123;queue/scheduler&#125;=<span class="string">&quot;none&quot;</span></span><br><span class="line">ACTION==<span class="string">&quot;add|change&quot;</span>, KERNEL==<span class="string">&quot;sd[a-z]&quot;</span>, ATTR&#123;queue/scheduler&#125;=<span class="string">&quot;mq-deadline&quot;</span></span><br><span class="line">EOF</span><br><span class="line">udevadm control --reload-rules</span><br><span class="line">udevadm trigger</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&gt;&gt;&gt; 配置完成！请重启系统使所有参数生效。&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&gt;&gt;&gt; 重启后验证: grep -i huge /proc/meminfo&quot;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<blockquote>
+<p><strong>参考文档</strong>：</p>
+<ul>
+<li>MOS Doc ID 361468.1 - <em>HugePages on Oracle Linux 64-bit</em></li>
+<li>MOS Doc ID 1557478.1 - <em>ALERT: Disable Transparent HugePages on Oracle Database Linux</em></li>
+<li>MOS Doc ID 1392625.1 - <em>Oracle Database and Transparent HugePages</em></li>
+<li>MOS Doc ID 2070347.1 - <em>Oracle NUMA Usage Recommendation</em></li>
+<li><em>Oracle Database Installation Guide for Linux</em> (19c&#x2F;21c)</li>
+<li>Red Hat Enterprise Linux 8&#x2F;9 <em>Performance Tuning Guide</em></li>
+</ul>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" rel="tag"># 性能调优</a>
+              <a href="/tags/HugePages/" rel="tag"># HugePages</a>
+              <a href="/tags/RHEL/" rel="tag"># RHEL</a>
+              <a href="/tags/Linux%E5%86%85%E6%A0%B8/" rel="tag"># Linux内核</a>
+              <a href="/tags/NUMA/" rel="tag"># NUMA</a>
+              <a href="/tags/Oracle/" rel="tag"># Oracle</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/06/04/ops/ops-night-talk/" rel="prev" title="运维夜话">
+                  <i class="fa fa-angle-left"></i> 运维夜话
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/01/12/oracle/silent-installation-best-practices-19c-23ai/" rel="next" title="Oracle 19c&#x2F;23ai 静默安装最佳实践：标准化环境交付指南">
+                  Oracle 19c/23ai 静默安装最佳实践：标准化环境交付指南 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

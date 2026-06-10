@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/03/13/oracle/memory-management-amm-vs-asmm/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/03/13/oracle/memory-management-amm-vs-asmm/","path":"2026/03/13/oracle/memory-management-amm-vs-asmm/","title":"Oracle 内存管理深度解析：AMM vs ASMM 与大内存服务器最佳实践"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Oracle 内存管理深度解析：AMM vs ASMM 与大内存服务器最佳实践 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E5%86%85%E5%AD%98%E9%85%8D%E7%BD%AE%E6%98%AFOracle%E6%80%A7%E8%83%BD%E7%9A%84%E5%9F%BA%E7%9F%B3"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 内存配置是Oracle性能的基石</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-AMM-vs-ASMM%E7%9A%84%E9%80%89%E6%8B%A9%E5%9B%B0%E6%83%91"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 AMM vs ASMM的选择困惑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-OOM-Killer%E5%AF%BC%E8%87%B4%E7%9A%84%E7%94%9F%E4%BA%A7%E4%BA%8B%E6%95%85%E6%A1%88%E4%BE%8B"><span class="nav-number">1.3.</span> <span class="nav-text">1.3 OOM Killer导致的生产事故案例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-SGA%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 SGA内存结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-PGA%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 PGA内存结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-AMM-Automatic-Memory-Management"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 AMM (Automatic Memory Management)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-ASMM-Automatic-Shared-Memory-Management"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 ASMM (Automatic Shared Memory Management)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-%E6%89%8B%E5%8A%A8%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="nav-number">2.5.</span> <span class="nav-text">2.5 手动内存管理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E5%86%85%E5%AD%98%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE%E6%A8%A1%E6%9D%BF"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 内存参数配置模板</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-AMM%E5%88%B0ASMM%E7%9A%84%E5%88%87%E6%8D%A2"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 AMM到ASMM的切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E5%86%85%E5%AD%98%E7%9B%91%E6%8E%A7"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 内存监控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-OOM%E9%A2%84%E9%98%B2"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 OOM预防</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E5%86%85%E5%AD%98%E5%8F%82%E6%95%B0%E7%94%9F%E6%95%88%E7%A1%AE%E8%AE%A4"><span class="nav-number">4.1.</span> <span class="nav-text">4.1 内存参数生效确认</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-HugePages%E4%BD%BF%E7%94%A8%E6%83%85%E5%86%B5"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 HugePages使用情况</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-OOM%E6%97%A5%E5%BF%97%E6%A3%80%E6%9F%A5"><span class="nav-number">4.3.</span> <span class="nav-text">4.3 OOM日志检查</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-AMM-vs-ASMM%E9%80%89%E5%9E%8B%E5%BB%BA%E8%AE%AE"><span class="nav-number">5.1.</span> <span class="nav-text">5.1 AMM vs ASMM选型建议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E9%BB%84%E9%87%91%E6%AF%94%E4%BE%8B"><span class="nav-number">5.2.</span> <span class="nav-text">5.2 内存分配黄金比例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-%E5%B8%B8%E8%A7%81%E5%86%85%E5%AD%98%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5"><span class="nav-number">5.3.</span> <span class="nav-text">5.3 常见内存问题排查</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/03/13/oracle/memory-management-amm-vs-asmm/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Oracle 内存管理深度解析：AMM vs ASMM 与大内存服务器最佳实践 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Oracle 内存管理深度解析：AMM vs ASMM 与大内存服务器最佳实践
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-13 10:00:00" itemprop="dateCreated datePublished" datetime="2026-03-13T10:00:00+00:00">2026-03-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在Oracle数据库的日常运维中，内存管理是最基础也是最关键的环节之一。不合理的内存配置不仅会导致数据库性能下降，更可能引发OOM Killer直接杀死数据库进程，造成严重的生产事故。本文将从原理到实战，全面解析Oracle的三种内存管理模式（AMM、ASMM、手动管理），并提供不同规格服务器的配置模板和OOM预防方案。</p>
+<span id="more"></span>
+
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><h3 id="1-1-内存配置是Oracle性能的基石"><a href="#1-1-内存配置是Oracle性能的基石" class="headerlink" title="1.1 内存配置是Oracle性能的基石"></a>1.1 内存配置是Oracle性能的基石</h3><p>Oracle数据库的性能很大程度上取决于内存的合理配置。SGA（System Global Area）决定了数据缓存命中率和SQL解析效率，PGA（Program Global Area）则直接影响排序、哈希连接等操作的性能。一个内存配置不当的数据库，即使拥有强大的CPU和高速存储，也难以发挥应有的性能。</p>
+<p>在实际生产环境中，我们经常遇到以下问题：</p>
+<ul>
+<li><strong>Buffer Cache命中率低</strong>：大量物理I&#x2F;O导致数据库响应缓慢</li>
+<li><strong>Shared Pool碎片化</strong>：SQL硬解析频繁，Library Cache争用严重</li>
+<li><strong>PGA不足</strong>：大量磁盘排序（Temp表空间溢出），复杂查询性能极差</li>
+<li><strong>内存过度分配</strong>：触发Linux OOM Killer，数据库进程被强制终止</li>
+</ul>
+<h3 id="1-2-AMM-vs-ASMM的选择困惑"><a href="#1-2-AMM-vs-ASMM的选择困惑" class="headerlink" title="1.2 AMM vs ASMM的选择困惑"></a>1.2 AMM vs ASMM的选择困惑</h3><p>Oracle提供了三种内存管理模式：</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>管理方式</th>
+<th>关键参数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AMM</td>
+<td>SGA+PGA统一自动管理</td>
+<td>MEMORY_TARGET</td>
+</tr>
+<tr>
+<td>ASMM</td>
+<td>SGA自动 + PGA自动</td>
+<td>SGA_TARGET + PGA_AGGREGATE_TARGET</td>
+</tr>
+<tr>
+<td>手动</td>
+<td>各组件独立配置</td>
+<td>各组件参数单独设置</td>
+</tr>
+</tbody></table>
+<p>很多DBA在搭建新环境时面临选择困惑：AMM看起来最省心，但生产环境真的适合用吗？ASMM和手动管理又该如何选择？</p>
+<h3 id="1-3-OOM-Killer导致的生产事故案例"><a href="#1-3-OOM-Killer导致的生产事故案例" class="headerlink" title="1.3 OOM Killer导致的生产事故案例"></a>1.3 OOM Killer导致的生产事故案例</h3><p>我曾处理过一起典型的生产事故：某客户的Oracle数据库运行在一台256GB内存的服务器上，使用AMM模式，MEMORY_TARGET设置为200GB。某天凌晨，数据库突然宕机，alert日志显示进程被OOM Killer终止。</p>
+<p>根本原因是：AMM依赖<code>/dev/shm</code>（tmpfs），当系统内存压力增大时，tmpfs占用的内存无法被swap out，导致OOM Killer优先选择Oracle进程进行kill。如果当时使用ASMM + HugePages，内存被锁定在物理内存中，就不会出现这个问题。</p>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-SGA内存结构"><a href="#2-1-SGA内存结构" class="headerlink" title="2.1 SGA内存结构"></a>2.1 SGA内存结构</h3><p>SGA是Oracle实例的共享内存区域，所有服务器进程共享访问。SGA由以下核心组件构成：</p>
+<p><strong>Buffer Cache（缓冲区缓存）</strong></p>
+<p>Buffer Cache是SGA中最大的组件，用于缓存数据文件中的数据块。当用户查询数据时，Oracle首先检查Buffer Cache中是否已有需要的数据块：</p>
+<ul>
+<li><strong>命中（Cache Hit）</strong>：直接从内存读取，速度极快</li>
+<li><strong>未命中（Cache Miss）</strong>：需要从磁盘读取，速度慢100-1000倍</li>
+</ul>
+<p>Buffer Cache使用LRU（Least Recently Used）算法管理缓存块。调优要点：</p>
+<ul>
+<li>通过<code>DB_CACHE_SIZE</code>设置大小</li>
+<li>监控<code>V$BUFFER_POOL_STATISTICS</code>查看命中率</li>
+<li>命中率应保持在95%以上</li>
+</ul>
+<p><strong>Shared Pool（共享池）</strong></p>
+<p>Shared Pool包含两个关键子结构：</p>
+<ul>
+<li><strong>Library Cache</strong>：缓存SQL和PL&#x2F;SQL的执行计划，减少硬解析</li>
+<li><strong>Data Dictionary Cache</strong>：缓存数据字典信息，减少递归SQL</li>
+</ul>
+<p>Shared Pool的调优要点：</p>
+<ul>
+<li>大小通过<code>SHARED_POOL_SIZE</code>设置</li>
+<li>监控<code>V$LIBRARYCACHE</code>，关注<code>RELOADS</code>和<code>INVALIDATIONS</code></li>
+<li>避免使用大量字面量SQL（应使用绑定变量）</li>
+</ul>
+<p><strong>Large Pool（大池）</strong></p>
+<p>Large Pool用于以下场景：</p>
+<ul>
+<li>RMAN备份恢复操作</li>
+<li>共享服务器模式（Shared Server）的UGA</li>
+<li>并行查询的消息缓冲区</li>
+<li>I&#x2F;O Slave进程</li>
+</ul>
+<p>大小通过<code>LARGE_POOL_SIZE</code>设置。如果使用RMAN备份或并行查询，建议适当增大。</p>
+<p><strong>Redo Log Buffer（重做日志缓冲区）</strong></p>
+<p>Redo Log Buffer缓存数据库变更的重做记录，由LGWR进程定期写入在线重做日志文件。大小通过<code>LOG_BUFFER</code>设置。一般不需要手动调整，除非遇到log buffer space等待事件。</p>
+<p><strong>Streams Pool 和 Java Pool</strong></p>
+<ul>
+<li><strong>Streams Pool</strong>：用于Oracle Streams和Advanced Queueing，如果未使用这些特性，可以设置为0</li>
+<li><strong>Java Pool</strong>：用于JVM相关操作，如果数据库中运行Java存储过程，需要适当配置</li>
+</ul>
+<h3 id="2-2-PGA内存结构"><a href="#2-2-PGA内存结构" class="headerlink" title="2.2 PGA内存结构"></a>2.2 PGA内存结构</h3><p>PGA是每个服务器进程的私有内存区域，不与其他进程共享。PGA主要包含：</p>
+<p><strong>Sort Area（排序区）</strong></p>
+<p>用于SQL操作中的排序操作，如ORDER BY、GROUP BY、DISTINCT等。当排序数据量超过Sort Area大小时，会溢出到Temp表空间（磁盘排序），性能急剧下降。</p>
+<p><strong>Hash Area（哈希区）</strong></p>
+<p>用于哈希连接（Hash Join）操作。同样，当数据量超过Hash Area时会溢出到磁盘。</p>
+<p><strong>Session Cursor（会话游标）</strong></p>
+<p>每个打开的游标都需要占用PGA内存，包括：</p>
+<ul>
+<li>游标状态信息</li>
+<li>SQL执行计划的私有副本</li>
+<li>绑定变量值</li>
+</ul>
+<p><strong>PGA_AGGREGATE_TARGET的作用</strong></p>
+<p><code>PGA_AGGREGATE_TARGET</code>参数设定了整个实例所有PGA的总目标大小。Oracle会根据各会话的实际需求动态分配PGA内存，但总和不超过此目标值。</p>
+<p>调优要点：</p>
+<ul>
+<li>监控<code>V$PGASTAT</code>中的<code>PGA TARGET</code>和<code>OVER ALLOC COUNT</code></li>
+<li>如果<code>OVER ALLOC COUNT</code>持续增长，说明PGA目标设置过低</li>
+<li>复杂查询（OLAP场景）需要更大的PGA</li>
+</ul>
+<h3 id="2-3-AMM-Automatic-Memory-Management"><a href="#2-3-AMM-Automatic-Memory-Management" class="headerlink" title="2.3 AMM (Automatic Memory Management)"></a>2.3 AMM (Automatic Memory Management)</h3><p>AMM是Oracle 11g引入的内存管理模式，通过<code>MEMORY_TARGET</code>和<code>MEMORY_MAX_TARGET</code>两个参数统一管理SGA和PGA。</p>
+<p><strong>核心参数</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 设置当前内存目标（动态参数，可在线修改）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> MEMORY_TARGET <span class="operator">=</span> <span class="number">16</span>G;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 设置最大内存目标（静态参数，需要重启生效）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> MEMORY_MAX_TARGET <span class="operator">=</span> <span class="number">20</span>G;</span><br></pre></td></tr></table></figure>
+
+<p><strong>AMM的实现机制：&#x2F;dev&#x2F;shm (tmpfs)</strong></p>
+<p>AMM使用Linux的共享内存文件系统（tmpfs）来管理内存。Oracle将SGA映射到<code>/dev/shm</code>目录下的文件，这种方式有以下特点：</p>
+<ol>
+<li><strong>内存锁定</strong>：tmpfs中的数据锁定在物理内存中（或swap），不会被page cache管理</li>
+<li><strong>文件系统开销</strong>：需要额外的文件系统元数据开销</li>
+<li><strong>大小限制</strong>：默认情况下<code>/dev/shm</code>大小为物理内存的50%</li>
+</ol>
+<p>查看当前<code>/dev/shm</code>大小：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">df</span> -h /dev/shm</span><br><span class="line"><span class="comment"># Filesystem      Size  Used Avail Use% Mounted on</span></span><br><span class="line"><span class="comment"># tmpfs            64G   20G   44G  32% /dev/shm</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>AMM与HugePages的互斥关系</strong></p>
+<p>这是AMM最重要的限制：<strong>AMM不支持HugePages</strong>。</p>
+<p>HugePages是Linux内核提供的大页内存机制（默认2MB&#x2F;页，可配置1GB&#x2F;页），相比标准的4KB页面有以下优势：</p>
+<ul>
+<li>减少TLB（Translation Lookaside Buffer）缺失</li>
+<li>减少页表条目，降低内存管理开销</li>
+<li>内存锁定，不会被swap out</li>
+</ul>
+<p>但HugePages要求应用使用<code>mmap()</code>直接映射共享内存，而AMM使用的tmpfs方式与之不兼容。对于大内存服务器（&gt;64GB），无法使用HugePages是一个严重的性能损失。</p>
+<p><strong>AMM的适用场景</strong></p>
+<ul>
+<li>开发测试环境</li>
+<li>小内存服务器（&lt;&#x3D;32GB）</li>
+<li>不需要精细调优的场景</li>
+<li>快速搭建环境的需求</li>
+</ul>
+<h3 id="2-4-ASMM-Automatic-Shared-Memory-Management"><a href="#2-4-ASMM-Automatic-Shared-Memory-Management" class="headerlink" title="2.4 ASMM (Automatic Shared Memory Management)"></a>2.4 ASMM (Automatic Shared Memory Management)</h3><p>ASMM是Oracle推荐的生产环境内存管理模式，通过<code>SGA_TARGET</code>和<code>PGA_AGGREGATE_TARGET</code>分别管理SGA和PGA。</p>
+<p><strong>核心参数</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- SGA自动管理（静态参数）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SGA_TARGET <span class="operator">=</span> <span class="number">48</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- PGA自动管理（动态参数）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> PGA_AGGREGATE_TARGET <span class="operator">=</span> <span class="number">16</span>G;</span><br></pre></td></tr></table></figure>
+
+<p><strong>ASMM的优势：可使用HugePages</strong></p>
+<p>ASMM使用标准的System V共享内存（<code>shmget</code>&#x2F;<code>shmat</code>），完美支持HugePages。对于大内存服务器，HugePages带来的性能提升非常可观：</p>
+<ul>
+<li>TLB缺失减少90%以上</li>
+<li>页表内存开销减少（从4KB页到2MB页，减少512倍）</li>
+<li>消除内存页面swap out的风险</li>
+</ul>
+<p><strong>各组件的自动调整机制</strong></p>
+<p>当设置<code>SGA_TARGET</code>后，以下组件会自动调整大小：</p>
+<ul>
+<li>Buffer Cache（<code>DB_CACHE_SIZE</code>作为最小值）</li>
+<li>Shared Pool（<code>SHARED_POOL_SIZE</code>作为最小值）</li>
+<li>Large Pool（<code>LARGE_POOL_SIZE</code>作为最小值）</li>
+<li>Java Pool（<code>JAVA_POOL_SIZE</code>作为最小值）</li>
+<li>Streams Pool（<code>STREAMS_POOL_SIZE</code>作为最小值）</li>
+</ul>
+<p>Oracle通过内存代理（Memory Advisor）根据工作负载动态调整各组件大小。未设置<code>SGA_TARGET</code>时，也可以单独设置各组件参数进行手动管理。</p>
+<h3 id="2-5-手动内存管理"><a href="#2-5-手动内存管理" class="headerlink" title="2.5 手动内存管理"></a>2.5 手动内存管理</h3><p>手动管理模式需要逐一设置每个内存组件的大小：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DB_CACHE_SIZE <span class="operator">=</span> <span class="number">32</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SHARED_POOL_SIZE <span class="operator">=</span> <span class="number">8</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> LARGE_POOL_SIZE <span class="operator">=</span> <span class="number">2</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> JAVA_POOL_SIZE <span class="operator">=</span> <span class="number">512</span>M <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> STREAMS_POOL_SIZE <span class="operator">=</span> <span class="number">512</span>M <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> PGA_AGGREGATE_TARGET <span class="operator">=</span> <span class="number">16</span>G;</span><br></pre></td></tr></table></figure>
+
+<p><strong>适用场景：精细调优</strong></p>
+<ul>
+<li>对工作负载有深入了解的环境</li>
+<li>需要严格控制各组件内存占比</li>
+<li>OLTP和OLAP混合负载，需要针对不同组件设置不同大小</li>
+<li>排查特定组件的内存问题</li>
+</ul>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-内存参数配置模板"><a href="#3-1-内存参数配置模板" class="headerlink" title="3.1 内存参数配置模板"></a>3.1 内存参数配置模板</h3><p>以下配置模板基于”物理内存的70-80%用于Oracle”的原则，剩余内存留给操作系统和其他进程。</p>
+<p><strong>小内存服务器（&lt;&#x3D;64GB）</strong></p>
+<p>适用于：开发测试环境、小型OLTP系统</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 假设物理内存 64GB，使用 ASMM</span></span><br><span class="line"><span class="comment">-- SGA: 40GB, PGA: 12GB</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SGA_TARGET <span class="operator">=</span> <span class="number">40</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SGA_MAX_SIZE <span class="operator">=</span> <span class="number">40</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> PGA_AGGREGATE_TARGET <span class="operator">=</span> <span class="number">12</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 设置各组件最小值（可选）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DB_CACHE_SIZE <span class="operator">=</span> <span class="number">24</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SHARED_POOL_SIZE <span class="operator">=</span> <span class="number">8</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> LARGE_POOL_SIZE <span class="operator">=</span> <span class="number">2</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> JAVA_POOL_SIZE <span class="operator">=</span> <span class="number">512</span>M <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 开启 HugePages（可选，但推荐）</span></span><br><span class="line"><span class="comment">-- Linux 内存参数需同步配置</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>中内存服务器（64-256GB）</strong></p>
+<p>适用于：中型生产系统、混合负载</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 假设物理内存 128GB，使用 ASMM + HugePages</span></span><br><span class="line"><span class="comment">-- SGA: 80GB, PGA: 24GB</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SGA_TARGET <span class="operator">=</span> <span class="number">80</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SGA_MAX_SIZE <span class="operator">=</span> <span class="number">80</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> PGA_AGGREGATE_TARGET <span class="operator">=</span> <span class="number">24</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 设置各组件最小值</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DB_CACHE_SIZE <span class="operator">=</span> <span class="number">56</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SHARED_POOL_SIZE <span class="operator">=</span> <span class="number">12</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> LARGE_POOL_SIZE <span class="operator">=</span> <span class="number">4</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> JAVA_POOL_SIZE <span class="operator">=</span> <span class="number">1</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> STREAMS_POOL_SIZE <span class="operator">=</span> <span class="number">1</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 配置 HugePages</span></span><br><span class="line"><span class="comment">-- 需要 40000 个 2MB HugePages（约80GB）</span></span><br><span class="line"><span class="comment">-- /etc/sysctl.conf: vm.nr_hugepages = 40000</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>大内存服务器（&gt;256GB）</strong></p>
+<p>适用于：大型OLTP&#x2F;OLAP系统、数据仓库</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 假设物理内存 512GB，使用 ASMM + HugePages</span></span><br><span class="line"><span class="comment">-- SGA: 360GB, PGA: 80GB</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SGA_TARGET <span class="operator">=</span> <span class="number">360</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SGA_MAX_SIZE <span class="operator">=</span> <span class="number">360</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> PGA_AGGREGATE_TARGET <span class="operator">=</span> <span class="number">80</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 设置各组件最小值（根据实际工作负载调整）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> DB_CACHE_SIZE <span class="operator">=</span> <span class="number">256</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> SHARED_POOL_SIZE <span class="operator">=</span> <span class="number">48</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> LARGE_POOL_SIZE <span class="operator">=</span> <span class="number">16</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> JAVA_POOL_SIZE <span class="operator">=</span> <span class="number">2</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">SYSTEM</span> <span class="keyword">SET</span> STREAMS_POOL_SIZE <span class="operator">=</span> <span class="number">4</span>G <span class="keyword">SCOPE</span><span class="operator">=</span>SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 配置 1GB HugePages（推荐用于大内存服务器）</span></span><br><span class="line"><span class="comment">-- 需要 360 个 1GB HugePages</span></span><br><span class="line"><span class="comment">-- /etc/sysctl.conf: vm.nr_hugepages = 360</span></span><br><span class="line"><span class="comment">-- 内核启动参数: hugepagesz=1G hugepages=360</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>HugePages配置参考（&#x2F;etc&#x2F;sysctl.conf）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 根据 SGA 大小计算 HugePages 数量</span></span><br><span class="line"><span class="comment"># 2MB HugePages: nr_hugepages = ceil(SGA_size_in_MB / 2)</span></span><br><span class="line"><span class="comment"># 1GB HugePages: 需要在内核启动参数中配置</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 示例：80GB SGA 使用 2MB HugePages</span></span><br><span class="line">vm.nr_hugepages = 41000  <span class="comment"># 留一些余量</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 禁用 AMM 时不需要 /dev/shm</span></span><br><span class="line"><span class="comment"># 如需调整 /dev/shm 大小</span></span><br><span class="line"><span class="comment"># tmpfs /dev/shm tmpfs defaults,size=100g 0 0</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-AMM到ASMM的切换"><a href="#3-2-AMM到ASMM的切换" class="headerlink" title="3.2 AMM到ASMM的切换"></a>3.2 AMM到ASMM的切换</h3><p>当生产环境从AMM切换到ASMM时，需要一个停机窗口。以下是完整步骤：</p>
+<p><strong>步骤1：评估当前内存使用情况</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看当前内存配置</span></span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> MEMORY_TARGET;</span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> MEMORY_MAX_TARGET;</span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> SGA_TARGET;</span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> PGA_AGGREGATE_TARGET;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看各组件当前大小</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$SGAINFO;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$SGASTAT;</span><br></pre></td></tr></table></figure>
+
+<p><strong>步骤2：计算新的ASMM参数值</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看SGA各组件的建议值</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$SGA_TARGET_ADVICE <span class="keyword">ORDER</span> <span class="keyword">BY</span> SGA_SIZE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看PGA的建议值</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$PGA_TARGET_ADVICE <span class="keyword">ORDER</span> <span class="keyword">BY</span> PGA_TARGET_FOR_ESTIMATE;</span><br></pre></td></tr></table></figure>
+
+<p><strong>步骤3：执行切换（需要停机）</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 1. 关闭数据库</span></span><br><span class="line">SHUTDOWN IMMEDIATE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 2. 创建新的spfile参数文件（备份原参数）</span></span><br><span class="line"><span class="keyword">CREATE</span> PFILE<span class="operator">=</span><span class="string">&#x27;/tmp/init_ORCL_backup.ora&#x27;</span> <span class="keyword">FROM</span> SPFILE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 3. 修改参数（使用pfile启动）</span></span><br><span class="line"><span class="comment">-- 编辑 /tmp/init_ORCL_new.ora，添加以下内容：</span></span><br><span class="line"><span class="comment">-- *.sga_target=80G</span></span><br><span class="line"><span class="comment">-- *.sga_max_size=80G</span></span><br><span class="line"><span class="comment">-- *.pga_aggregate_target=24G</span></span><br><span class="line"><span class="comment">-- 删除或注释掉 memory_target 和 memory_max_target</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 4. 使用新pfile启动</span></span><br><span class="line">STARTUP PFILE<span class="operator">=</span><span class="string">&#x27;/tmp/init_ORCL_new.ora&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 5. 创建新的spfile</span></span><br><span class="line"><span class="keyword">CREATE</span> SPFILE <span class="keyword">FROM</span> PFILE<span class="operator">=</span><span class="string">&#x27;/tmp/init_ORCL_new.ora&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 6. 验证参数</span></span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> SGA_TARGET;</span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> PGA_AGGREGATE_TARGET;</span><br><span class="line"><span class="keyword">SHOW</span> <span class="keyword">PARAMETER</span> MEMORY_TARGET;  <span class="comment">-- 应为0</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>步骤4：配置HugePages</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 计算所需HugePages数量</span></span><br><span class="line"><span class="comment"># 以80GB SGA为例</span></span><br><span class="line"><span class="comment"># 2MB页: 80*1024/2 = 40960，留余量设为41000</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改 /etc/sysctl.conf</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;vm.nr_hugepages = 41000&quot;</span> &gt;&gt; /etc/sysctl.conf</span><br><span class="line">sysctl -p</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证HugePages配置</span></span><br><span class="line"><span class="built_in">cat</span> /proc/meminfo | grep -i huge</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置Oracle用户的memlock限制</span></span><br><span class="line"><span class="comment"># /etc/security/limits.conf</span></span><br><span class="line"><span class="comment"># oracle soft memlock unlimited</span></span><br><span class="line"><span class="comment"># oracle hard memlock unlimited</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-内存监控"><a href="#3-3-内存监控" class="headerlink" title="3.3 内存监控"></a>3.3 内存监控</h3><p><strong>V$SGAINFO - SGA概览</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看SGA各组件的当前大小</span></span><br><span class="line"><span class="keyword">SELECT</span> NAME, BYTES<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> SIZE_GB, RESIZEABLE</span><br><span class="line"><span class="keyword">FROM</span> V$SGAINFO</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> BYTES <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>V$SGASTAT - SGA详细统计</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看Shared Pool的详细使用情况</span></span><br><span class="line"><span class="keyword">SELECT</span> POOL, NAME, BYTES<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> SIZE_MB</span><br><span class="line"><span class="keyword">FROM</span> V$SGASTAT</span><br><span class="line"><span class="keyword">WHERE</span> POOL <span class="operator">=</span> <span class="string">&#x27;shared pool&#x27;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> BYTES <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">FETCH</span> <span class="keyword">FIRST</span> <span class="number">20</span> <span class="keyword">ROWS</span> <span class="keyword">ONLY</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看Buffer Cache的使用情况</span></span><br><span class="line"><span class="keyword">SELECT</span> NAME, <span class="keyword">VALUE</span></span><br><span class="line"><span class="keyword">FROM</span> V$SYSSTAT</span><br><span class="line"><span class="keyword">WHERE</span> NAME <span class="keyword">IN</span> (<span class="string">&#x27;db block gets from cache&#x27;</span>, <span class="string">&#x27;consistent gets from cache&#x27;</span>,</span><br><span class="line">               <span class="string">&#x27;physical reads cache&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<p><strong>V$PGASTAT - PGA统计</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看PGA的整体使用情况</span></span><br><span class="line"><span class="keyword">SELECT</span> NAME, <span class="keyword">VALUE</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> VALUE_GB</span><br><span class="line"><span class="keyword">FROM</span> V$PGASTAT</span><br><span class="line"><span class="keyword">WHERE</span> NAME <span class="keyword">IN</span> (<span class="string">&#x27;aggregate PGA target parameter&#x27;</span>,</span><br><span class="line">               <span class="string">&#x27;total PGA allocated&#x27;</span>,</span><br><span class="line">               <span class="string">&#x27;total PGA used for auto workareas&#x27;</span>,</span><br><span class="line">               <span class="string">&#x27;over allocation count&#x27;</span>,</span><br><span class="line">               <span class="string">&#x27;cache hit percentage&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 关键指标：</span></span><br><span class="line"><span class="comment">-- aggregate PGA target parameter: PGA目标值</span></span><br><span class="line"><span class="comment">-- total PGA allocated: 实际分配的PGA总量</span></span><br><span class="line"><span class="comment">-- over allocation count: PGA超分配次数（应为0或很小）</span></span><br><span class="line"><span class="comment">-- cache hit percentage: PGA缓存命中率（应&gt;90%）</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>V$MEMORY_TARGET_ADVICE - AMM内存建议</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 仅在AMM模式下可用</span></span><br><span class="line"><span class="keyword">SELECT</span> MEMORY_SIZE, MEMORY_SIZE_FACTOR, ESTD_DB_TIME,</span><br><span class="line">       ESTD_DB_TIME_FACTOR, VERSION</span><br><span class="line"><span class="keyword">FROM</span> V$MEMORY_TARGET_ADVICE</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> MEMORY_SIZE;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-OOM预防"><a href="#3-4-OOM预防" class="headerlink" title="3.4 OOM预防"></a>3.4 OOM预防</h3><p>OOM（Out of Memory）Killer是Linux内核在内存严重不足时的最后手段。预防OOM是DBA的重要职责。</p>
+<p><strong>1. oom_score_adj配置</strong></p>
+<p>每个进程都有一个OOM分数，分数越高越容易被kill。Oracle进程应该设置较低的OOM分数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看Oracle进程的OOM分数</span></span><br><span class="line"><span class="built_in">cat</span> /proc/$(pgrep -f <span class="string">&quot;ora_pmon&quot;</span>)/oom_score</span><br><span class="line"><span class="built_in">cat</span> /proc/$(pgrep -f <span class="string">&quot;ora_pmon&quot;</span>)/oom_score_adj</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置Oracle进程的OOM分数为-1000（永不被kill）</span></span><br><span class="line"><span class="comment"># 方法1：通过systemd service配置（推荐）</span></span><br><span class="line"><span class="comment"># /etc/systemd/system/oracle.service</span></span><br><span class="line"><span class="comment"># [Service]</span></span><br><span class="line"><span class="comment"># OOMScoreAdjust=-1000</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：通过rc.local或启动脚本</span></span><br><span class="line"><span class="built_in">echo</span> -1000 &gt; /proc/$(pgrep -f <span class="string">&quot;ora_pmon&quot;</span>)/oom_score_adj</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法3：批量设置所有Oracle进程</span></span><br><span class="line"><span class="keyword">for</span> pid <span class="keyword">in</span> $(pgrep -f <span class="string">&quot;ora_&quot;</span>); <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">echo</span> -1000 &gt; /proc/<span class="variable">$pid</span>/oom_score_adj</span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>2. Linux overcommit_memory设置</strong></p>
+<p><code>vm.overcommit_memory</code>控制内核的内存分配策略：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /etc/sysctl.conf</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 0 (默认): 启发式overcommit，内核根据可用内存决定是否允许分配</span></span><br><span class="line"><span class="comment"># 1: 总是允许overcommit（不推荐用于数据库服务器）</span></span><br><span class="line"><span class="comment"># 2: 严格模式，不允许overcommit超过 swap + ratio% * RAM</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 推荐设置为2，限制内存过度分配</span></span><br><span class="line">vm.overcommit_memory = 2</span><br><span class="line"></span><br><span class="line"><span class="comment"># overcommit比率，配合overcommit_memory=2使用</span></span><br><span class="line"><span class="comment"># 默认50，建议设置为80-90</span></span><br><span class="line">vm.overcommit_ratio = 80</span><br><span class="line"></span><br><span class="line"><span class="comment"># 应用配置</span></span><br><span class="line">sysctl -p</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. Oracle进程的OOM保护完整配置</strong></p>
+<p>以下是完整的OOM保护配置方案：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment"># oracle_oom_protect.sh - Oracle OOM保护脚本</span></span><br><span class="line"><span class="comment"># 建议放入 /etc/rc.local 或使用 systemd 执行</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置所有Oracle进程的OOM分数为-1000</span></span><br><span class="line"><span class="function"><span class="title">protect_oracle_processes</span></span>() &#123;</span><br><span class="line">    <span class="built_in">local</span> oracle_pids=$(pgrep -u oracle -f <span class="string">&quot;ora_|oracle&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> [ -z <span class="string">&quot;<span class="variable">$oracle_pids</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;No Oracle processes found&quot;</span></span><br><span class="line">        <span class="built_in">return</span> 1</span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> pid <span class="keyword">in</span> <span class="variable">$oracle_pids</span>; <span class="keyword">do</span></span><br><span class="line">        <span class="keyword">if</span> [ -f /proc/<span class="variable">$pid</span>/oom_score_adj ]; <span class="keyword">then</span></span><br><span class="line">            <span class="built_in">echo</span> -1000 &gt; /proc/<span class="variable">$pid</span>/oom_score_adj 2&gt;/dev/null</span><br><span class="line">            <span class="keyword">if</span> [ $? -eq 0 ]; <span class="keyword">then</span></span><br><span class="line">                <span class="built_in">echo</span> <span class="string">&quot;Protected PID <span class="variable">$pid</span> (<span class="subst">$(cat /proc/$pid/comm)</span>)&quot;</span></span><br><span class="line">            <span class="keyword">fi</span></span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 内存使用监控和告警</span></span><br><span class="line"><span class="function"><span class="title">check_memory_usage</span></span>() &#123;</span><br><span class="line">    <span class="built_in">local</span> threshold=90  <span class="comment"># 告警阈值</span></span><br><span class="line">    <span class="built_in">local</span> usage=$(free | grep Mem | awk <span class="string">&#x27;&#123;printf &quot;%.0f&quot;, $3/$2 * 100&#125;&#x27;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> [ <span class="variable">$usage</span> -ge <span class="variable">$threshold</span> ]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;WARNING: Memory usage is <span class="variable">$&#123;usage&#125;</span>%&quot;</span></span><br><span class="line">        <span class="comment"># 可以在此处添加告警通知</span></span><br><span class="line">        <span class="comment"># mail -s &quot;Oracle Server Memory Alert&quot; dba@company.com &lt;&lt;&lt; &quot;Memory usage: $&#123;usage&#125;%&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行保护</span></span><br><span class="line">protect_oracle_processes</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定期检查内存（可通过cron调用）</span></span><br><span class="line">check_memory_usage</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 使用cgroups限制内存（高级方案）</strong></p>
+<p>对于容器化或需要更精细控制的场景，可以使用cgroups：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建Oracle专用的cgroup</span></span><br><span class="line"><span class="built_in">mkdir</span> -p /sys/fs/cgroup/memory/oracle</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置内存限制（示例：限制为240GB）</span></span><br><span class="line"><span class="built_in">echo</span> $((<span class="number">240</span> * <span class="number">1024</span> * <span class="number">1024</span> * <span class="number">1024</span>)) &gt; /sys/fs/cgroup/memory/oracle/memory.limit_in_bytes</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将Oracle进程加入cgroup</span></span><br><span class="line"><span class="keyword">for</span> pid <span class="keyword">in</span> $(pgrep -u oracle); <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="variable">$pid</span> &gt; /sys/fs/cgroup/memory/oracle/cgroup.procs</span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><h3 id="4-1-内存参数生效确认"><a href="#4-1-内存参数生效确认" class="headerlink" title="4.1 内存参数生效确认"></a>4.1 内存参数生效确认</h3><p>配置完成后，需要验证所有参数已正确生效：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 验证SGA配置</span></span><br><span class="line"><span class="keyword">SELECT</span> NAME, <span class="keyword">VALUE</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> VALUE_GB</span><br><span class="line"><span class="keyword">FROM</span> V$<span class="keyword">PARAMETER</span></span><br><span class="line"><span class="keyword">WHERE</span> NAME <span class="keyword">IN</span> (<span class="string">&#x27;sga_target&#x27;</span>, <span class="string">&#x27;sga_max_size&#x27;</span>, <span class="string">&#x27;memory_target&#x27;</span>, </span><br><span class="line">               <span class="string">&#x27;db_cache_size&#x27;</span>, <span class="string">&#x27;shared_pool_size&#x27;</span>, <span class="string">&#x27;large_pool_size&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 验证PGA配置</span></span><br><span class="line"><span class="keyword">SELECT</span> NAME, <span class="keyword">VALUE</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> VALUE_GB</span><br><span class="line"><span class="keyword">FROM</span> V$<span class="keyword">PARAMETER</span></span><br><span class="line"><span class="keyword">WHERE</span> NAME <span class="keyword">IN</span> (<span class="string">&#x27;pga_aggregate_target&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看实际内存分配</span></span><br><span class="line"><span class="keyword">SELECT</span> COMPONENT, CURRENT_SIZE<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> CURRENT_GB,</span><br><span class="line">       MIN_SIZE<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> MIN_GB,</span><br><span class="line">       MAX_SIZE<span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span><span class="operator">/</span><span class="number">1024</span> <span class="keyword">AS</span> MAX_GB</span><br><span class="line"><span class="keyword">FROM</span> V$SGA_DYNAMIC_COMPONENTS</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> CURRENT_SIZE <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-HugePages使用情况"><a href="#4-2-HugePages使用情况" class="headerlink" title="4.2 HugePages使用情况"></a>4.2 HugePages使用情况</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看HugePages配置和使用情况</span></span><br><span class="line">grep -i huge /proc/meminfo</span><br><span class="line"></span><br><span class="line"><span class="comment"># 预期输出（示例）：</span></span><br><span class="line"><span class="comment"># HugePages_Total:   41000</span></span><br><span class="line"><span class="comment"># HugePages_Free:     1000</span></span><br><span class="line"><span class="comment"># HugePages_Rsvd:      500</span></span><br><span class="line"><span class="comment"># HugePages_Surp:        0</span></span><br><span class="line"><span class="comment"># Hugepagesize:       2048 kB</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证Oracle是否使用了HugePages</span></span><br><span class="line"><span class="comment"># 查看alert日志</span></span><br><span class="line"><span class="built_in">tail</span> -100 <span class="variable">$ORACLE_BASE</span>/diag/rdbms/<span class="variable">$ORACLE_SID</span>/<span class="variable">$ORACLE_SID</span>/trace/alert_<span class="variable">$ORACLE_SID</span>.<span class="built_in">log</span> | grep -i huge</span><br><span class="line"></span><br><span class="line"><span class="comment"># 应该看到类似信息：</span></span><br><span class="line"><span class="comment"># Starting ORACLE instance (normal)</span></span><br><span class="line"><span class="comment"># Large pages enabled for SGA</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-3-OOM日志检查"><a href="#4-3-OOM日志检查" class="headerlink" title="4.3 OOM日志检查"></a>4.3 OOM日志检查</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 检查系统OOM日志</span></span><br><span class="line">dmesg | grep -i <span class="string">&quot;out of memory&quot;</span></span><br><span class="line">journalctl -k | grep -i <span class="string">&quot;oom&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查Oracle alert日志中的内存相关错误</span></span><br><span class="line">grep -i <span class="string">&quot;ORA-04030\|ORA-04031\|memory\|swap&quot;</span> <span class="variable">$ORACLE_BASE</span>/diag/rdbms/<span class="variable">$ORACLE_SID</span>/<span class="variable">$ORACLE_SID</span>/trace/alert_<span class="variable">$ORACLE_SID</span>.<span class="built_in">log</span> | <span class="built_in">tail</span> -20</span><br><span class="line"></span><br><span class="line"><span class="comment"># ORA-04030: 在尝试分配字节时内存不足（PGA不足）</span></span><br><span class="line"><span class="comment"># ORA-04031: 无法分配共享内存（Shared Pool不足）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 监控swap使用情况</span></span><br><span class="line">free -h</span><br><span class="line">vmstat 1 5</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="5-1-AMM-vs-ASMM选型建议"><a href="#5-1-AMM-vs-ASMM选型建议" class="headerlink" title="5.1 AMM vs ASMM选型建议"></a>5.1 AMM vs ASMM选型建议</h3><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐模式</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>开发测试环境</td>
+<td>AMM</td>
+<td>简单易用，快速搭建</td>
+</tr>
+<tr>
+<td>小型生产（&lt;&#x3D;64GB）</td>
+<td>ASMM</td>
+<td>支持HugePages，性能更优</td>
+</tr>
+<tr>
+<td>中大型生产（&gt;64GB）</td>
+<td>ASMM</td>
+<td>必须使用HugePages，AMM无法支持</td>
+</tr>
+<tr>
+<td>OLAP&#x2F;数据仓库</td>
+<td>ASMM</td>
+<td>PGA需求大，需要独立控制</td>
+</tr>
+<tr>
+<td>精细调优需求</td>
+<td>手动管理</td>
+<td>对各组件有精确控制需求</td>
+</tr>
+</tbody></table>
+<p><strong>核心结论</strong>：生产环境强烈推荐ASMM。AMM的便利性远不及HugePages带来的性能提升，特别是对于内存超过64GB的服务器。</p>
+<h3 id="5-2-内存分配黄金比例"><a href="#5-2-内存分配黄金比例" class="headerlink" title="5.2 内存分配黄金比例"></a>5.2 内存分配黄金比例</h3><p>根据多年DBA经验，以下是内存分配的参考比例：</p>
+<p><strong>通用原则</strong></p>
+<ul>
+<li>Oracle总内存（SGA + PGA）：物理内存的70-80%</li>
+<li>SGA占比：Oracle总内存的70-75%</li>
+<li>PGA占比：Oracle总内存的25-30%</li>
+<li>操作系统预留：物理内存的20-30%</li>
+</ul>
+<p><strong>OLTP系统</strong></p>
+<ul>
+<li>SGA : PGA &#x3D; 80 : 20</li>
+<li>Buffer Cache占SGA的60-70%</li>
+<li>Shared Pool占SGA的20-25%</li>
+</ul>
+<p><strong>OLAP系统</strong></p>
+<ul>
+<li>SGA : PGA &#x3D; 60 : 40</li>
+<li>Buffer Cache占SGA的50-60%</li>
+<li>Shared Pool占SGA的15-20%</li>
+</ul>
+<p><strong>混合负载</strong></p>
+<ul>
+<li>SGA : PGA &#x3D; 70 : 30</li>
+<li>根据实际工作负载动态调整</li>
+</ul>
+<h3 id="5-3-常见内存问题排查"><a href="#5-3-常见内存问题排查" class="headerlink" title="5.3 常见内存问题排查"></a>5.3 常见内存问题排查</h3><p><strong>问题1：ORA-04031 - Shared Pool不足</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看Shared Pool碎片情况</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> V$SGASTAT <span class="keyword">WHERE</span> POOL <span class="operator">=</span> <span class="string">&#x27;shared pool&#x27;</span> <span class="keyword">AND</span> NAME <span class="operator">=</span> <span class="string">&#x27;free memory&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 解决方案：</span></span><br><span class="line"><span class="comment">-- 1. 增加SHARED_POOL_SIZE</span></span><br><span class="line"><span class="comment">-- 2. 使用绑定变量，减少硬解析</span></span><br><span class="line"><span class="comment">-- 3. 设置CURSOR_SHARING=FORCE（临时方案）</span></span><br><span class="line"><span class="comment">-- 4. 定期刷新Shared Pool（ALTER SYSTEM FLUSH SHARED_POOL; 不推荐频繁使用）</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>问题2：ORA-04030 - PGA内存不足</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看PGA使用情况</span></span><br><span class="line"><span class="keyword">SELECT</span> NAME, <span class="keyword">VALUE</span> <span class="keyword">FROM</span> V$PGASTAT <span class="keyword">WHERE</span> NAME <span class="keyword">LIKE</span> <span class="string">&#x27;%over%&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 解决方案：</span></span><br><span class="line"><span class="comment">-- 1. 增加PGA_AGGREGATE_TARGET</span></span><br><span class="line"><span class="comment">-- 2. 优化SQL，减少排序和哈希操作</span></span><br><span class="line"><span class="comment">-- 3. 检查是否有会话泄漏（未关闭游标）</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>问题3：Buffer Cache命中率低</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 计算Buffer Cache命中率</span></span><br><span class="line"><span class="keyword">SELECT</span> </span><br><span class="line">    ROUND((<span class="number">1</span> <span class="operator">-</span> (physical_reads <span class="operator">/</span> (db_block_gets <span class="operator">+</span> consistent_gets))) <span class="operator">*</span> <span class="number">100</span>, <span class="number">2</span>) <span class="keyword">AS</span> hit_ratio</span><br><span class="line"><span class="keyword">FROM</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> </span><br><span class="line">        <span class="built_in">SUM</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> name <span class="operator">=</span> <span class="string">&#x27;physical reads&#x27;</span> <span class="keyword">THEN</span> <span class="keyword">value</span> <span class="keyword">ELSE</span> <span class="number">0</span> <span class="keyword">END</span>) <span class="keyword">AS</span> physical_reads,</span><br><span class="line">        <span class="built_in">SUM</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> name <span class="operator">=</span> <span class="string">&#x27;db block gets&#x27;</span> <span class="keyword">THEN</span> <span class="keyword">value</span> <span class="keyword">ELSE</span> <span class="number">0</span> <span class="keyword">END</span>) <span class="keyword">AS</span> db_block_gets,</span><br><span class="line">        <span class="built_in">SUM</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> name <span class="operator">=</span> <span class="string">&#x27;consistent gets&#x27;</span> <span class="keyword">THEN</span> <span class="keyword">value</span> <span class="keyword">ELSE</span> <span class="number">0</span> <span class="keyword">END</span>) <span class="keyword">AS</span> consistent_gets</span><br><span class="line">    <span class="keyword">FROM</span> V$SYSSTAT</span><br><span class="line">    <span class="keyword">WHERE</span> name <span class="keyword">IN</span> (<span class="string">&#x27;physical reads&#x27;</span>, <span class="string">&#x27;db block gets&#x27;</span>, <span class="string">&#x27;consistent gets&#x27;</span>)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 命中率应 &gt; 95%</span></span><br><span class="line"><span class="comment">-- 如果低于95%，考虑增加DB_CACHE_SIZE</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>问题4：HugePages未被使用</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 检查HugePages是否足够</span></span><br><span class="line">grep -i huge /proc/meminfo</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果HugePages_Free为0，说明配置不足</span></span><br><span class="line"><span class="comment"># 需要增加nr_hugepages</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查Oracle用户memlock限制</span></span><br><span class="line"><span class="built_in">ulimit</span> -l</span><br><span class="line"><span class="comment"># 应该是unlimited或足够大</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查是否启用了AMM（AMM会禁用HugePages）</span></span><br><span class="line">sqlplus / as sysdba</span><br><span class="line">SHOW PARAMETER MEMORY_TARGET;</span><br><span class="line"><span class="comment"># 如果不为0，需要切换到ASMM</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>内存管理是Oracle DBA的核心技能之一。选择合适的内存管理模式，合理配置参数，并做好OOM预防，是保障数据库稳定运行的基础。对于生产环境，ASMM + HugePages是经过验证的最佳实践。希望本文的配置模板和排查指南能帮助你更好地管理Oracle数据库的内存资源。</p>
+<p><em>作者：OCM认证Oracle DBA，专注数据库运维与性能优化。博客地址：4dba.top</em></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" rel="tag"># 内存管理</a>
+              <a href="/tags/SGA/" rel="tag"># SGA</a>
+              <a href="/tags/PGA/" rel="tag"># PGA</a>
+              <a href="/tags/AMM/" rel="tag"># AMM</a>
+              <a href="/tags/ASMM/" rel="tag"># ASMM</a>
+              <a href="/tags/OOM/" rel="tag"># OOM</a>
+              <a href="/tags/HugePages/" rel="tag"># HugePages</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/08/oracle/sql-execution-plan-analysis-mastery/" rel="prev" title="SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化">
+                  <i class="fa fa-angle-left"></i> SQL 执行计划分析精通：Cost, Cardinality, Access Path 与连接优化
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/18/oracle/io-subsystem-optimization/" rel="next" title="I&#x2F;O 子系统优化：从 ASM 到 Linux I&#x2F;O 栈的全链路调优">
+                  I/O 子系统优化：从 ASM 到 Linux I/O 栈的全链路调优 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

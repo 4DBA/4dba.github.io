@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="/lib/@fortawesome/fontawesome-free/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"4dba.top","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":360,"width_dual_column":280,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":true}}</script><script src="/js/config.js" defer></script>
+
+
+
+<link rel="canonical" href="https://4dba.top/2026/02/05/oracle/rac-cache-fusion-load-balancing/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://4dba.top/2026/02/05/oracle/rac-cache-fusion-load-balancing/","path":"2026/02/05/oracle/rac-cache-fusion-load-balancing/","title":"RAC Cache Fusion 深度解析与负载均衡实战"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>RAC Cache Fusion 深度解析与负载均衡实战 | 4DBA's Blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/animejs/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="/lib/hexo-generator-searchdb/dist/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+<style>
+  .sidebar-nav {
+    display: none !important;
+  }
+</style>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">4DBA's Blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-oracle"><a href="/categories/Oracle/" rel="section"><i class="fa fa-database fa-fw"></i>Oracle</a></li><li class="menu-item menu-item-mysql"><a href="/categories/MySQL/" rel="section"><i class="fa fa-database fa-fw"></i>MySQL</a></li><li class="menu-item menu-item-postgresql"><a href="/categories/PostgreSQL/" rel="section"><i class="fa fa-database fa-fw"></i>PostgreSQL</a></li><li class="menu-item menu-item-信创专栏"><a href="/categories/%E4%BF%A1%E5%88%9B/" rel="section"><i class="fa fa-database fa-fw"></i>信创专栏</a></li><li class="menu-item menu-item-综合运维"><a href="/categories/%E8%BF%90%E7%BB%B4%E6%9D%82%E8%AE%B0/" rel="section"><i class="fa fa-wrench fa-fw"></i>综合运维</a></li><li class="menu-item menu-item-运维夜话"><a href="/categories/%E8%BF%90%E7%BB%B4%E5%A4%9C%E8%AF%9D/" rel="section"><i class="fa fa-moon fa-fw"></i>运维夜话</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、问题背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%90%86%E8%AE%BA%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">二、理论分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Cache-Fusion-%E5%8E%9F%E7%90%86"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 Cache Fusion 原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%8E-Disk-based-%E5%88%B0-Cache-based-%E7%9A%84%E6%BC%94%E8%BF%9B"><span class="nav-number">2.1.1.</span> <span class="nav-text">从 Disk-based 到 Cache-based 的演进</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Global-Cache-Service-GCS-%E4%B8%8E-Global-Enqueue-Service-GES"><span class="nav-number">2.1.2.</span> <span class="nav-text">Global Cache Service (GCS) 与 Global Enqueue Service (GES)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#LMS%EF%BC%88Lock-Manager-Server%EF%BC%89%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%A0%B8%E5%BF%83%E8%A7%92%E8%89%B2"><span class="nav-number">2.1.3.</span> <span class="nav-text">LMS（Lock Manager Server）进程的核心角色</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#LMD%EF%BC%88Lock-Manager-Daemon%EF%BC%89%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.1.4.</span> <span class="nav-text">LMD（Lock Manager Daemon）进程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E6%95%B0%E6%8D%AE%E5%9D%97%E5%9C%A8RAC%E4%B8%AD%E7%9A%84%E6%B5%81%E8%BD%AC"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 数据块在RAC中的流转</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#PCM-Lock-%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.2.1.</span> <span class="nav-text">PCM Lock 模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Current-Block-%E8%AF%B7%E6%B1%82%E6%B5%81%E7%A8%8B"><span class="nav-number">2.2.2.</span> <span class="nav-text">Current Block 请求流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CR-Block-%E8%AF%B7%E6%B1%82%E6%B5%81%E7%A8%8B"><span class="nav-number">2.2.3.</span> <span class="nav-text">CR Block 请求流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Read-Read-Read-Write-Write-Write-%E5%9C%BA%E6%99%AF"><span class="nav-number">2.2.4.</span> <span class="nav-text">Read-Read, Read-Write, Write-Write 场景</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-GC%E7%AD%89%E5%BE%85%E4%BA%8B%E4%BB%B6"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 GC等待事件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#gc-buffer-busy-acquire-gc-buffer-busy-release"><span class="nav-number">2.3.1.</span> <span class="nav-text">gc buffer busy acquire &#x2F; gc buffer busy release</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#gc-cr-request-gc-current-request"><span class="nav-number">2.3.2.</span> <span class="nav-text">gc cr request &#x2F; gc current request</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#gc-cr-multi-block-request"><span class="nav-number">2.3.3.</span> <span class="nav-text">gc cr multi block request</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#gc-cr-block-congested-gc-current-block-congested"><span class="nav-number">2.3.4.</span> <span class="nav-text">gc cr block congested &#x2F; gc current block congested</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%8A%E6%96%AD%E6%96%B9%E6%B3%95"><span class="nav-number">2.3.5.</span> <span class="nav-text">诊断方法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Service%E7%BA%A7%E5%88%AB%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 Service级别负载均衡</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Service-%E7%9A%84%E6%A6%82%E5%BF%B5%E4%B8%8E%E4%BD%9C%E7%94%A8"><span class="nav-number">2.4.1.</span> <span class="nav-text">Service 的概念与作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Server-Side-Load-Balancing"><span class="nav-number">2.4.2.</span> <span class="nav-text">Server-Side Load Balancing</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Client-Side-Load-Balancing"><span class="nav-number">2.4.3.</span> <span class="nav-text">Client-Side Load Balancing</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Runtime-Connection-Load-Balancing"><span class="nav-number">2.4.4.</span> <span class="nav-text">Runtime Connection Load Balancing</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">三、实战操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-Cache-Fusion-%E7%9B%91%E6%8E%A7"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 Cache Fusion 监控</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#GV-SYSSTAT-%E4%B8%AD%E7%9A%84-GC-%E7%BB%9F%E8%AE%A1%E4%BF%A1%E6%81%AF"><span class="nav-number">3.1.1.</span> <span class="nav-text">GV$SYSSTAT 中的 GC 统计信息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GC-%E7%AD%89%E5%BE%85%E4%BA%8B%E4%BB%B6%E7%9A%84-AWR-%E5%88%86%E6%9E%90"><span class="nav-number">3.1.2.</span> <span class="nav-text">GC 等待事件的 AWR 分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#LMS-%E8%BF%9B%E7%A8%8B%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7"><span class="nav-number">3.1.3.</span> <span class="nav-text">LMS 进程性能监控</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Service-%E5%88%9B%E5%BB%BA%E4%B8%8E%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 Service 创建与配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#srvctl-add-service-%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.2.1.</span> <span class="nav-text">srvctl add service 配置示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TAF-%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.2.</span> <span class="nav-text">TAF 配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FAN-%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.3.</span> <span class="nav-text">FAN 配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E4%BC%98%E5%8C%96"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 负载均衡优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#LOAD-BALANCE-YES-vs-LOAD-BALANCE-FACTOR"><span class="nav-number">3.3.1.</span> <span class="nav-text">LOAD_BALANCE&#x3D;YES vs LOAD_BALANCE&#x3D;FACTOR</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%88%86%E5%8C%BA%E7%AD%96%E7%95%A5%E5%87%8F%E5%B0%91-GC-%E4%BA%89%E7%94%A8"><span class="nav-number">3.3.2.</span> <span class="nav-text">数据分区策略减少 GC 争用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-GC-%E9%97%AE%E9%A2%98%E8%AF%8A%E6%96%AD"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 GC 问题诊断</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#AWR-%E6%8A%A5%E5%91%8A%E4%B8%AD-GC-%E7%9B%B8%E5%85%B3%E6%8C%87%E6%A0%87%E8%A7%A3%E8%AF%BB"><span class="nav-number">3.4.1.</span> <span class="nav-text">AWR 报告中 GC 相关指标解读</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#oradebug-%E8%AF%8A%E6%96%AD-LMS"><span class="nav-number">3.4.2.</span> <span class="nav-text">oradebug 诊断 LMS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%83%AD%E7%82%B9%E5%9D%97%E5%A4%84%E7%90%86"><span class="nav-number">3.4.3.</span> <span class="nav-text">热点块处理</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%93%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">4.</span> <span class="nav-text">四、结果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#GC-%E7%AD%89%E5%BE%85%E4%BA%8B%E4%BB%B6%E6%A3%80%E6%9F%A5"><span class="nav-number">4.0.1.</span> <span class="nav-text">GC 等待事件检查</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Service-%E7%8A%B6%E6%80%81%E6%A3%80%E6%9F%A5"><span class="nav-number">4.0.2.</span> <span class="nav-text">Service 状态检查</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Interconnect-%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87"><span class="nav-number">4.0.3.</span> <span class="nav-text">Interconnect 性能指标</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Cache-Fusion-%E4%BC%98%E5%8C%96%E7%9A%84%E4%BC%98%E5%85%88%E7%BA%A7"><span class="nav-number">5.1.</span> <span class="nav-text">Cache Fusion 优化的优先级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Service-%E8%AE%BE%E8%AE%A1%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">5.2.</span> <span class="nav-text">Service 设计的最佳实践</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RAC-%E7%8E%AF%E5%A2%83%E4%B8%8B%E7%9A%84-SQL-%E4%BC%98%E5%8C%96%E7%AD%96%E7%95%A5"><span class="nav-number">5.3.</span> <span class="nav-text">RAC 环境下的 SQL 优化策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%A7%E4%BA%8B%E5%8A%A1%E5%AF%B9-GC-%E7%9A%84%E5%BD%B1%E5%93%8D%E4%B8%8E%E4%BC%98%E5%8C%96"><span class="nav-number">5.4.</span> <span class="nav-text">大事务对 GC 的影响与优化</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cove"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Cove</p>
+  <div class="site-description" itemprop="description">Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务</div>
+</div>
+<div class="sidebar-banner" style="padding: 10px; text-align: center;">
+  <img src="/images/sidebar-banner.png" alt="WeChat" style="max-width: 100%; border-radius: 8px;">
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://4dba.top/2026/02/05/oracle/rac-cache-fusion-load-balancing/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Cove">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="4DBA's Blog">
+      <meta itemprop="description" content="Oracle OCM / MySQL OCP <br> 提供专业数据恢复、迁移升级、紧急救援服务">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="RAC Cache Fusion 深度解析与负载均衡实战 | 4DBA's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RAC Cache Fusion 深度解析与负载均衡实战
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-02-05 10:00:00" itemprop="dateCreated datePublished" datetime="2026-02-05T10:00:00+00:00">2026-02-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-10 01:23:59" itemprop="dateModified" datetime="2026-06-10T01:23:59+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Oracle/" itemprop="url" rel="index"><span itemprop="name">Oracle</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>Oracle RAC（Real Application Clusters）是 Oracle 数据库实现高可用与水平扩展的核心架构。在 RAC 集群中，<strong>Cache Fusion</strong> 是最核心的技术——它让多个实例通过高速互联网络（Interconnect）直接交换数据块，而无需先写入磁盘。然而，很多 DBA 在遇到 <code>gc buffer busy</code>、<code>gc cr request</code> 等 Global Cache（GC）等待事件时束手无策，根源在于对 Cache Fusion 底层机制理解不足。与此同时，负载均衡配置不当也是 RAC 环境中的常见问题，经常导致某一节点过载而其他节点闲置，白白浪费集群资源。</p>
+<p>本文将从原理出发，结合生产实战经验，深入剖析 Cache Fusion 的工作机制与负载均衡的最佳实践。</p>
+<span id="more"></span>
+
+<hr>
+<h2 id="一、问题背景"><a href="#一、问题背景" class="headerlink" title="一、问题背景"></a>一、问题背景</h2><p>在单实例数据库中，数据块只存在一个 Buffer Cache 中，所有会话访问同一份内存副本。但在 RAC 环境中，每个实例拥有独立的 Buffer Cache，当实例 1 需要访问的数据块当前缓存在实例 2 的内存中时，就必须通过 Cache Fusion 机制从实例 2 获取该块的副本。</p>
+<p>这个过程虽然对应用透明，但涉及实例间通信、锁协调、一致性读构造等一系列复杂操作。如果设计或配置不当，极易出现以下问题：</p>
+<ul>
+<li><strong>GC 等待事件过高</strong>：<code>gc buffer busy acquire</code>、<code>gc cr request</code> 等等待占据 Top 5 等待事件前列，严重拖慢 SQL 执行速度。</li>
+<li><strong>热点数据争用</strong>：多个实例频繁读写同一组数据块，导致 LMS 进程成为瓶颈。</li>
+<li><strong>负载不均衡</strong>：连接全部集中到一个节点，另一节点几乎空闲，集群资源利用率低下。</li>
+<li><strong>大事务影响</strong>：长事务持有的锁未释放，导致其他实例的 GC 请求长时间等待。</li>
+</ul>
+<hr>
+<h2 id="二、理论分析"><a href="#二、理论分析" class="headerlink" title="二、理论分析"></a>二、理论分析</h2><h3 id="2-1-Cache-Fusion-原理"><a href="#2-1-Cache-Fusion-原理" class="headerlink" title="2.1 Cache Fusion 原理"></a>2.1 Cache Fusion 原理</h3><h4 id="从-Disk-based-到-Cache-based-的演进"><a href="#从-Disk-based-到-Cache-based-的演进" class="headerlink" title="从 Disk-based 到 Cache-based 的演进"></a>从 Disk-based 到 Cache-based 的演进</h4><p>在 Oracle 8i 之前的 Parallel Server 时代，当实例间需要共享数据时，必须先将脏块（Dirty Block）写回磁盘，另一个实例再从磁盘读取——这就是 <strong>Disk-based Cache Coherency</strong>。这种方式的 I&#x2F;O 开销极大，是早期 RAC 性能的主要瓶颈。</p>
+<p>Oracle 8i 引入了 Cache Fusion Phase I，实现了 Current Block 的内存间传输；Oracle 9i 的 Cache Fusion Phase II 进一步支持了 CR Block 的直接传输，彻底消除了数据交换对磁盘的依赖。这就是 <strong>Cache-based Cache Coherency</strong>——数据块直接通过私有网络在实例的 Buffer Cache 之间传递。</p>
+<h4 id="Global-Cache-Service-GCS-与-Global-Enqueue-Service-GES"><a href="#Global-Cache-Service-GCS-与-Global-Enqueue-Service-GES" class="headerlink" title="Global Cache Service (GCS) 与 Global Enqueue Service (GES)"></a>Global Cache Service (GCS) 与 Global Enqueue Service (GES)</h4><p>RAC 的全局协调依赖两大核心服务：</p>
+<ul>
+<li><strong>GCS（Global Cache Service）</strong>：负责数据块的全局一致性管理。它协调数据块在各实例间的传输与锁定，是 Cache Fusion 的核心调度器。</li>
+<li><strong>GES（Global Enqueue Service）</strong>：负责全局锁（Enqueue）的协调管理，包括字典缓存锁、DDL 锁、事务锁等非数据块级别的锁资源。</li>
+</ul>
+<p>GCS 和 GES 的元数据存储在 <strong>GRD（Global Resource Directory）</strong> 中，GRD 分布在所有实例的共享内存中，每个实例负责管理一部分资源。</p>
+<h4 id="LMS（Lock-Manager-Server）进程的核心角色"><a href="#LMS（Lock-Manager-Server）进程的核心角色" class="headerlink" title="LMS（Lock Manager Server）进程的核心角色"></a>LMS（Lock Manager Server）进程的核心角色</h4><p>LMS 进程是 Cache Fusion 中最关键的工作进程，其职责包括：</p>
+<ol>
+<li><strong>处理来自其他实例的 GC 请求</strong>：当实例 A 需要实例 B 上的数据块时，由实例 B 的 LMS 进程负责将数据块通过 Interconnect 发送给实例 A。</li>
+<li><strong>管理 GCS 资源</strong>：维护数据块的锁模式和角色信息。</li>
+<li><strong>构造 CR Block</strong>：当请求的块被修改过但请求方需要一致性读版本时，LMS 负责利用 Undo 信息构造 CR Block。</li>
+</ol>
+<p>LMS 进程的数量由参数 <code>_lm_lms</code>（11g+）或 <code>GCS_SERVER_PROCESSES</code> 控制，默认值根据 CPU 核数自动计算。在高并发的 RAC 环境中，通常建议手动增加 LMS 进程数。</p>
+<h4 id="LMD（Lock-Manager-Daemon）进程"><a href="#LMD（Lock-Manager-Daemon）进程" class="headerlink" title="LMD（Lock Manager Daemon）进程"></a>LMD（Lock Manager Daemon）进程</h4><p>LMD 进程负责处理 GES 相关的锁请求，它是锁管理的守护进程。当会话需要获取全局锁时，LMD 接收请求并通过 GRD 协调锁的授予。虽然 LMD 不直接参与数据块传输，但它的性能直接影响全局锁获取的速度。</p>
+<h3 id="2-2-数据块在RAC中的流转"><a href="#2-2-数据块在RAC中的流转" class="headerlink" title="2.2 数据块在RAC中的流转"></a>2.2 数据块在RAC中的流转</h3><h4 id="PCM-Lock-模式"><a href="#PCM-Lock-模式" class="headerlink" title="PCM Lock 模式"></a>PCM Lock 模式</h4><p>RAC 使用 PCM（Parallel Cache Management）锁来管理数据块的并发访问，共有四种模式：</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>含义</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Null (N)</strong></td>
+<td>无访问</td>
+<td>不持有该块的任何锁</td>
+</tr>
+<tr>
+<td><strong>Shared (S)</strong></td>
+<td>共享读</td>
+<td>可以读取 Current Block，多实例可同时持有 S 模式</td>
+</tr>
+<tr>
+<td><strong>Shared Sub-Xact (SSX)</strong></td>
+<td>子事务共享</td>
+<td>11g 引入，用于支持更细粒度的并发写</td>
+</tr>
+<tr>
+<td><strong>Exclusive (X)</strong></td>
+<td>独占写</td>
+<td>可以修改数据块，同一时刻只有一个实例能持有 X 模式</td>
+</tr>
+</tbody></table>
+<p>每个数据块的 GCS 资源记录了三个关键信息：<strong>Lock Mode</strong>（当前持有模式）、<strong>Role</strong>（Local 或 Global）和 <strong>Past Image（PI）</strong>。</p>
+<h4 id="Current-Block-请求流程"><a href="#Current-Block-请求流程" class="headerlink" title="Current Block 请求流程"></a>Current Block 请求流程</h4><p>当实例 1 需要读取一个当前缓存在实例 2 的 Current Block 时：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">实例1 (请求方)                    实例2 (持有方)                    磁盘</span><br><span class="line">    |                                 |                              |</span><br><span class="line">    |--- 1. 发送 GC 请求 ---&gt;         |                              |</span><br><span class="line">    |    (请求S模式Current Block)      |                              |</span><br><span class="line">    |                                 |                              |</span><br><span class="line">    |                                 | 2. LMS处理请求               |</span><br><span class="line">    |                                 |    检查锁模式和角色           |</span><br><span class="line">    |                                 |                              |</span><br><span class="line">    |                                 | 3. 若有PI，写PI到磁盘        |</span><br><span class="line">    |                                 |    (Role=Global时) ---------&gt; |</span><br><span class="line">    |                                 |                              |</span><br><span class="line">    |&lt;-- 4. 通过Interconnect ---      |                              |</span><br><span class="line">    |    发送Current Block            |                              |</span><br><span class="line">    |                                 |                              |</span><br><span class="line">    | 5. 实例1获得S模式锁            | 锁模式降级为S                 |</span><br><span class="line">    |    并读取数据块                  |                              |</span><br></pre></td></tr></table></figure>
+
+<h4 id="CR-Block-请求流程"><a href="#CR-Block-请求流程" class="headerlink" title="CR Block 请求流程"></a>CR Block 请求流程</h4><p>当实例 1 需要读取一个 CR Block（一致性读版本）时：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">实例1 (请求方)                    实例2 (持有方)</span><br><span class="line">    |                                 |</span><br><span class="line">    |--- 1. 发送 GC CR 请求 ---&gt;      |</span><br><span class="line">    |    (附带SCN信息)                |</span><br><span class="line">    |                                 |</span><br><span class="line">    |                                 | 2. LMS使用Undo信息构造CR Block</span><br><span class="line">    |                                 |    (在实例2的内存中完成)</span><br><span class="line">    |                                 |</span><br><span class="line">    |&lt;-- 3. 发送CR Block ---          |</span><br><span class="line">    |    (通过Interconnect)           |</span><br><span class="line">    |                                 |</span><br><span class="line">    | 4. 实例1缓存CR Block           |</span><br><span class="line">    |    持有S模式                    |</span><br></pre></td></tr></table></figure>
+
+<p>CR Block 的构造由 LMS 在持有方实例完成，这意味着请求方不会受到持有方当前事务的影响。这也是 Cache Fusion 相比 Disk-based 方案的显著优势。</p>
+<h4 id="Read-Read-Read-Write-Write-Write-场景"><a href="#Read-Read-Read-Write-Write-Write-场景" class="headerlink" title="Read-Read, Read-Write, Write-Write 场景"></a>Read-Read, Read-Write, Write-Write 场景</h4><ul>
+<li><p><strong>Read-Read（读-读）</strong>：两个实例都需要读取同一数据块。此时两个实例都可以持有 S 模式锁，无需等待，数据块直接在实例间拷贝。这是开销最小的场景。</p>
+</li>
+<li><p><strong>Read-Write（读-写）</strong>：实例 1 要读，实例 2 当前持有 X 模式（正在修改）。实例 2 需要将锁降级为 S，同时可能需要构造 CR Block 发送给实例 1。如果实例 2 的事务已提交但块未写回，则可能需要写 Past Image。</p>
+</li>
+<li><p><strong>Write-Write（写-写）</strong>：两个实例都需要修改同一数据块。这需要将 X 模式从一个实例转移到另一个实例，涉及锁模式转换、PI 写入和数据块传输，是开销最大的场景。频繁的 Write-Write 争用是 GC 性能问题的主要来源。</p>
+</li>
+</ul>
+<h3 id="2-3-GC等待事件"><a href="#2-3-GC等待事件" class="headerlink" title="2.3 GC等待事件"></a>2.3 GC等待事件</h3><p>理解 GC 等待事件是诊断 RAC 性能问题的关键：</p>
+<h4 id="gc-buffer-busy-acquire-gc-buffer-busy-release"><a href="#gc-buffer-busy-acquire-gc-buffer-busy-release" class="headerlink" title="gc buffer busy acquire &#x2F; gc buffer busy release"></a>gc buffer busy acquire &#x2F; gc buffer busy release</h4><ul>
+<li><strong>gc buffer busy acquire</strong>：会话在尝试获取一个 GC Buffer 时发现该 Buffer 正忙（被其他会话持有或正在传输中），需要等待。通常意味着对同一数据块的并发访问过高。</li>
+<li><strong>gc buffer busy release</strong>：会话在释放 GC Buffer 时遇到等待，通常发生在 LMS 正在处理该块的请求时。</li>
+</ul>
+<h4 id="gc-cr-request-gc-current-request"><a href="#gc-cr-request-gc-current-request" class="headerlink" title="gc cr request &#x2F; gc current request"></a>gc cr request &#x2F; gc current request</h4><ul>
+<li><strong>gc cr request</strong>：会话需要从远程实例获取一个 CR Block，正在等待远程实例通过 Interconnect 返回。</li>
+<li><strong>gc current request</strong>：会话需要从远程实例获取一个 Current Block，正在等待传输完成。</li>
+</ul>
+<p>这两个等待事件的高值直接反映了 Cache Fusion 的数据传输开销。如果持续偏高，需要检查 Interconnect 带宽、LMS 进程数量以及是否存在热点块。</p>
+<h4 id="gc-cr-multi-block-request"><a href="#gc-cr-multi-block-request" class="headerlink" title="gc cr multi block request"></a>gc cr multi block request</h4><p>多块读（如全表扫描）时，需要从远程实例获取多个 CR Block。如果该等待事件偏高，说明大量多块读操作都命中了远程实例的缓存。</p>
+<h4 id="gc-cr-block-congested-gc-current-block-congested"><a href="#gc-cr-block-congested-gc-current-block-congested" class="headerlink" title="gc cr block congested &#x2F; gc current block congested"></a>gc cr block congested &#x2F; gc current block congested</h4><p>这两个等待事件表明 LMS 进程出现了拥塞，请求在 LMS 的队列中等待过久。通常与 LMS 进程数不足、CPU 资源紧张或 LMS 进程优先级设置不当有关。</p>
+<h4 id="诊断方法"><a href="#诊断方法" class="headerlink" title="诊断方法"></a>诊断方法</h4><ol>
+<li>检查 <code>GV$SESSION_WAIT</code> 中的等待事件分布。</li>
+<li>分析 AWR 报告中的 “Global Cache Load Profile” 段。</li>
+<li>查看 <code>GV$SYSSTAT</code> 中的 GC 统计信息。</li>
+<li>检查 Interconnect 网络的吞吐量和延迟。</li>
+</ol>
+<h3 id="2-4-Service级别负载均衡"><a href="#2-4-Service级别负载均衡" class="headerlink" title="2.4 Service级别负载均衡"></a>2.4 Service级别负载均衡</h3><h4 id="Service-的概念与作用"><a href="#Service-的概念与作用" class="headerlink" title="Service 的概念与作用"></a>Service 的概念与作用</h4><p>Oracle Service 是将数据库工作负载逻辑分组的机制。通过 Service，可以将不同类型的应用负载分配到不同的 RAC 节点上，实现精细化的负载管理。Service 不仅是负载均衡的基础，还是 TAF、FAN、资源管理（Resource Manager）等高级功能的支撑。</p>
+<h4 id="Server-Side-Load-Balancing"><a href="#Server-Side-Load-Balancing" class="headerlink" title="Server-Side Load Balancing"></a>Server-Side Load Balancing</h4><p>服务端负载均衡由 Local Listener 实现。当客户端连接到某个节点的 Listener 时，该 Listener 可以根据各节点的负载情况将连接重定向到其他节点。配置方式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># listener.ora - 配置REMOTE_LISTENER</span><br><span class="line">REMOTE_LISTENER = LISTENERS_CLUSTER</span><br></pre></td></tr></table></figure>
+
+<p>每个节点的 PMON 进程会定期向 Local Listener 和 Remote Listener 注册实例的负载信息（Load Balance Advisory）。</p>
+<h4 id="Client-Side-Load-Balancing"><a href="#Client-Side-Load-Balancing" class="headerlink" title="Client-Side Load Balancing"></a>Client-Side Load Balancing</h4><p>客户端负载均衡通过 TNS 配置中的 <code>LOAD_BALANCE=YES</code> 实现，客户端在连接时随机选择一个地址进行连接：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">ORCL <span class="operator">=</span></span><br><span class="line">  (DESCRIPTION <span class="operator">=</span></span><br><span class="line">    (ADDRESS_LIST <span class="operator">=</span></span><br><span class="line">      (LOAD_BALANCE <span class="operator">=</span> YES)</span><br><span class="line">      (ADDRESS <span class="operator">=</span> (PROTOCOL <span class="operator">=</span> TCP)(HOST <span class="operator">=</span> node1<span class="operator">-</span>vip)(PORT <span class="operator">=</span> <span class="number">1521</span>))</span><br><span class="line">      (ADDRESS <span class="operator">=</span> (PROTOCOL <span class="operator">=</span> TCP)(HOST <span class="operator">=</span> node2<span class="operator">-</span>vip)(PORT <span class="operator">=</span> <span class="number">1521</span>))</span><br><span class="line">    )</span><br><span class="line">    (CONNECT_DATA <span class="operator">=</span> (SERVICE_NAME <span class="operator">=</span> ORCL_SVC))</span><br><span class="line">  )</span><br></pre></td></tr></table></figure>
+
+<h4 id="Runtime-Connection-Load-Balancing"><a href="#Runtime-Connection-Load-Balancing" class="headerlink" title="Runtime Connection Load Balancing"></a>Runtime Connection Load Balancing</h4><p>运行时连接负载均衡（RCLB）是 Oracle 11g 引入的高级特性，基于 JDBC&#x2F;OCI 的连接池实现。当连接池中创建新连接或回收空闲连接时，会根据节点的实时负载指标（运行时间、CPU 使用率、会话数等）动态选择最优节点。RCLB 依赖 FAN 通知机制工作。</p>
+<hr>
+<h2 id="三、实战操作"><a href="#三、实战操作" class="headerlink" title="三、实战操作"></a>三、实战操作</h2><h3 id="3-1-Cache-Fusion-监控"><a href="#3-1-Cache-Fusion-监控" class="headerlink" title="3.1 Cache Fusion 监控"></a>3.1 Cache Fusion 监控</h3><h4 id="GV-SYSSTAT-中的-GC-统计信息"><a href="#GV-SYSSTAT-中的-GC-统计信息" class="headerlink" title="GV$SYSSTAT 中的 GC 统计信息"></a>GV$SYSSTAT 中的 GC 统计信息</h4><p>以下脚本可以查看各实例的 GC 统计概况：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看GC相关统计信息</span></span><br><span class="line"><span class="keyword">SELECT</span> inst_id, name, <span class="keyword">value</span></span><br><span class="line"><span class="keyword">FROM</span> gv$sysstat</span><br><span class="line"><span class="keyword">WHERE</span> name <span class="keyword">IN</span> (</span><br><span class="line">    <span class="string">&#x27;gc cr blocks served&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc cr blocks received&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc current blocks served&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc current blocks received&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc cr block build time&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc cr block send time&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc cr block flush time&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc current block pin time&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc current block send time&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc current block flush time&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc cr blocks lost&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc current blocks lost&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc blocks corrupt&#x27;</span></span><br><span class="line">)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> name, inst_id;</span><br></pre></td></tr></table></figure>
+
+<p>关键指标解读：</p>
+<ul>
+<li><strong>gc cr&#x2F;current blocks served</strong>：本实例作为持有方为其他实例提供的数据块数量。</li>
+<li><strong>gc cr&#x2F;current blocks received</strong>：本实例作为请求方从其他实例获取的数据块数量。</li>
+<li><strong>gc block send&#x2F;flush time</strong>：数据块传输的发送和刷盘时间（单位：1&#x2F;100秒）。</li>
+<li><strong>gc blocks lost</strong>：传输过程中丢失的块数，非零值说明 Interconnect 存在严重问题。</li>
+</ul>
+<h4 id="GC-等待事件的-AWR-分析"><a href="#GC-等待事件的-AWR-分析" class="headerlink" title="GC 等待事件的 AWR 分析"></a>GC 等待事件的 AWR 分析</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看GC等待事件的详细统计</span></span><br><span class="line"><span class="keyword">SELECT</span> event_name,</span><br><span class="line">       total_waits,</span><br><span class="line">       total_timeouts,</span><br><span class="line">       time_waited_micro <span class="operator">/</span> <span class="number">1000000</span> <span class="keyword">AS</span> time_waited_sec,</span><br><span class="line">       ROUND(time_waited_micro <span class="operator">/</span> total_waits <span class="operator">/</span> <span class="number">1000</span>, <span class="number">2</span>) <span class="keyword">AS</span> avg_wait_ms</span><br><span class="line"><span class="keyword">FROM</span> gv$system_event</span><br><span class="line"><span class="keyword">WHERE</span> event_name <span class="keyword">LIKE</span> <span class="string">&#x27;gc%&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> total_waits <span class="operator">&gt;</span> <span class="number">0</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> time_waited_micro <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="LMS-进程性能监控"><a href="#LMS-进程性能监控" class="headerlink" title="LMS 进程性能监控"></a>LMS 进程性能监控</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看LMS进程的状态和CPU使用情况</span></span><br><span class="line"><span class="keyword">SELECT</span> pid, pname, username, </span><br><span class="line">       ROUND((sysdate <span class="operator">-</span> logon_time) <span class="operator">*</span> <span class="number">24</span>, <span class="number">2</span>) <span class="keyword">AS</span> hours_running,</span><br><span class="line">       status</span><br><span class="line"><span class="keyword">FROM</span> gv$process</span><br><span class="line"><span class="keyword">WHERE</span> pname <span class="keyword">LIKE</span> <span class="string">&#x27;LMS%&#x27;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> inst_id, pname;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看LMS进程的响应时间</span></span><br><span class="line"><span class="keyword">SELECT</span> inst_id, name, <span class="keyword">value</span></span><br><span class="line"><span class="keyword">FROM</span> gv$sysstat</span><br><span class="line"><span class="keyword">WHERE</span> name <span class="keyword">LIKE</span> <span class="string">&#x27;%lms%&#x27;</span></span><br><span class="line">   <span class="keyword">OR</span> name <span class="keyword">LIKE</span> <span class="string">&#x27;%gcs%message%&#x27;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> inst_id, name;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-Service-创建与配置"><a href="#3-2-Service-创建与配置" class="headerlink" title="3.2 Service 创建与配置"></a>3.2 Service 创建与配置</h3><h4 id="srvctl-add-service-配置示例"><a href="#srvctl-add-service-配置示例" class="headerlink" title="srvctl add service 配置示例"></a>srvctl add service 配置示例</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建Service，将OLTP负载分配到节点1和节点2</span></span><br><span class="line">srvctl add service -db ORCL \</span><br><span class="line">    -service OLTP_SVC \</span><br><span class="line">    -preferred ORCL1,ORCL2 \</span><br><span class="line">    -available ORCL3 \</span><br><span class="line">    -role PRIMARY \</span><br><span class="line">    -policy AUTOMATIC \</span><br><span class="line">    -clbgoal SHORT \</span><br><span class="line">    -rlbgoal SERVICE_TIME \</span><br><span class="line">    -failovertype SELECT \</span><br><span class="line">    -failoverretry 3 \</span><br><span class="line">    -failoverdelay 5</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动Service</span></span><br><span class="line">srvctl start service -db ORCL -service OLTP_SVC</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建报表专用Service，仅运行在节点3</span></span><br><span class="line">srvctl add service -db ORCL \</span><br><span class="line">    -service REPORT_SVC \</span><br><span class="line">    -preferred ORCL3 \</span><br><span class="line">    -available ORCL1 \</span><br><span class="line">    -role PRIMARY \</span><br><span class="line">    -policy AUTOMATIC</span><br></pre></td></tr></table></figure>
+
+<p>参数说明：</p>
+<ul>
+<li><strong>preferred</strong>：首选运行节点。</li>
+<li><strong>available</strong>：故障转移目标节点。</li>
+<li><strong>clbgoal</strong>：Client Load Balance Goal，<code>SHORT</code> 表示基于瞬时负载。</li>
+<li><strong>rlbgoal</strong>：Runtime Load Balance Goal，<code>SERVICE_TIME</code> 表示基于服务响应时间。</li>
+</ul>
+<h4 id="TAF-配置"><a href="#TAF-配置" class="headerlink" title="TAF 配置"></a>TAF 配置</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 服务端TAF配置（基于Service）</span></span><br><span class="line"><span class="comment">-- 通过srvctl配置时已包含failovertype等参数</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 客户端TAF配置</span></span><br><span class="line">OLTP_SVC <span class="operator">=</span></span><br><span class="line">  (DESCRIPTION <span class="operator">=</span></span><br><span class="line">    (ADDRESS <span class="operator">=</span> (PROTOCOL <span class="operator">=</span> TCP)(HOST <span class="operator">=</span> node1<span class="operator">-</span>vip)(PORT <span class="operator">=</span> <span class="number">1521</span>))</span><br><span class="line">    (ADDRESS <span class="operator">=</span> (PROTOCOL <span class="operator">=</span> TCP)(HOST <span class="operator">=</span> node2<span class="operator">-</span>vip)(PORT <span class="operator">=</span> <span class="number">1521</span>))</span><br><span class="line">    (CONNECT_DATA <span class="operator">=</span></span><br><span class="line">      (SERVICE_NAME <span class="operator">=</span> OLTP_SVC)</span><br><span class="line">      (FAILOVER_MODE <span class="operator">=</span></span><br><span class="line">        (TYPE <span class="operator">=</span> <span class="keyword">SELECT</span>)</span><br><span class="line">        (<span class="keyword">METHOD</span> <span class="operator">=</span> BASIC)</span><br><span class="line">        (RETRIES <span class="operator">=</span> <span class="number">3</span>)</span><br><span class="line">        (DELAY <span class="operator">=</span> <span class="number">5</span>)</span><br><span class="line">      )</span><br><span class="line">    )</span><br><span class="line">  )</span><br></pre></td></tr></table></figure>
+
+<h4 id="FAN-配置"><a href="#FAN-配置" class="headerlink" title="FAN 配置"></a>FAN 配置</h4><p>FAN（Fast Application Notification）允许应用快速感知集群事件（节点宕机、Service 状态变化等）。配置 FAN 需要确保：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 检查FAN相关设置</span></span><br><span class="line"><span class="keyword">SELECT</span> name, <span class="keyword">value</span> <span class="keyword">FROM</span> v$<span class="keyword">parameter</span> </span><br><span class="line"><span class="keyword">WHERE</span> name <span class="keyword">IN</span> (<span class="string">&#x27;service_names&#x27;</span>, <span class="string">&#x27;local_listener&#x27;</span>, <span class="string">&#x27;remote_listener&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 确认ONS配置</span></span><br><span class="line">srvctl config nodeapps <span class="operator">|</span> grep <span class="operator">-</span>i ons</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-负载均衡优化"><a href="#3-3-负载均衡优化" class="headerlink" title="3.3 负载均衡优化"></a>3.3 负载均衡优化</h3><h4 id="LOAD-BALANCE-YES-vs-LOAD-BALANCE-FACTOR"><a href="#LOAD-BALANCE-YES-vs-LOAD-BALANCE-FACTOR" class="headerlink" title="LOAD_BALANCE&#x3D;YES vs LOAD_BALANCE&#x3D;FACTOR"></a>LOAD_BALANCE&#x3D;YES vs LOAD_BALANCE&#x3D;FACTOR</h4><p><code>LOAD_BALANCE=YES</code> 是简单的随机负载均衡，而 12c 引入的 <code>LOAD_BALANCE=FACTOR</code> 允许基于节点权重进行负载分配：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 12c+ 配置基于权重的负载均衡</span></span><br><span class="line">OLTP_SVC <span class="operator">=</span></span><br><span class="line">  (DESCRIPTION <span class="operator">=</span></span><br><span class="line">    (ADDRESS_LIST <span class="operator">=</span></span><br><span class="line">      (LOAD_BALANCE <span class="operator">=</span> YES)</span><br><span class="line">      (ADDRESS <span class="operator">=</span> (PROTOCOL <span class="operator">=</span> TCP)(HOST <span class="operator">=</span> node1<span class="operator">-</span>vip)(PORT <span class="operator">=</span> <span class="number">1521</span>))</span><br><span class="line">      (ADDRESS <span class="operator">=</span> (PROTOCOL <span class="operator">=</span> TCP)(HOST <span class="operator">=</span> node2<span class="operator">-</span>vip)(PORT <span class="operator">=</span> <span class="number">1521</span>))</span><br><span class="line">    )</span><br><span class="line">    (CONNECT_DATA <span class="operator">=</span></span><br><span class="line">      (SERVICE_NAME <span class="operator">=</span> OLTP_SVC)</span><br><span class="line">    )</span><br><span class="line">  )</span><br></pre></td></tr></table></figure>
+
+<h4 id="数据分区策略减少-GC-争用"><a href="#数据分区策略减少-GC-争用" class="headerlink" title="数据分区策略减少 GC 争用"></a>数据分区策略减少 GC 争用</h4><p>减少 GC 争用的最有效方法是数据分区。通过哈希分区将数据分散到不同的实例：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 按客户ID哈希分区，不同分区路由到不同实例</span></span><br><span class="line"><span class="comment">-- 配合Service使用，每个Service绑定到特定实例</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 示例：OLTP_SVC处理A-M开头的客户，OLTP_SVC2处理N-Z</span></span><br><span class="line"><span class="comment">-- 通过应用层路由或Oracle Application Continuity实现</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- 更直接的方案：使用Sequence的不同Cache值减少索引争用</span></span><br><span class="line"><span class="keyword">CREATE</span> SEQUENCE order_seq CACHE <span class="number">1000</span> NOORDER;</span><br><span class="line"><span class="comment">-- NOORDER避免跨实例的序列值排序争用</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-GC-问题诊断"><a href="#3-4-GC-问题诊断" class="headerlink" title="3.4 GC 问题诊断"></a>3.4 GC 问题诊断</h3><h4 id="AWR-报告中-GC-相关指标解读"><a href="#AWR-报告中-GC-相关指标解读" class="headerlink" title="AWR 报告中 GC 相关指标解读"></a>AWR 报告中 GC 相关指标解读</h4><p>AWR 报告中有多个与 Cache Fusion 相关的关键段：</p>
+<p><strong>1. Global Cache Load Profile（全局缓存负载概况）</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Per Second                       Per Transaction</span><br><span class="line">----------------------         ----------------------</span><br><span class="line">Global Cache blocks served:       1,245.67          89.34</span><br><span class="line">Global Cache blocks received:     1,032.45          73.92</span><br><span class="line">GC CR Block Build Time (ms):         2.34           0.17</span><br><span class="line">GC CR Block Flush Time (ms):         5.67           0.41</span><br><span class="line">GC CR Block Send Time (ms):          1.23           0.09</span><br><span class="line">GC Current Block Pin Time (ms):      3.45           0.25</span><br><span class="line">GC Current Block Send Time (ms):     1.56           0.11</span><br><span class="line">GC Current Block Flush Time (ms):    6.78           0.49</span><br></pre></td></tr></table></figure>
+
+<p>解读要点：</p>
+<ul>
+<li><strong>blocks served&#x2F;received</strong>：反映实例间数据交换量。差值过大说明负载不均衡。</li>
+<li><strong>Build Time</strong>：构造 CR Block 的平均耗时。过高说明 Undo 段压力大。</li>
+<li><strong>Flush Time</strong>：数据块刷盘时间。过高可能是 LMS CPU 不足。</li>
+<li><strong>Send Time</strong>：网络传输时间。过高说明 Interconnect 带宽不足或延迟大。</li>
+</ul>
+<p><strong>2. Global Cache Efficiency Percentage（全局缓存效率）</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Global Cache Efficiency Percentage (Target=100%):  92.34%</span><br></pre></td></tr></table></figure>
+
+<p>该值低于 95% 时需要关注，低于 90% 说明 GC 争用严重。</p>
+<p><strong>3. Interconnect Traffic Stats</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Interconnect throughput:</span><br><span class="line">    Send: 256.78 MB/sec</span><br><span class="line">    Receive: 234.56 MB/sec</span><br><span class="line">    Send + Receive: 491.34 MB/sec</span><br></pre></td></tr></table></figure>
+
+<p>如果 Interconnect 带宽使用率超过 70%，需要考虑升级网络或优化数据访问模式。</p>
+<h4 id="oradebug-诊断-LMS"><a href="#oradebug-诊断-LMS" class="headerlink" title="oradebug 诊断 LMS"></a>oradebug 诊断 LMS</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查找LMS进程的SPID</span></span><br><span class="line"><span class="keyword">SELECT</span> p.pid, p.spid, s.program</span><br><span class="line"><span class="keyword">FROM</span> gv$process p, gv$session s</span><br><span class="line"><span class="keyword">WHERE</span> p.addr <span class="operator">=</span> s.paddr</span><br><span class="line">  <span class="keyword">AND</span> p.pname <span class="keyword">LIKE</span> <span class="string">&#x27;LMS%&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> s.inst_id <span class="operator">=</span> p.inst_id;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 使用oradebug跟踪LMS（需SYSDBA权限）</span></span><br><span class="line"><span class="comment">-- 在LMS所在实例执行</span></span><br><span class="line">oradebug setospid <span class="operator">&lt;</span>LMS_SPID<span class="operator">&gt;</span></span><br><span class="line">oradebug event <span class="number">10046</span> trace name context forever, level <span class="number">12</span></span><br><span class="line"><span class="comment">-- 等待一段时间后</span></span><br><span class="line">oradebug event <span class="number">10046</span> trace name context off</span><br><span class="line"><span class="comment">-- 分析trace文件中LMS的处理耗时</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="热点块处理"><a href="#热点块处理" class="headerlink" title="热点块处理"></a>热点块处理</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查找热点数据块</span></span><br><span class="line"><span class="keyword">SELECT</span> p1 &quot;file#&quot;, p2 &quot;block#&quot;, p3 &quot;class#&quot;, <span class="built_in">COUNT</span>(<span class="operator">*</span>)</span><br><span class="line"><span class="keyword">FROM</span> gv$session_wait</span><br><span class="line"><span class="keyword">WHERE</span> event <span class="keyword">LIKE</span> <span class="string">&#x27;gc%buffer%&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> p1, p2, p3</span><br><span class="line"><span class="keyword">HAVING</span> <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="operator">&gt;</span> <span class="number">10</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 进一步确认热点块所属对象</span></span><br><span class="line"><span class="keyword">SELECT</span> owner, segment_name, partition_name, segment_type</span><br><span class="line"><span class="keyword">FROM</span> dba_extents</span><br><span class="line"><span class="keyword">WHERE</span> file_id <span class="operator">=</span> <span class="operator">&amp;</span>file_id</span><br><span class="line">  <span class="keyword">AND</span> <span class="operator">&amp;</span>block_id <span class="keyword">BETWEEN</span> block_id <span class="keyword">AND</span> block_id <span class="operator">+</span> blocks <span class="operator">-</span> <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+
+<p>处理热点块的常见策略：</p>
+<ol>
+<li><strong>数据重新分区</strong>：将热点数据分散到不同的分区。</li>
+<li><strong>反向键索引（Reverse Key Index）</strong>：打散索引的插入热点。</li>
+<li><strong>Sequence NOORDER</strong>：避免跨实例排序争用。</li>
+<li><strong>表分区 + 应用路由</strong>：将不同分区的数据通过 Service 路由到不同实例。</li>
+</ol>
+<hr>
+<h2 id="四、结果验证"><a href="#四、结果验证" class="headerlink" title="四、结果验证"></a>四、结果验证</h2><p>优化完成后，需要系统性地验证效果：</p>
+<h4 id="GC-等待事件检查"><a href="#GC-等待事件检查" class="headerlink" title="GC 等待事件检查"></a>GC 等待事件检查</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 实时检查GC等待事件</span></span><br><span class="line"><span class="keyword">SELECT</span> sw.inst_id, sw.event, <span class="built_in">COUNT</span>(<span class="operator">*</span>) <span class="keyword">AS</span> wait_count,</span><br><span class="line">       ROUND(<span class="built_in">AVG</span>(sw.wait_time_micro) <span class="operator">/</span> <span class="number">1000</span>, <span class="number">2</span>) <span class="keyword">AS</span> avg_wait_ms</span><br><span class="line"><span class="keyword">FROM</span> gv$session_wait sw</span><br><span class="line"><span class="keyword">WHERE</span> sw.event <span class="keyword">LIKE</span> <span class="string">&#x27;gc%&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> sw.inst_id, sw.event</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> wait_count <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 对比优化前后的GC统计</span></span><br><span class="line"><span class="keyword">SELECT</span> s.inst_id, s.name, </span><br><span class="line">       s.value <span class="keyword">AS</span> current_value,</span><br><span class="line">       s.value <span class="operator">-</span> <span class="operator">&amp;</span>baseline_value <span class="keyword">AS</span> delta</span><br><span class="line"><span class="keyword">FROM</span> gv$sysstat s</span><br><span class="line"><span class="keyword">WHERE</span> s.name <span class="keyword">IN</span> (</span><br><span class="line">    <span class="string">&#x27;gc cr blocks served&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc current blocks served&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc cr block build time&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc current block send time&#x27;</span></span><br><span class="line">)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> s.name, s.inst_id;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Service-状态检查"><a href="#Service-状态检查" class="headerlink" title="Service 状态检查"></a>Service 状态检查</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 检查Service运行状态</span></span><br><span class="line">srvctl status service -db ORCL -service OLTP_SVC</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查Service详细配置</span></span><br><span class="line">srvctl config service -db ORCL -service OLTP_SVC</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看Service的运行时统计</span></span><br><span class="line">SELECT inst_id, service_name, COUNT(*) AS session_count</span><br><span class="line">FROM gv<span class="variable">$session</span></span><br><span class="line">WHERE service_name IN (<span class="string">&#x27;OLTP_SVC&#x27;</span>, <span class="string">&#x27;REPORT_SVC&#x27;</span>)</span><br><span class="line">GROUP BY inst_id, service_name</span><br><span class="line">ORDER BY service_name, inst_id;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Interconnect-性能指标"><a href="#Interconnect-性能指标" class="headerlink" title="Interconnect 性能指标"></a>Interconnect 性能指标</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 检查Interconnect性能</span></span><br><span class="line"><span class="keyword">SELECT</span> name, <span class="keyword">value</span></span><br><span class="line"><span class="keyword">FROM</span> gv$sysstat</span><br><span class="line"><span class="keyword">WHERE</span> name <span class="keyword">IN</span> (</span><br><span class="line">    <span class="string">&#x27;IPC send bytes&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;IPC recv bytes&#x27;</span>, </span><br><span class="line">    <span class="string">&#x27;IPC send count&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;IPC recv count&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc cr block receive time&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;gc current block receive time&#x27;</span></span><br><span class="line">)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> name, inst_id;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 计算平均块传输时间</span></span><br><span class="line"><span class="keyword">SELECT</span> inst_id,</span><br><span class="line">       ROUND(<span class="built_in">SUM</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> name <span class="keyword">LIKE</span> <span class="string">&#x27;%receive time%&#x27;</span> <span class="keyword">THEN</span> <span class="keyword">value</span> <span class="keyword">END</span>) <span class="operator">*</span> <span class="number">10</span> <span class="operator">/</span></span><br><span class="line">             <span class="built_in">NULLIF</span>(<span class="built_in">SUM</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> name <span class="keyword">LIKE</span> <span class="string">&#x27;%received%&#x27;</span> <span class="keyword">THEN</span> <span class="keyword">value</span> <span class="keyword">END</span>), <span class="number">0</span>), <span class="number">2</span>) </span><br><span class="line">       <span class="keyword">AS</span> avg_transfer_ms</span><br><span class="line"><span class="keyword">FROM</span> gv$sysstat</span><br><span class="line"><span class="keyword">WHERE</span> name <span class="keyword">LIKE</span> <span class="string">&#x27;gc%block%receive%&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> inst_id;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="五、经验总结"><a href="#五、经验总结" class="headerlink" title="五、经验总结"></a>五、经验总结</h2><h3 id="Cache-Fusion-优化的优先级"><a href="#Cache-Fusion-优化的优先级" class="headerlink" title="Cache Fusion 优化的优先级"></a>Cache Fusion 优化的优先级</h3><p>在实际生产环境中，Cache Fusion 的优化应遵循以下优先级：</p>
+<ol>
+<li><p><strong>Interconnect 硬件优先</strong>：确保使用高速互联（推荐 25GbE 或 InfiniBand），配置 Jumbo Frame（MTU&#x3D;9000），验证无丢包。硬件是基础，软件优化再好也弥补不了网络带宽不足。</p>
+</li>
+<li><p><strong>数据访问模式优化</strong>：减少不必要的跨实例数据访问是最根本的优化。通过数据分区、应用路由、合理设计 Service 来实现”数据跟着应用走”。</p>
+</li>
+<li><p><strong>LMS 进程调优</strong>：根据 GC 负载调整 LMS 进程数，必要时提升 LMS 进程的 OS 优先级（通过 <code>ORA_LMS_PRI</code> 或 Linux 的 <code>nice</code>&#x2F;<code>chrt</code>）。</p>
+</li>
+<li><p><strong>SQL 优化</strong>：减少不必要的全表扫描和大范围扫描，降低 gc cr multi block request。优化热点 SQL 的执行计划。</p>
+</li>
+</ol>
+<h3 id="Service-设计的最佳实践"><a href="#Service-设计的最佳实践" class="headerlink" title="Service 设计的最佳实践"></a>Service 设计的最佳实践</h3><ul>
+<li>每个业务模块使用独立的 Service，不要全部使用默认的 <code>DB_SERVICE</code>。</li>
+<li>为 OLTP 和 Batch 作业分别创建 Service，并绑定到不同的实例。</li>
+<li>配置合理的 TAF 策略，确保故障转移时业务不中断。</li>
+<li>定期检查 Service 的会话分布，及时发现负载不均衡。</li>
+</ul>
+<h3 id="RAC-环境下的-SQL-优化策略"><a href="#RAC-环境下的-SQL-优化策略" class="headerlink" title="RAC 环境下的 SQL 优化策略"></a>RAC 环境下的 SQL 优化策略</h3><ul>
+<li><strong>避免跨实例的大表关联</strong>：通过 Service 路由确保关联表的数据在同一实例访问。</li>
+<li><strong>减少 FULL TABLE SCAN</strong>：多块读在 RAC 中的开销是单实例的数倍（每个块可能在不同实例）。</li>
+<li><strong>绑定变量与游标共享</strong>：减少硬解析带来的 Library Cache 全局锁争用。</li>
+<li><strong>合理使用 Result Cache</strong>：对变化频率低的查询结果缓存，减少数据块访问。</li>
+</ul>
+<h3 id="大事务对-GC-的影响与优化"><a href="#大事务对-GC-的影响与优化" class="headerlink" title="大事务对 GC 的影响与优化"></a>大事务对 GC 的影响与优化</h3><p>大事务（Long-Running Transaction）是 RAC 环境中的性能杀手：</p>
+<ul>
+<li>大事务修改大量数据块，这些块被锁定在 X 模式，导致其他实例的读请求全部需要 GC 传输。</li>
+<li>大事务的 Undo 信息量大，构造 CR Block 的开销显著增加。</li>
+<li>大事务持有锁时间长，阻塞链可能导致级联的 GC 等待。</li>
+</ul>
+<p>优化建议：</p>
+<ol>
+<li>将大事务拆分为多个小批次提交。</li>
+<li>使用 Direct Path Load 或 Partition Exchange 减少锁影响范围。</li>
+<li>将批处理作业通过 Service 路由到专用节点，与 OLTP 负载隔离。</li>
+<li>合理设置 Undo 表空间和 Undo Retention，避免 Undo 段争用。</li>
+</ol>
+<hr>
+<blockquote>
+<p><strong>总结</strong>：RAC Cache Fusion 是一项精巧但复杂的技术，DBA 不仅要理解其底层原理，还要在实践中结合 AWR 分析、SQL 优化和 Service 设计进行系统性调优。负载均衡不是简单地设置 <code>LOAD_BALANCE=YES</code>，而是需要从业务逻辑、数据分区、Service 路由等多个维度综合设计。只有深入理解数据块在 RAC 集群中的流转规律，才能在面对 GC 等待事件时做到心中有数、对症下药。</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" rel="tag"># 性能调优</a>
+              <a href="/tags/RAC/" rel="tag"># RAC</a>
+              <a href="/tags/Cache-Fusion/" rel="tag"># Cache Fusion</a>
+              <a href="/tags/GCS/" rel="tag"># GCS</a>
+              <a href="/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="tag"># 负载均衡</a>
+              <a href="/tags/Service/" rel="tag"># Service</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/01/31/oracle/ansible-automated-deployment/" rel="prev" title="Ansible 自动化部署 Oracle：从 OS 准备到软件安装的全流程">
+                  <i class="fa fa-angle-left"></i> Ansible 自动化部署 Oracle：从 OS 准备到软件安装的全流程
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/02/10/oracle/active-data-guard-implementation/" rel="next" title="Active Data Guard 实战：物理备库搭建、Real-time Apply 与读写分离">
+                  Active Data Guard 实战：物理备库搭建、Real-time Apply 与读写分离 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备2025173299号-1 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Cove</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

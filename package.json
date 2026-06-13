@@ -12,7 +12,7 @@
     "version": "7.1.1"
   },
   "dependencies": {
-    "@fancyapps/ui": "^5.0.31",
+    "@fancyapps/ui": "^6.1.14",
     "@fortawesome/fontawesome-free": "^7.0.0",
     "@next-theme/pjax": "^0.6.0",
     "@next-theme/plugins": "^8.27.0",

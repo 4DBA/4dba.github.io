@@ -21,8 +21,8 @@ importers:
         specifier: ^8.27.0
         version: 8.27.0(chokidar@3.6.0)(preact@8.1.0)
       animate.css:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^4.1.1
+        version: 4.1.1
       animejs:
         specifier: ^3.2.1
         version: 3.2.1
@@ -1167,6 +1167,9 @@ packages:
 
   animate.css@3.1.1:
     resolution: {integrity: sha512-tvsK8x2vQLIcHpxy/KjmGx7MtlQ5BZsuiBDmrty7TvRF3mGVhhG2Nuue2DN6fXBfqIKw7i1SKQ4Cuk2ReojNHQ==}
+
+  animate.css@4.1.1:
+    resolution: {integrity: sha512-+mRmCTv6SbCmtYJCN4faJMNFVNN5EuCTTprDTAo7YzIGji2KADmakjVA3+8mVDkZ2Bf09vayB35lSQIex2+QaQ==}
 
   animejs@3.2.1:
     resolution: {integrity: sha512-sWno3ugFryK5nhiDm/2BKeFCpZv7vzerWUcUPyAZLDhMek3+S/p418ldZJbJXo5ZUOpfm2kP2XRO4NJcULMy9A==}
@@ -3195,6 +3198,7 @@ packages:
   whatwg-encoding@2.0.0:
     resolution: {integrity: sha512-p41ogyeMUrw3jWclHWTQg1k05DSVXPLcVxRTYsXUk+ZooOCZLcoYgPZ/HL/D/N+uQPOtcp1me1WhBEaX02mhWg==}
     engines: {node: '>=12'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@3.0.0:
     resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
@@ -4679,6 +4683,8 @@ snapshots:
       '@algolia/requester-node-http': 5.36.0
 
   animate.css@3.1.1: {}
+
+  animate.css@4.1.1: {}
 
   animejs@3.2.1: {}
 

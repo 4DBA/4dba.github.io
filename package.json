@@ -17,7 +17,7 @@
     "@next-theme/pjax": "^0.6.0",
     "@next-theme/plugins": "^8.27.0",
     "animate.css": "^3.1.1",
-    "animejs": "^3.2.1",
+    "animejs": "^4.5.0",
     "bulma-stylus": "0.8.0",
     "deepmerge": "^4.3.1",
     "hexo": "^7.1.1",

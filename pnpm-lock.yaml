@@ -114,8 +114,8 @@ importers:
         specifier: ^1.30.0
         version: 1.30.0
       quicklink:
-        specifier: ^3.0.1
-        version: 3.0.1
+        specifier: ^3.0.2
+        version: 3.0.2
       semver:
         specifier: ^7.8.1
         version: 7.8.1
@@ -2755,6 +2755,17 @@ packages:
       react-dom:
         optional: true
 
+  quicklink@3.0.2:
+    resolution: {integrity: sha512-TwzHrOZT83w4nAask7CRKr2dkNJMKaqcf3hLr+tiXnUPrQ6mepZHwfuk+BMwX0CCznfLRQvbzkopgy0g6AsTBw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
+      react-dom: ^16.8.0 || ^17 || ^18 || ^19
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
@@ -3195,6 +3206,7 @@ packages:
   whatwg-encoding@2.0.0:
     resolution: {integrity: sha512-p41ogyeMUrw3jWclHWTQg1k05DSVXPLcVxRTYsXUk+ZooOCZLcoYgPZ/HL/D/N+uQPOtcp1me1WhBEaX02mhWg==}
     engines: {node: '>=12'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@3.0.0:
     resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
@@ -6511,6 +6523,11 @@ snapshots:
   querystringify@2.2.0: {}
 
   quicklink@3.0.1:
+    dependencies:
+      route-manifest: 1.0.0
+      throttles: 1.0.1
+
+  quicklink@3.0.2:
     dependencies:
       route-manifest: 1.0.0
       throttles: 1.0.1

@@ -47,7 +47,7 @@
     "pace-js": "^1.2.4",
     "pangu": "^7.2.0",
     "prismjs": "^1.30.0",
-    "quicklink": "^3.0.1",
+    "quicklink": "^3.0.2",
     "semver": "^7.8.1"
   }
 }

@@ -78,8 +78,8 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
       hexo-robots:
-        specifier: ^1.0.2
-        version: 1.0.2(hexo@7.1.1(chokidar@3.6.0))
+        specifier: ^1.0.4
+        version: 1.0.4(hexo@7.1.1(chokidar@3.6.0))
       hexo-server:
         specifier: ^3.0.0
         version: 3.0.0
@@ -2058,8 +2058,8 @@ packages:
     resolution: {integrity: sha512-cFm8ZwShBBeFcQwOXc8EK7lIZnSYVD6OJykdL4GBw99hxc4eD5Hlsi32nRzE8sgKv00jhX1s9Da3GVVFMPAVQg==}
     engines: {node: '>=14'}
 
-  hexo-robots@1.0.2:
-    resolution: {integrity: sha512-EdwcGVjWlIWAhDhGJsqW4/fPxU/Usg99v+44dj9WasnHLwc7UH+iyPF29gS8cq81vPiJ5E82cc2wR3Z15AU5wQ==}
+  hexo-robots@1.0.4:
+    resolution: {integrity: sha512-IsObhMYHBrljMH/KD/g0bELUomYNw9lADU4G8cG95ghD7bLASAsJGP+pnq/WsBxo9hgqkY7SboSK2+agsWc8CA==}
     engines: {node: '>=16'}
     peerDependencies:
       hexo: ^7.0.0 || ^8.0.0
@@ -3195,6 +3195,7 @@ packages:
   whatwg-encoding@2.0.0:
     resolution: {integrity: sha512-p41ogyeMUrw3jWclHWTQg1k05DSVXPLcVxRTYsXUk+ZooOCZLcoYgPZ/HL/D/N+uQPOtcp1me1WhBEaX02mhWg==}
     engines: {node: '>=12'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@3.0.0:
     resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
@@ -5758,7 +5759,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  hexo-robots@1.0.2(hexo@7.1.1(chokidar@3.6.0)):
+  hexo-robots@1.0.4(hexo@7.1.1(chokidar@3.6.0)):
     dependencies:
       hexo: 7.1.1(chokidar@3.6.0)
 

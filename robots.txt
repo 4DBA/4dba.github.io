@@ -1,0 +1,8 @@
+Sitemap: https://4dba.top/sitemap.xml
+
+User-agent: *
+Allow: /
+Allow: /archives/
+Disallow: /js/
+Disallow: /css/
+Disallow: /images/
